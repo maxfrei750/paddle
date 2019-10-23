@@ -1,0 +1,12 @@
+name: pytorch
+channels:
+- defaults
+- pytorch
+- conda-forge
+dependencies:
+- pytorch
+- torchvision
+- cudatoolkit=10.1
+- pip
+- pip:
+  - pycocotools
