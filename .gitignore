@@ -72,3 +72,6 @@ __pycache__
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Datasets
+datasets
