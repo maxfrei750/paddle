@@ -51,7 +51,7 @@ def display_detection(image, detection, do_display_box=True, do_display_outlines
 
         if do_display_box:
             box = box.numpy()
-            ImageDraw.Draw(result).rectangle(box, outline=color)
+            ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
 
     result.show()
 
