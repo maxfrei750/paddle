@@ -47,6 +47,8 @@ class Dataset(torch.utils.data.Dataset):
         # TODO: Support multiple classes.
         labels = torch.ones((n_instances,), dtype=torch.int64)
 
+        scores = torch.ones((n_instances,), dtype=torch.float32)
+
         masks = torch.as_tensor(masks, dtype=torch.uint8)
 
         image_id = torch.tensor([index])
@@ -59,6 +61,7 @@ class Dataset(torch.utils.data.Dataset):
         target = {
             "boxes": boxes,
             "labels": labels,
+            "scores": scores,
             "masks": masks,
             "image_id": image_id,
             "area": area,
