@@ -1,4 +1,4 @@
-name: pytorch
+name: mrcnn_pytorch
 channels:
 - defaults
 - pytorch
@@ -7,6 +7,14 @@ dependencies:
 - pytorch
 - torchvision
 - cudatoolkit=10.1
+- ignite
+- tensorboard
+- tensorboardx
+- matplotlib
+- pandas
+- seaborn
+- tqdm
+- scikit-image
 - pip
 - pip:
   - pycocotools
