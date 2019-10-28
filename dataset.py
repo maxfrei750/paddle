@@ -5,13 +5,21 @@ import torch.utils.data
 from PIL import Image
 from glob import glob
 from visualization import display_detection
+import random
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, root, transforms=None):
+    def __init__(self, root, transforms=None, class_name_dict=None):
         self.root = root
         self.transforms = transforms
         self.sample_folders = glob(path.join(root, "**"))
+
+        if class_name_dict is None:
+            self.class_name_dict = {
+                1: "particle"
+            }
+        else:
+            self.class_name_dict = class_name_dict
 
     def __getitem__(self, index):
         sample_folder = self.sample_folders[index]
@@ -80,7 +88,15 @@ if __name__ == '__main__':
     test_root_path = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
                                "individual_fibers_no_clutter_no_loops", "training")
 
-    dataset = Dataset(test_root_path)
-    image, target = dataset.__getitem__(3)
+    class_name_dict = {
+        1: "fiber"
+    }
 
-    display_detection(image, target)
+    dataset = Dataset(test_root_path, class_name_dict=class_name_dict)
+
+    sample_id = random.randint(1, len(dataset))
+    image, target = dataset[sample_id]
+
+    display_detection(image,
+                      target,
+                      class_name_dict=dataset.class_name_dict)
