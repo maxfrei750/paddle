@@ -4,7 +4,6 @@ import torch
 import torch.utils.data
 from PIL import Image
 from glob import glob
-from utilities import extract_bounding_box
 from visualization import display_detection
 
 
@@ -36,11 +35,12 @@ class Dataset(torch.utils.data.Dataset):
 
         for mask_path in mask_paths:
             mask = Image.open(mask_path)
+
+            box = mask.getbbox()
+            boxes.append(box)
+
             mask = np.array(mask)
             masks.append(mask)
-
-            bounding_box = extract_bounding_box(mask)
-            boxes.append(bounding_box)
 
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
 
