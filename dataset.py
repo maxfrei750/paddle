@@ -9,10 +9,17 @@ import random
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, root, transforms=None, class_name_dict=None):
+    def __init__(self, root, subset, transforms=None, class_name_dict=None):
+        assert path.isdir(root), "The specified root does not exist: " + root
         self.root = root
+
+        self.subset_path = path.join(root, subset)
+        assert path.isdir(self.subset_path), "The specified subset folder does not exist: " + subset
+
+        self.subset = subset
+        self.sample_folders = glob(path.join(root, subset, "**"))
+
         self.transforms = transforms
-        self.sample_folders = glob(path.join(root, "**"))
 
         if class_name_dict is None:
             self.class_name_dict = {
@@ -86,13 +93,15 @@ class Dataset(torch.utils.data.Dataset):
 
 if __name__ == '__main__':
     test_root_path = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
-                               "individual_fibers_no_clutter_no_loops", "training")
+                               "individual_fibers_no_clutter_no_loops")
 
     class_name_dict = {
         1: "fiber"
     }
 
-    dataset = Dataset(test_root_path, class_name_dict=class_name_dict)
+    dataset = Dataset(test_root_path,
+                      subset="training",
+                      class_name_dict=class_name_dict)
 
     sample_id = random.randint(1, len(dataset))
     image, target = dataset[sample_id]
