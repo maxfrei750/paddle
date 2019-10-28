@@ -1,7 +1,7 @@
 name: mrcnn_pytorch
 channels:
-- defaults
 - pytorch
+- defaults
 - conda-forge
 dependencies:
 - pytorch
