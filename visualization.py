@@ -1,7 +1,7 @@
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image, ImageOps, ImageDraw, ImageFont
 import random
 import numpy as np
-from skimage.morphology import binary_erosion
+from scipy.ndimage.morphology import binary_erosion
 from matplotlib import cm
 
 
@@ -17,42 +17,68 @@ def get_random_colors(n_colors):
     return colors
 
 
-def display_detection(image, detection, do_display_box=True, do_display_outlines_only=True):
-    masks = detection["masks"]
+def display_detection(image,
+                      detection,
+                      do_display_box=True,
+                      do_display_outlines_only=True,
+                      do_display_label=True,
+                      do_display_score=True,
+                      class_name_dict=None):
+    if class_name_dict is None:
+        class_name_dict = {
+            1: "particle"
+        }
+
+    masks = detection["masks"].numpy()
 
     n_instances = len(masks)
 
-    boxes = detection["boxes"]
+    boxes = detection["boxes"].numpy()
 
     if "scores" in detection:
-        scores = detection["scores"]
+        scores = detection["scores"].numpy()
     else:
         scores = [None] * n_instances
 
-    labels = detection["labels"]
+    labels = detection["labels"].numpy()
 
     result = image.convert("RGB")
 
     colors = get_random_colors(n_instances)
 
     for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
-        mask = mask.numpy()
+        mask = mask > 0
 
         if do_display_outlines_only:
-            mask = mask > 0
-            mask = np.logical_xor(mask, binary_erosion(mask))
+            outline_width = 1
+            mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
 
         mask = Image.fromarray(mask)
-        mask = mask.convert("L")
 
-        mask = ImageOps.colorize(mask, black="black", white=color)
+        mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
 
-        result = Image.blend(result, mask, 0.5)
+        result = Image.composite(mask_colored, result, mask)
 
         if do_display_box:
-            box = box.numpy()
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
 
-    result.show()
+        if do_display_label:
+            assert label is not None, "There is no label to display (label is None)."
+            caption = class_name_dict[label]
 
-        # TODO: Display scores and labels.
+        if do_display_score:
+            assert score is not None, "There is no score to display (score is None)."
+
+            if not do_display_label:
+                caption = "Score"
+
+            caption += ": {:.3f}".format(score)
+
+        if do_display_label or do_display_score:
+            font_size = 16
+            font = ImageFont.truetype('DejaVuSans.ttf', font_size)
+            x, y = box[:2]
+            y -= font_size + 2
+            ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
+
+    result.show()
