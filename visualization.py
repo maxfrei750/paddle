@@ -35,10 +35,7 @@ def display_detection(image,
 
     boxes = detection["boxes"].numpy()
 
-    if "scores" in detection:
-        scores = detection["scores"].numpy()
-    else:
-        scores = [None] * n_instances
+    scores = detection["scores"].numpy()
 
     labels = detection["labels"].numpy()
 
@@ -63,12 +60,9 @@ def display_detection(image,
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
 
         if do_display_label:
-            assert label is not None, "There is no label to display (label is None)."
             caption = class_name_dict[label]
 
         if do_display_score:
-            assert score is not None, "There is no score to display (score is None)."
-
             if not do_display_label:
                 caption = "Score"
 
@@ -76,7 +70,7 @@ def display_detection(image,
 
         if do_display_label or do_display_score:
             font_size = 16
-            font = ImageFont.truetype('DejaVuSans.ttf', font_size)
+            font = ImageFont.truetype("DejaVuSans.ttf", font_size)
             x, y = box[:2]
             y -= font_size + 2
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
