@@ -15,6 +15,8 @@ dependencies:
 - seaborn
 - tqdm
 - scikit-image
+- cython
 - pip
 - pip:
-  - pycocotools
+  - git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
+#  - git+https://github.com/waleedka/coco.git#subdirectory=PythonAPI  # for linux
