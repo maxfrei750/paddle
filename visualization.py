@@ -1,24 +1,16 @@
 from PIL import Image, ImageOps, ImageDraw
-import pylab
 import random
 import numpy as np
 from skimage.morphology import binary_erosion
+from matplotlib import cm
 
 
-def get_random_colors(n_colors, colormap_name="viridis", do_randomize=True):
-    cm = pylab.get_cmap(colormap_name)
-
+def get_random_colors(n_colors):
     colors = list()
 
-    if do_randomize:
-        n_colors_base = 255
-        color_indices = random.sample(range(n_colors_base), n_colors)
-    else:
-        color_indices = range(n_colors)
-        n_colors_base = n_colors
-
-    for color_index in color_indices:
-        color = cm(1. * color_index / n_colors_base)
+    for i_color in range(n_colors):
+        color = cm.hsv(random.uniform(0, 0.6))
+        # Convert color to uint8.
         color = tuple([int(round(x * 255)) for x in color])
         colors.append(color)
 
