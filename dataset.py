@@ -35,10 +35,10 @@ class Dataset(torch.utils.data.Dataset):
         mask_paths = glob(path.join(sample_folder, "masks", "*"))
 
         # TODO: Support splines.
-        # spline_paths = glob(path.join(sample_folder, "splines", "*"))
+        #  spline_paths = glob(path.join(sample_folder, "splines", "*"))
 
         # TODO: Support multiple classes.
-        # instance_class_path = path.join(sample_folder, "*.txt")
+        #  instance_class_path = path.join(sample_folder, "*.txt")
 
         image = Image.open(image_path)
         image = image.convert("RGB")

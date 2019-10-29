@@ -44,6 +44,8 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
 
         optimizer.zero_grad()
         losses.backward()
+        # TODO (optional): implement gradient norm
+        #  torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
         optimizer.step()
 
         if lr_scheduler is not None:
