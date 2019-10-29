@@ -71,7 +71,7 @@ class Dataset(torch.utils.data.Dataset):
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         # Assume that there are no crowd instances.
-        is_crowd = torch.zeros((n_instances,), dtype=torch.int64)
+        iscrowd = torch.zeros((n_instances,), dtype=torch.int64)
 
         target = {
             "boxes": boxes,
@@ -80,7 +80,8 @@ class Dataset(torch.utils.data.Dataset):
             "masks": masks,
             "image_id": image_id,
             "area": area,
-            "is_crowd": is_crowd}
+            "iscrowd": iscrowd
+        }
 
         if self.transforms is not None:
             image, target = self.transforms(image, target)
