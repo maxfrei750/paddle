@@ -49,9 +49,9 @@ class Dataset(torch.utils.data.Dataset):
         boxes = list()
 
         for mask_path in mask_paths:
-            mask = Image.open(mask_path)
+            mask = Image.open(mask_path).convert("1")
 
-            box = mask.getbbox()
+            box = list(mask.getbbox())
             boxes.append(box)
 
             mask = np.array(mask)
