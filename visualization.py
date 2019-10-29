@@ -1,8 +1,10 @@
+import PIL
 from PIL import Image, ImageOps, ImageDraw, ImageFont
 import random
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion
 from matplotlib import cm
+from torchvision import  transforms
 
 
 def get_random_colors(n_colors):
@@ -28,6 +30,9 @@ def display_detection(image,
         class_name_dict = {
             1: "particle"
         }
+
+    if not isinstance(image, PIL.Image.Image):
+        image = transforms.ToPILImage()(image)
 
     masks = detection["masks"].numpy()
 
