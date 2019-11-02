@@ -18,5 +18,6 @@ dependencies:
 - cython
 - pip
 - pip:
-  - git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
+  - git+https://github.com/maxfrei750/cocoapi.git#subdirectory=PythonAPI
+#  - git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
 #  - git+https://github.com/waleedka/coco.git#subdirectory=PythonAPI  # for linux
