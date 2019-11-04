@@ -14,6 +14,8 @@ def main():
     # Parameters -------------------------------------------------------------------------------------------------------
     n_classes = 2  # Background and Fiber
 
+    model_name = "mrcnn"
+
     batch_size_train = 4
     batch_size_val = 1
     max_epochs = 10
@@ -31,6 +33,7 @@ def main():
 
     # Model ------------------------------------------------------------------------------------------------------------
     model = get_mask_rcnn_model(n_classes)
+    model.name = model_name
 
     # Paths ------------------------------------------------------------------------------------------------------------
     data_root = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
