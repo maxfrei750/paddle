@@ -114,17 +114,17 @@ def main():
     dataset = PennFudanDataset('datasets/PennFudanPed/', get_transform(train=True))
     dataset_test = PennFudanDataset('datasets/PennFudanPed/', get_transform(train=False))
 
-    from PIL import Image
-    image_id = 1
-
-    img = torchvision.transforms.ToPILImage()(dataset[image_id][0])
-
-    mask = dataset[image_id][1]["masks"][0].numpy()*255
-    mask = Image.fromarray(mask)
-
-    img.show()
-    mask.show()
-    exit()
+    # from PIL import Image
+    # image_id = 1
+    #
+    # img = torchvision.transforms.ToPILImage()(dataset[image_id][0])
+    #
+    # mask = dataset[image_id][1]["masks"][0].numpy()*255
+    # mask = Image.fromarray(mask)
+    #
+    # img.show()
+    # mask.show()
+    # exit()
 
     # split the dataset in train and test set
     torch.manual_seed(1)
@@ -167,9 +167,9 @@ def main():
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        # train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
-        lr_scheduler.step()
+        # lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
