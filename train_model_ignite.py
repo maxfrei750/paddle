@@ -84,14 +84,17 @@ def main():
     # Logging ----------------------------------------------------------------------------------------------------------
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_epoch_summary(engine):
+        epoch = engine.state.epoch
+
+        # Training
+        tensorboard_writer.add_scalar("training/loss", engine.state.output["loss"], epoch)
+        tensorboard_writer.add_scalar("training/lr", engine.state.output["lr"], epoch)
+
+        # Validation
         print(" Validation:")
         evaluator_val.run(data_loader_val)
         metrics["AP"].print()
 
-        epoch = engine.state.epoch
-
-        tensorboard_writer.add_scalar("training/loss", engine.state.output["loss"], epoch)
-        tensorboard_writer.add_scalar("training/lr", engine.state.output["lr"], epoch)
         tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
 
     @trainer.on(Events.EPOCH_STARTED)
@@ -152,8 +155,10 @@ def main():
         pass
         tensorboard_writer.close()
 
+
 def score_function(engine):
     return engine.state.metrics["AP"]
+
 
 def get_transform(train):
     transforms = [T.ToTensor()]
