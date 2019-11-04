@@ -105,7 +105,7 @@ class AveragePrecision(Metric):
     def print(self):
         p = self.parameters
 
-        format_string = ' {:<18} {} @[ IoU={:<9} | area={:>6s} | n_detections_max={:>3d} ] = {:0.3f}'
+        format_string = ' {:<18} {} @[ IoU={:<9} | area={} | n_detections_max={:>3d} ] = {:0.3f}'
         title_string = 'Average Precision'
         type_string = '(AP)'
         iou_string = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
