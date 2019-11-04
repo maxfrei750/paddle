@@ -75,3 +75,6 @@ __pycache__
 
 # Datasets
 datasets
+
+# Logs
+logs

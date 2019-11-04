@@ -4,10 +4,11 @@ from torchvision_detection_references.utils import collate_fn
 import torchvision_detection_references.transforms as T
 from dataset import Dataset
 from os import path
-from utilities import set_random_seed
+from utilities import get_time_stamp, set_random_seed
 from mask_rcnn import get_mask_rcnn_model, create_mask_rcnn_trainer
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
+from tensorboardX import SummaryWriter
 
 
 def main():
@@ -25,8 +26,8 @@ def main():
     subset_train = "training"
     subset_val = "validation"
 
-    subset_train += "_mini"
-    subset_val += "_mini"
+    # subset_train += "_mini"
+    # subset_val += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
     set_random_seed(random_seed)
@@ -36,6 +37,8 @@ def main():
     model.name = model_name
 
     # Paths ------------------------------------------------------------------------------------------------------------
+    time_stamp = get_time_stamp()
+    log_dir = path.join("logs", model.name + "_" + time_stamp)
     data_root = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
                           "individual_fibers_no_clutter_no_loops")
 
@@ -45,6 +48,9 @@ def main():
         get_data_loaders(data_root,
                          subset_train=subset_train, subset_val=subset_val,
                          batch_size_train=batch_size_train, batch_size_val=batch_size_val)
+
+    # Tensorboard ------------------------------------------------------------------------------------------------------
+    tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=1)
 
     # Device -----------------------------------------------------------------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -74,13 +80,19 @@ def main():
 
     evaluator_val = create_supervised_evaluator(model, metrics=metrics, device=device)
 
+    # Logging ----------------------------------------------------------------------------------------------------------
     @trainer.on(Events.EPOCH_COMPLETED)
-    def evaluate_validation_set(engine):
+    def log_epoch_summary(engine):
         print(" Validation:")
         evaluator_val.run(data_loader_val)
         metrics["AP"].print()
 
-    # Logging ----------------------------------------------------------------------------------------------------------
+        epoch = engine.state.epoch
+
+        tensorboard_writer.add_scalar("training/loss", engine.state.output["loss"], epoch)
+        tensorboard_writer.add_scalar("training/lr", engine.state.output["lr"], epoch)
+        tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
+
     @trainer.on(Events.EPOCH_STARTED)
     def log_epoch(engine):
         epoch = engine.state.epoch
@@ -119,7 +131,7 @@ def main():
         trainer.run(data_loader_train, max_epochs=max_epochs)
     finally:
         pass
-        # tensorboard_writer.close()
+        tensorboard_writer.close()
 
 
 def get_transform(train):
