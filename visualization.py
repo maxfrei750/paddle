@@ -32,23 +32,24 @@ def display_detection(image,
         }
 
     if not isinstance(image, PIL.Image.Image):
-        image = transforms.ToPILImage()(image)
+        image = transforms.ToPILImage()(image.cpu())
 
-    masks = detection["masks"].numpy()
+    for key in detection:
+        detection[key] = detection[key].cpu().numpy()
+
+    masks = detection["masks"]
+    boxes = detection["boxes"]
+    scores = detection["scores"]
+    labels = detection["labels"]
 
     n_instances = len(masks)
-
-    boxes = detection["boxes"].numpy()
-
-    scores = detection["scores"].numpy()
-
-    labels = detection["labels"].numpy()
 
     result = image.convert("RGB")
 
     colors = get_random_colors(n_instances)
 
     for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
+        mask = mask.squeeze()
         mask = mask > 0
 
         if do_display_outlines_only:
