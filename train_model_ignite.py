@@ -9,6 +9,7 @@ from mask_rcnn import get_mask_rcnn_model, create_mask_rcnn_trainer
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
+from ignite.handlers import ModelCheckpoint
 
 
 def main():
@@ -126,6 +127,24 @@ def main():
             log_msg = delimiter.join(log_items)
             print(log_msg)
 
+    # Checkpointers ----------------------------------------------------------------------------------------------------
+    best_model_saver = ModelCheckpoint(log_dir,
+                                       filename_prefix="model",
+                                       score_name="AP",
+                                       score_function=score_function,
+                                       n_saved=1,
+                                       atomic=True,
+                                       create_dir=True)
+    evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {model.name: model})
+
+    last_model_saver = ModelCheckpoint(log_dir,
+                                       filename_prefix="checkpoint",
+                                       save_interval=1,
+                                       n_saved=1,
+                                       atomic=True,
+                                       create_dir=True)
+    trainer.add_event_handler(Events.COMPLETED, last_model_saver, {model.name: model})
+
     # Training ---------------------------------------------------------------------------------------------------------
     try:
         trainer.run(data_loader_train, max_epochs=max_epochs)
@@ -133,6 +152,8 @@ def main():
         pass
         tensorboard_writer.close()
 
+def score_function(engine):
+    return engine.state.metrics["AP"]
 
 def get_transform(train):
     transforms = [T.ToTensor()]
