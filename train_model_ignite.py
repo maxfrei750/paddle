@@ -23,8 +23,8 @@ def main():
     subset_train = "training"
     subset_val = "validation"
 
-    subset_train += "mini"
-    subset_val += "mini"
+    subset_train += "_mini"
+    subset_val += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
     set_random_seed(random_seed)
