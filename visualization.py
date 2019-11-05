@@ -5,6 +5,7 @@ import numpy as np
 from scipy.ndimage.morphology import binary_erosion
 from matplotlib import cm
 from torchvision import transforms
+import torch
 
 
 def get_random_colors(n_colors):
@@ -49,11 +50,17 @@ def visualize_detection(image,
             1: "particle"
         }
 
+    if isinstance(image, torch.Tensor):
+        image = image.cpu().numpy()
+
     if not isinstance(image, PIL.Image.Image):
-        image = transforms.ToPILImage()(image.cpu())
+        image = transforms.ToPILImage()(image)
 
     for key in detection:
-        detection[key] = detection[key].cpu().numpy()
+        value = detection[key]
+        if isinstance(value, torch.Tensor):
+            value = value.cpu().numpy()
+            detection[key] = value
 
     masks = detection["masks"]
     boxes = detection["boxes"]
