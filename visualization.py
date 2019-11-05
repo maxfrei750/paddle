@@ -4,7 +4,7 @@ import random
 import numpy as np
 from scipy.ndimage.morphology import binary_erosion
 from matplotlib import cm
-from torchvision import  transforms
+from torchvision import transforms
 
 
 def get_random_colors(n_colors):
@@ -26,6 +26,24 @@ def display_detection(image,
                       do_display_label=True,
                       do_display_score=True,
                       class_name_dict=None):
+
+    result = visualize_detection(image,
+                                 detection,
+                                 do_display_box,
+                                 do_display_outlines_only,
+                                 do_display_label,
+                                 do_display_score,
+                                 class_name_dict)
+    result.show()
+
+
+def visualize_detection(image,
+                        detection,
+                        do_display_box=True,
+                        do_display_outlines_only=True,
+                        do_display_label=True,
+                        do_display_score=True,
+                        class_name_dict=None):
     if class_name_dict is None:
         class_name_dict = {
             1: "particle"
@@ -41,11 +59,8 @@ def display_detection(image,
     boxes = detection["boxes"]
     scores = detection["scores"]
     labels = detection["labels"]
-
     n_instances = len(masks)
-
     result = image.convert("RGB")
-
     colors = get_random_colors(n_instances)
 
     for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
@@ -81,4 +96,4 @@ def display_detection(image,
             y -= font_size + 2
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
 
-    result.show()
+    return result
