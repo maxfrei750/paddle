@@ -1,4 +1,3 @@
-import PIL
 from PIL import Image, ImageOps, ImageDraw, ImageFont
 import random
 import numpy as np
@@ -6,6 +5,8 @@ from scipy.ndimage.morphology import binary_erosion
 from matplotlib import cm
 from torchvision import transforms
 import torch
+from skimage import img_as_float, img_as_ubyte
+import warnings
 
 
 def get_random_colors(n_colors):
@@ -50,11 +51,13 @@ def visualize_detection(image,
             1: "particle"
         }
 
-    if isinstance(image, torch.Tensor):
-        image = image.cpu().numpy()
+    assert isinstance(image, torch.Tensor), "Expected image to be of class torch.Tensor."
 
-    if not isinstance(image, PIL.Image.Image):
-        image = transforms.ToPILImage()(image)
+    image = image.permute(1, 2, 0).cpu().numpy()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        image = img_as_ubyte(image)
+    image = transforms.ToPILImage()(image)
 
     for key in detection:
         value = detection[key]
@@ -72,7 +75,10 @@ def visualize_detection(image,
 
     for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
         mask = mask.squeeze()
-        mask = mask > 0
+
+        if mask.dtype == "uint8" and mask.max() <= 1:
+            mask = img_as_float(mask*255)
+        mask = mask >= 0.5
 
         if do_display_outlines_only:
             outline_width = 1
