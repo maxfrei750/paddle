@@ -4,8 +4,6 @@ import torch
 import torch.utils.data
 from PIL import Image
 from glob import glob
-from visualization import display_detection
-import random
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -93,6 +91,11 @@ class Dataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
+    from visualization import display_detection
+    import random
+    import torchvision_detection_references.transforms as T
+    import torch.cuda as cuda
+
     test_root_path = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
                                "individual_fibers_no_clutter_no_loops")
 
@@ -100,12 +103,23 @@ if __name__ == '__main__':
         1: "fiber"
     }
 
+    def get_transform():
+        transforms = [T.ToTensor()]
+        return T.Compose(transforms)
+
     dataset = Dataset(test_root_path,
                       subset="training",
-                      class_name_dict=class_name_dict)
+                      class_name_dict=class_name_dict,
+                      transforms=get_transform())
 
     sample_id = random.randint(1, len(dataset))
     image, target = dataset[sample_id]
+
+    if cuda.is_available():
+        image = image.to("cuda")
+
+        for key in target:
+            target[key] = target[key].to("cuda")
 
     display_detection(image,
                       target,
