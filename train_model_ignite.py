@@ -10,6 +10,8 @@ from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
 from ignite.handlers import ModelCheckpoint
+from visualization import visualize_detection
+import numpy as np
 
 
 def main():
@@ -94,8 +96,17 @@ def main():
         print(" Validation:")
         evaluator_val.run(data_loader_val)
         metrics["AP"].print()
-
         tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
+
+        example_image = next(iter(data_loader_val))[0][0]
+        example_image = example_image.to(device)
+
+        model.eval()
+        with torch.no_grad():
+            prediction = model([example_image])[0]
+
+        detection_image = np.array(visualize_detection(example_image, prediction))
+        tensorboard_writer.add_image("validation/example_detection", detection_image, epoch, dataformats="HWC")
 
     @trainer.on(Events.EPOCH_STARTED)
     def log_epoch(engine):
@@ -160,12 +171,10 @@ def score_function(engine):
     return engine.state.metrics["AP"]
 
 
-def get_transform(train):
-    transforms = [T.ToTensor()]
-
-    if train:
-        transforms.append(T.RandomHorizontalFlip(0.5))
-        transforms.append(T.RandomVerticalFlip(0.5))
+def get_transform():
+    transforms = list()
+    transforms.append(T.RandomHorizontalFlip(0.5))
+    transforms.append(T.RandomVerticalFlip(0.5))
     return T.Compose(transforms)
 
 
@@ -176,7 +185,7 @@ def get_data_loaders(data_root, subset_train="training", subset_val="validation"
 
     dataset_train = Dataset(data_root,
                             subset_train,
-                            transforms=get_transform(train=True),
+                            transforms=get_transform(),
                             class_name_dict=class_name_dict)
     data_loader_train = DataLoader(dataset_train,
                                    batch_size=batch_size_train,
@@ -186,11 +195,10 @@ def get_data_loaders(data_root, subset_train="training", subset_val="validation"
 
     dataset_val = Dataset(data_root,
                           subset_val,
-                          transforms=get_transform(train=False),
                           class_name_dict=class_name_dict)
     data_loader_val = DataLoader(dataset_val,
                                  batch_size=batch_size_val,
-                                 shuffle=False,
+                                 shuffle=True,
                                  num_workers=4,
                                  collate_fn=collate_fn)
 
