@@ -4,6 +4,7 @@ import torch
 import torch.utils.data
 from PIL import Image
 from glob import glob
+from torchvision.transforms import functional as F
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -81,6 +82,8 @@ class Dataset(torch.utils.data.Dataset):
             "iscrowd": iscrowd
         }
 
+        image = F.to_tensor(image)
+
         if self.transforms is not None:
             image, target = self.transforms(image, target)
 
@@ -93,7 +96,6 @@ class Dataset(torch.utils.data.Dataset):
 if __name__ == '__main__':
     from visualization import display_detection
     import random
-    import torchvision_detection_references.transforms as T
     import torch.cuda as cuda
 
     test_root_path = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
@@ -103,14 +105,10 @@ if __name__ == '__main__':
         1: "fiber"
     }
 
-    def get_transform():
-        transforms = [T.ToTensor()]
-        return T.Compose(transforms)
 
     dataset = Dataset(test_root_path,
                       subset="training",
-                      class_name_dict=class_name_dict,
-                      transforms=get_transform())
+                      class_name_dict=class_name_dict)
 
     sample_id = random.randint(1, len(dataset))
     image, target = dataset[sample_id]
