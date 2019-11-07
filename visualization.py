@@ -7,6 +7,7 @@ from torchvision import transforms
 import torch
 from skimage import img_as_float, img_as_ubyte
 import warnings
+from spline import Spline
 
 
 def get_random_colors(n_colors):
@@ -21,21 +22,8 @@ def get_random_colors(n_colors):
     return colors
 
 
-def display_detection(image,
-                      detection,
-                      do_display_box=True,
-                      do_display_outlines_only=True,
-                      do_display_label=True,
-                      do_display_score=True,
-                      class_name_dict=None):
-
-    result = visualize_detection(image,
-                                 detection,
-                                 do_display_box,
-                                 do_display_outlines_only,
-                                 do_display_label,
-                                 do_display_score,
-                                 class_name_dict)
+def display_detection(*args, **kwargs):
+    result = visualize_detection(*args, **kwargs)
     result.show()
 
 
@@ -45,6 +33,9 @@ def visualize_detection(image,
                         do_display_outlines_only=True,
                         do_display_label=True,
                         do_display_score=True,
+                        do_display_mask=True,
+                        do_display_keypoints=True,
+                        do_display_spline=True,
                         class_name_dict=None):
     if class_name_dict is None:
         class_name_dict = {
@@ -65,7 +56,21 @@ def visualize_detection(image,
             value = value.cpu().numpy()
             detection[key] = value
 
-    masks = detection["masks"]
+    if "masks" in detection:
+        masks = detection["masks"]
+    else:
+        masks = [None]
+
+    if "keypoints" in detection:
+        key_point_sets = detection["keypoints"]
+    else:
+        key_point_sets = [None]
+
+    if "spline_widths" in detection:
+        spline_widths = detection["spline_widths"]
+    else:
+        spline_widths = [None]
+
     boxes = detection["boxes"]
     scores = detection["scores"]
     labels = detection["labels"]
@@ -73,22 +78,37 @@ def visualize_detection(image,
     result = image.convert("RGB")
     colors = get_random_colors(n_instances)
 
-    for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
-        mask = mask.squeeze()
+    for mask, box, color, score, label, key_points, spline_width in zip(masks,
+                                                                       boxes,
+                                                                       colors,
+                                                                       scores,
+                                                                       labels,
+                                                                       key_point_sets,
+                                                                       spline_widths):
+        if mask is not None and do_display_mask:
+            mask = mask.squeeze()
 
-        if mask.dtype == "uint8" and mask.max() <= 1:
-            mask = img_as_float(mask*255)
-        mask = mask >= 0.5
+            if mask.dtype == "uint8" and mask.max() <= 1:
+                mask = img_as_float(mask * 255)
+            mask = mask >= 0.5
 
-        if do_display_outlines_only:
-            outline_width = 1
-            mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
+            result = _overlay_image_with_mask(result, mask, color, do_display_outlines_only)
 
-        mask = Image.fromarray(mask)
+        if key_points is not None and do_display_keypoints:
+            x_list, y_list, is_visible_key_point_list = key_points.T
+            point_size = 5
+            r = point_size / 2
 
-        mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
+            for x, y, is_visible_key_point in zip(x_list, y_list, is_visible_key_point_list):
+                if is_visible_key_point:
+                    ImageDraw.Draw(result).ellipse([x - r, y - r, x + r, y + r], fill=color)
 
-        result = Image.composite(mask_colored, result, mask)
+        if key_points is not None and spline_width is not None and do_display_spline:
+            xy = key_points[:, :2]
+            spline = Spline(xy, spline_width)
+            spline_mask = spline.get_mask(result.size)
+
+            result = _overlay_image_with_mask(result, spline_mask, color, do_display_outlines_only)
 
         if do_display_box:
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
@@ -115,3 +135,13 @@ def visualize_detection(image,
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
 
     return result
+
+
+def _overlay_image_with_mask(image, mask, color, do_display_outlines_only):
+    if do_display_outlines_only:
+        outline_width = 1
+        mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
+    mask = Image.fromarray(mask)
+    mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
+    image = Image.composite(mask_colored, image, mask)
+    return image

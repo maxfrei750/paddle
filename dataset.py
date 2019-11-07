@@ -5,6 +5,7 @@ import torch.utils.data
 from PIL import Image
 from glob import glob
 from torchvision.transforms import functional as F
+import pandas as pd
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -32,9 +33,7 @@ class Dataset(torch.utils.data.Dataset):
 
         image_path = glob(path.join(sample_folder, "images", "*"))[0]
         mask_paths = glob(path.join(sample_folder, "masks", "*"))
-
-        # TODO: Support splines.
-        #  spline_paths = glob(path.join(sample_folder, "splines", "*"))
+        spline_paths = glob(path.join(sample_folder, "splines", "*.csv"))
 
         # TODO: Support multiple classes.
         #  instance_class_path = path.join(sample_folder, "*.txt")
@@ -56,21 +55,31 @@ class Dataset(torch.utils.data.Dataset):
             mask = np.array(mask)
             masks.append(mask)
 
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        key_point_sets = list()
+        spline_widths = list()
 
+        for spline_path in spline_paths:
+            spline_data = pd.read_csv(spline_path)
+
+            spline_width = spline_data["width"][0]
+            spline_widths.append(spline_width)
+
+            key_point_set = spline_data[["x", "y"]]
+            # Assume that all keypoints are visible.
+            key_point_set["visibility"] = 1
+            key_point_sets.append(key_point_set.to_numpy())
+
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
         # TODO: Support multiple classes.
         labels = torch.ones((n_instances,), dtype=torch.int64)
-
         scores = torch.ones((n_instances,), dtype=torch.float32)
-
         masks = torch.as_tensor(masks, dtype=torch.uint8)
-
         image_id = torch.tensor([index])
-
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
-
         # Assume that there are no crowd instances.
         iscrowd = torch.zeros((n_instances,), dtype=torch.int64)
+        key_point_sets = torch.as_tensor(key_point_sets, dtype=torch.float32)
+        spline_widths = torch.as_tensor(spline_widths, dtype=torch.float32)
 
         target = {
             "boxes": boxes,
@@ -79,7 +88,9 @@ class Dataset(torch.utils.data.Dataset):
             "masks": masks,
             "image_id": image_id,
             "area": area,
-            "iscrowd": iscrowd
+            "iscrowd": iscrowd,
+            "keypoints": key_point_sets,
+            "spline_widths": spline_widths
         }
 
         image = F.to_tensor(image)
@@ -107,7 +118,7 @@ if __name__ == '__main__':
 
 
     dataset = Dataset(test_root_path,
-                      subset="training",
+                      subset="test",
                       class_name_dict=class_name_dict)
 
     sample_id = random.randint(1, len(dataset))
@@ -121,4 +132,5 @@ if __name__ == '__main__':
 
     display_detection(image,
                       target,
-                      class_name_dict=dataset.class_name_dict)
+                      class_name_dict=dataset.class_name_dict,
+                      do_display_mask=False)
