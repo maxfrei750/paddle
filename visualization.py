@@ -104,7 +104,12 @@ def visualize_detection(image,
 
         if do_display_label or do_display_score:
             font_size = 16
-            font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+
+            try:
+                font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+            except OSError:
+                font = ImageFont.truetype("arial.ttf", font_size)
+
             x, y = box[:2]
             y -= font_size + 2
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
