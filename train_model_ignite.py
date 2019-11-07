@@ -123,7 +123,7 @@ def main():
             engine.state.previous_epoch = epoch
 
     @trainer.on(Events.ITERATION_STARTED)
-    def increment_(engine):
+    def increment_epoch_iteration(engine):
         engine.state.epoch_iteration += 1
 
     @trainer.on(Events.ITERATION_COMPLETED)
