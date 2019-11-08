@@ -166,6 +166,8 @@ def main():
         pass
         tensorboard_writer.close()
 
+    # TODO: Early stopping
+
 
 def score_function(engine):
     return engine.state.metrics["AP"]
