@@ -84,24 +84,3 @@ def create_mask_rcnn_trainer(model, optimizer, data_loader, device=None):
         return output_dict
 
     return Engine(_update)
-
-
-def create_mask_rcnn_evaluator(model, metrics=None, device=None):
-    metrics = metrics or dict()
-
-    if device:
-        model.to(device)
-
-    def _inference(engine, batch):
-        model.eval()
-        with torch.no_grad():
-            images, targets = batch
-            predictions = model(images)
-            return predictions, targets
-
-    engine = Engine(_inference)
-
-    for name, metric in metrics.items():
-        metric.attach(engine, name)
-
-    return engine
