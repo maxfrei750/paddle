@@ -35,8 +35,16 @@ def visualize_detection(image,
                         do_display_score=True,
                         do_display_mask=True,
                         do_display_keypoints=True,
+                        do_display_keypoint_indices=True,
                         do_display_spline=True,
                         class_name_dict=None):
+    font_size = 16
+
+    try:
+        font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+    except OSError:
+        font = ImageFont.truetype("arial.ttf", font_size)
+
     if class_name_dict is None:
         class_name_dict = {
             1: "particle"
@@ -123,9 +131,13 @@ def visualize_detection(image,
             point_size = 5
             r = point_size / 2
 
-            for x, y, is_visible_key_point in zip(x_list, y_list, is_visible_key_point_list):
+            for index, (x, y, is_visible_key_point) in enumerate(zip(x_list, y_list, is_visible_key_point_list)):
                 if is_visible_key_point:
                     ImageDraw.Draw(result).ellipse([x - r, y - r, x + r, y + r], fill=color)
+
+                    if do_display_keypoint_indices:
+                        offset = 2
+                        ImageDraw.Draw(result).text((x + offset, y + offset), str(index + 1), font=font, fill=color)
 
         if key_points is not None and spline_width is not None and do_display_spline:
             xy = key_points[:, :2]
@@ -147,13 +159,6 @@ def visualize_detection(image,
             caption += ": {:.3f}".format(score)
 
         if label is not None and do_display_label or score is not None and do_display_score:
-            font_size = 16
-
-            try:
-                font = ImageFont.truetype("DejaVuSans.ttf", font_size)
-            except OSError:
-                font = ImageFont.truetype("arial.ttf", font_size)
-
             x, y = box[:2]
             y -= font_size + 2
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
