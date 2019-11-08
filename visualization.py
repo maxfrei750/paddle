@@ -42,9 +42,16 @@ def visualize_detection(image,
             1: "particle"
         }
 
-    assert isinstance(image, torch.Tensor), "Expected image to be of class torch.Tensor."
+    assert isinstance(image, torch.Tensor) or isinstance(image, np.ndarray), \
+        "Expected image to be of class torch.Tensor or numpy.ndarray."
 
-    image = image.permute(1, 2, 0).cpu().numpy()
+    if isinstance(image, torch.Tensor):
+        image = image.cpu().numpy()
+
+    # Convert from CWH to HWC if necessary.
+    if not image.shape[2] == 3 and image.shape[0] == 3:
+        image = np.moveaxis(image, 0, 2)
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         image = img_as_ubyte(image)
