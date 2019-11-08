@@ -65,33 +65,50 @@ def visualize_detection(image,
 
     if "masks" in detection:
         masks = detection["masks"]
+        n_instances = len(masks)
     else:
         masks = [None]
 
     if "keypoints" in detection:
         key_point_sets = detection["keypoints"]
+        n_instances = len(key_point_sets)
     else:
         key_point_sets = [None]
 
     if "spline_widths" in detection:
         spline_widths = detection["spline_widths"]
+        n_instances = len(spline_widths)
     else:
         spline_widths = [None]
 
-    boxes = detection["boxes"]
-    scores = detection["scores"]
-    labels = detection["labels"]
-    n_instances = len(masks)
+    if "boxes" in detection:
+        boxes = detection["boxes"]
+        n_instances = len(boxes)
+    else:
+        boxes = [None]
+
+    if "scores" in detection:
+        scores = detection["scores"]
+        n_instances = len(scores)
+    else:
+        scores = [None]
+
+    if "labels" in detection:
+        labels = detection["labels"]
+        n_instances = len(labels)
+    else:
+        labels = [None]
+
     result = image.convert("RGB")
     colors = get_random_colors(n_instances)
 
     for mask, box, color, score, label, key_points, spline_width in zip(masks,
-                                                                       boxes,
-                                                                       colors,
-                                                                       scores,
-                                                                       labels,
-                                                                       key_point_sets,
-                                                                       spline_widths):
+                                                                        boxes,
+                                                                        colors,
+                                                                        scores,
+                                                                        labels,
+                                                                        key_point_sets,
+                                                                        spline_widths):
         if mask is not None and do_display_mask:
             mask = mask.squeeze()
 
@@ -117,19 +134,19 @@ def visualize_detection(image,
 
             result = _overlay_image_with_mask(result, spline_mask, color, do_display_outlines_only)
 
-        if do_display_box:
+        if box is not None and do_display_box:
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
 
-        if do_display_label:
+        if label is not None and do_display_label:
             caption = class_name_dict[label]
 
-        if do_display_score:
+        if score is not None and do_display_score:
             if not do_display_label:
                 caption = "Score"
 
             caption += ": {:.3f}".format(score)
 
-        if do_display_label or do_display_score:
+        if label is not None and do_display_label or score is not None and do_display_score:
             font_size = 16
 
             try:
