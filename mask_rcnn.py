@@ -5,7 +5,6 @@ import math
 import sys
 from ignite.engine import Engine
 import torchvision_detection_references.utils as utils
-import torch
 
 
 def get_mask_rcnn_model(num_classes):
