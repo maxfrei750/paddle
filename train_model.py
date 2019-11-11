@@ -13,42 +13,32 @@ from tensorboardX import SummaryWriter
 from ignite.handlers import ModelCheckpoint
 from visualization import visualize_detection
 import numpy as np
+from config import Config
 
 
 def main():
-    # Model selection --------------------------------------------------------------------------------------------------
-    model_name = "mrcnn"
+    # Config -----------------------------------------------------------------------------------------------------------
+    config_file_name = "mrcnn"
+    config = Config.load(path.join("configs", config_file_name + ".yml"))
 
-    model_name = model_name.lower()
-    expected_model_names = ["krcnn", "mrcnn"]
-    assert model_name in expected_model_names, \
-        f"Unknown modelname '{model_name}'. Expected modelname to be in {expected_model_names}."
+    # Testmode ---------------------------------------------------------------------------------------------------------
+    test_mode = True
 
-    # Parameters -------------------------------------------------------------------------------------------------------
-    n_classes = 2  # Background and Fiber
-
-    if model_name == "krcnn":
-        n_keypoints = 20
-
-    batch_size_train = 2
-    batch_size_val = 1
-    max_epochs = 10
-    random_seed = 12345
-    print_frequency = 10
-
-    subset_train = "training"
-    subset_val = "validation"
-
-    # subset_train += "_mini"
-    # subset_val += "_mini"
+    if test_mode:
+        config["subset_train"] += "_mini"
+        config["subset_val"] += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
-    set_random_seed(random_seed)
+    set_random_seed(config["random_seed"])
 
     # Model ------------------------------------------------------------------------------------------------------------
+    model_name = config["model_name"]
+    n_classes = config["n_classes"]
+
     if model_name == "mrcnn":
         model = get_mask_rcnn_model(n_classes)
     elif model_name == "krcnn":
+        n_keypoints = config["n_keypoints"]
         model = get_keypoint_rcnn_model(n_classes, n_keypoints)
 
     model.name = model_name
@@ -56,6 +46,7 @@ def main():
     # Paths ------------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
     log_dir = path.join("logs", model.name + "_" + time_stamp)
+    # TODO: Create symlink.
     data_root = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
                           "individual_fibers_no_clutter_no_loops")
 
@@ -63,8 +54,8 @@ def main():
     # TODO: Test pillow-SIMD
     data_loader_train, data_loader_val = \
         get_data_loaders(data_root,
-                         subset_train=subset_train, subset_val=subset_val,
-                         batch_size_train=batch_size_train, batch_size_val=batch_size_val)
+                         subset_train=config["subset_train"], subset_val=config["subset_val"],
+                         batch_size_train=config["batch_size_train"], batch_size_val=config["batch_size_val"])
 
     # Tensorboard ------------------------------------------------------------------------------------------------------
     tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
@@ -117,7 +108,6 @@ def main():
             # TODO: Write evaluator.
             pass
 
-
         example_image = next(iter(data_loader_val))[0][0]
         example_image = example_image.to(device)
 
@@ -150,7 +140,7 @@ def main():
     def log_training_losses(engine):
         epoch_iteration = engine.state.epoch_iteration
 
-        if (epoch_iteration - 1) % print_frequency == 0:
+        if (epoch_iteration - 1) % config["print_frequency"] == 0:
             output = engine.state.output
             delimiter = "    "
 
@@ -181,7 +171,7 @@ def main():
 
     # Training ---------------------------------------------------------------------------------------------------------
     try:
-        trainer.run(data_loader_train, max_epochs=max_epochs)
+        trainer.run(data_loader_train, max_epochs=config["max_epochs"])
     finally:
         pass
         tensorboard_writer.close()
