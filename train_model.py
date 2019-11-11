@@ -41,10 +41,7 @@ def main():
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
-    data_loader_train, data_loader_val = \
-        get_data_loaders(data_root,
-                         subset_train=config["subset_train"], subset_val=config["subset_val"],
-                         batch_size_train=config["batch_size_train"], batch_size_val=config["batch_size_val"])
+    data_loader_train, data_loader_val = get_data_loaders(data_root, config)
 
     # Tensorboard ------------------------------------------------------------------------------------------------------
     tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
@@ -179,7 +176,12 @@ def get_transform():
     return T.Compose(transforms)
 
 
-def get_data_loaders(data_root, subset_train="training", subset_val="validation", batch_size_train=1, batch_size_val=1):
+def get_data_loaders(data_root, config):
+    subset_train = config["subset_train"]
+    subset_val = config["subset_val"]
+    batch_size_train = config["batch_size_train"]
+    batch_size_val = config["batch_size_val"]
+
     class_name_dict = {
         1: "fiber"
     }
