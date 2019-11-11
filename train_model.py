@@ -75,6 +75,8 @@ def main():
     evaluator_val = create_supervised_evaluator(model, metrics=metrics, device=device)
 
     # Logging ----------------------------------------------------------------------------------------------------------
+    config.save(path.join(log_dir, "config_" + model.name + ".yml"))
+
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_epoch_summary(engine):
         epoch = engine.state.epoch
