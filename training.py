@@ -3,6 +3,9 @@ import sys
 from ignite.engine import Engine
 import torchvision_detection_references.utils as utils
 import torch
+from visualization import visualize_detection
+import numpy as np
+from ignite.engine import Events
 
 
 def create_trainer(model, optimizer, data_loader, device=None):
@@ -81,3 +84,67 @@ def get_optimizer(model, config):
 
 def get_lr_scheduler(optimizer, config):
     return torch.optim.lr_scheduler.StepLR(optimizer, **config["lr_scheduler"])
+
+
+def setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer):
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def log_epoch_summary(engine):
+        epoch = engine.state.epoch
+
+        # Training
+        for key in engine.state.output:
+            tag = "training/" + key
+            tensorboard_writer.add_scalar(tag, engine.state.output[key], epoch)
+
+        # Validation
+        print(" Validation:")
+        if model.name == "mrcnn":
+            evaluator_val.run(data_loader_val)
+            metrics["AP"].print()
+            tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
+        elif model.name == "krcnn":
+            # TODO: Write evaluator.
+            pass
+
+        example_image = next(iter(data_loader_val))[0][0]
+        example_image = example_image.to(device)
+
+        model.eval()
+        with torch.no_grad():
+            prediction = model([example_image])[0]
+
+        detection_image = np.array(visualize_detection(example_image, prediction))
+        tensorboard_writer.add_image("validation/example_detection", detection_image, epoch, dataformats="HWC")
+
+    @trainer.on(Events.EPOCH_STARTED)
+    def log_epoch(engine):
+        epoch = engine.state.epoch
+
+        print("\nEpoch: {}".format(epoch))
+        print(" Training:")
+
+        if epoch == 1:
+            engine.state.previous_epoch = 0
+
+        if engine.state.previous_epoch != epoch:
+            engine.state.epoch_iteration = 0
+            engine.state.previous_epoch = epoch
+
+    @trainer.on(Events.ITERATION_STARTED)
+    def increment_epoch_iteration(engine):
+        engine.state.epoch_iteration += 1
+
+    @trainer.on(Events.ITERATION_COMPLETED)
+    def log_training_losses(engine):
+        epoch_iteration = engine.state.epoch_iteration
+
+        if (epoch_iteration - 1) % config["logging"]["print_frequency"] == 0:
+            output = engine.state.output
+            delimiter = "    "
+
+            log_items = list()
+            log_items.append(" [{:4d}]".format(epoch_iteration))
+            log_items += ["{}: {:.4f}".format(key, output[key]) for key in output]
+
+            log_msg = delimiter.join(log_items)
+            print(log_msg)
