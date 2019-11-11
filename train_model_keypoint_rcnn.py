@@ -90,8 +90,9 @@ def main():
         epoch = engine.state.epoch
 
         # Training
-        tensorboard_writer.add_scalar("training/loss", engine.state.output["loss"], epoch)
-        tensorboard_writer.add_scalar("training/lr", engine.state.output["lr"], epoch)
+        for key in engine.state.output:
+            tag = "training/" + key
+            tensorboard_writer.add_scalar(tag, engine.state.output[key], epoch)
 
         # Validation
         print(" Validation:")
