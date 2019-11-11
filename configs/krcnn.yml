@@ -1,5 +1,7 @@
 model_name: krcnn
 n_classes: 2  # Background and Fiber
+class_names:
+  1: fiber
 n_keypoints: 20
 batch_size_train: 2
 batch_size_val: 1

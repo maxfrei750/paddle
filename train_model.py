@@ -182,14 +182,15 @@ def get_data_loaders(data_root, config):
     batch_size_train = config["batch_size_train"]
     batch_size_val = config["batch_size_val"]
 
-    class_name_dict = {
-        1: "fiber"
-    }
+    if "class_names" in config:
+        class_names = config["class_names"]
+    else:
+        class_names = None
 
     dataset_train = Dataset(data_root,
                             subset_train,
                             transforms=get_transform(),
-                            class_name_dict=class_name_dict)
+                            class_name_dict=class_names)
     data_loader_train = DataLoader(dataset_train,
                                    batch_size=batch_size_train,
                                    shuffle=True,
@@ -198,7 +199,7 @@ def get_data_loaders(data_root, config):
 
     dataset_val = Dataset(data_root,
                           subset_val,
-                          class_name_dict=class_name_dict)
+                          class_name_dict=class_names)
     data_loader_val = DataLoader(dataset_val,
                                  batch_size=batch_size_val,
                                  shuffle=True,
