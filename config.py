@@ -17,11 +17,19 @@ class Config(UserDict):
         with open(path, "w") as file:
             yaml.dump(self.data, file)
 
+    def __getitem__(self, key):
+        if key not in self:
+            return None
+        else:
+            return super().__getitem__(key)
+
 
 def main():
     import os
     config = Config.load(os.path.join("configs", "mrcnn.yml"))
     print(config)
+    print(config["model_name"])
+    print(config["teasdasfkljdslgas"])
 
 
 if __name__ == "__main__":
