@@ -16,13 +16,14 @@ from config import Config
 
 
 def main():
+    # Parameters -------------------------------------------------------------------------------------------------------
+    test_mode = True
+    config_file_name = "mrcnn.yml"
+
     # Config -----------------------------------------------------------------------------------------------------------
-    config_file_name = "mrcnn"
-    config = Config.load(path.join("configs", config_file_name + ".yml"))
+    config = Config.load(path.join("configs", config_file_name))
 
     # Testmode ---------------------------------------------------------------------------------------------------------
-    test_mode = True
-
     if test_mode:
         config["data"]["subset_train"] += "_mini"
         config["data"]["subset_val"] += "_mini"
