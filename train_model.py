@@ -5,7 +5,8 @@ import torchvision_detection_references.transforms as T
 from dataset import Dataset
 from os import path
 from utilities import get_time_stamp, set_random_seed
-from mask_rcnn import get_mask_rcnn_model, create_mask_rcnn_trainer
+from models import get_mask_rcnn_model, get_keypoint_rcnn_model
+from training import create_trainer
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
@@ -15,12 +16,21 @@ import numpy as np
 
 
 def main():
+    # Model selection --------------------------------------------------------------------------------------------------
+    model_name = "mrcnn"
+
+    model_name = model_name.lower()
+    expected_model_names = ["krcnn", "mrcnn"]
+    assert model_name in expected_model_names, \
+        f"Unknown modelname '{model_name}'. Expected modelname to be in {expected_model_names}."
+
     # Parameters -------------------------------------------------------------------------------------------------------
     n_classes = 2  # Background and Fiber
 
-    model_name = "mrcnn"
+    if model_name == "krcnn":
+        n_keypoints = 20
 
-    batch_size_train = 4
+    batch_size_train = 2
     batch_size_val = 1
     max_epochs = 10
     random_seed = 12345
@@ -36,7 +46,11 @@ def main():
     set_random_seed(random_seed)
 
     # Model ------------------------------------------------------------------------------------------------------------
-    model = get_mask_rcnn_model(n_classes)
+    if model_name == "mrcnn":
+        model = get_mask_rcnn_model(n_classes)
+    elif model_name == "krcnn":
+        model = get_keypoint_rcnn_model(n_classes, n_keypoints)
+
     model.name = model_name
 
     # Paths ------------------------------------------------------------------------------------------------------------
@@ -53,7 +67,7 @@ def main():
                          batch_size_train=batch_size_train, batch_size_val=batch_size_val)
 
     # Tensorboard ------------------------------------------------------------------------------------------------------
-    tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=1)
+    tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
 
     # Device -----------------------------------------------------------------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -65,7 +79,7 @@ def main():
     # optimizer = torch.optim.Adam(parameters, lr=1e-3)
 
     # Trainer ----------------------------------------------------------------------------------------------------------
-    trainer = create_mask_rcnn_trainer(model, optimizer, data_loader_train, device)
+    trainer = create_trainer(model, optimizer, data_loader_train, device)
 
     # Learning rate scheduler ------------------------------------------------------------------------------------------
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
@@ -89,14 +103,20 @@ def main():
         epoch = engine.state.epoch
 
         # Training
-        tensorboard_writer.add_scalar("training/loss", engine.state.output["loss"], epoch)
-        tensorboard_writer.add_scalar("training/lr", engine.state.output["lr"], epoch)
+        for key in engine.state.output:
+            tag = "training/" + key
+            tensorboard_writer.add_scalar(tag, engine.state.output[key], epoch)
 
         # Validation
         print(" Validation:")
-        evaluator_val.run(data_loader_val)
-        metrics["AP"].print()
-        tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
+        if model_name == "mrcnn":
+            evaluator_val.run(data_loader_val)
+            metrics["AP"].print()
+            tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
+        elif model_name == "krcnn":
+            # TODO: Write evaluator.
+            pass
+
 
         example_image = next(iter(data_loader_val))[0][0]
         example_image = example_image.to(device)

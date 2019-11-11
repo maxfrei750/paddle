@@ -1,31 +1,10 @@
-import torchvision
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 import math
 import sys
 from ignite.engine import Engine
 import torchvision_detection_references.utils as utils
 
 
-def get_mask_rcnn_model(num_classes):
-    # Load an instance segmentation model pre-trained on COCO.
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
-    # Get the number of input features for the classifier.
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-    # Get the number of input features for the mask classifier.
-    in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 256
-    # Replace the mask predictor with a new one.
-    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                       hidden_layer,
-                                                       num_classes)
-
-    return model
-
-
-def create_mask_rcnn_trainer(model, optimizer, data_loader, device=None):
+def create_trainer(model, optimizer, data_loader, device=None):
     if device:
         model.to(device)
 
@@ -70,7 +49,6 @@ def create_mask_rcnn_trainer(model, optimizer, data_loader, device=None):
         if lr_scheduler is not None:
             lr_scheduler.step()
 
-        # print("epoch: {} - iteration: {} - loss: {}".format(epoch, iteration, loss_value))
         output_dict = dict()
 
         for key in loss_dict_reduced:
