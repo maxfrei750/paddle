@@ -77,3 +77,7 @@ def get_optimizer(model, config):
         return torch.optim.SGD(trainable_parameters, **config["optimizer"]["parameters"])
     elif optimizer_name == "adam":
         return torch.optim.Adam(trainable_parameters, **config["optimizer"]["parameters"])
+
+
+def get_lr_scheduler(optimizer, config):
+    return torch.optim.lr_scheduler.StepLR(optimizer, **config["lr_scheduler"])

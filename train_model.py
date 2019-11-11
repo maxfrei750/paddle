@@ -5,7 +5,7 @@ from data import get_data_loaders
 from os import path
 from utilities import get_time_stamp, set_random_seed
 from models import get_model
-from training import create_trainer, get_optimizer
+from training import create_trainer, get_optimizer, get_lr_scheduler
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
@@ -57,9 +57,7 @@ def main():
     trainer = create_trainer(model, optimizer, data_loader_train, device)
 
     # Learning rate scheduler ------------------------------------------------------------------------------------------
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=3,
-                                                   gamma=0.1)
+    lr_scheduler = get_lr_scheduler(optimizer, config)
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def step_lr_scheduler(engine):
