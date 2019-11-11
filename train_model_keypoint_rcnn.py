@@ -21,7 +21,7 @@ def main():
 
     model_name = "krcnn"
 
-    batch_size_train = 2
+    batch_size_train = 3
     batch_size_val = 1
     max_epochs = 10
     random_seed = 12345
