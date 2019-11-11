@@ -6,6 +6,21 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torch import nn
 
 
+def get_model(config):
+    model_name = config["model_name"]
+    n_classes = config["n_classes"]
+
+    if model_name == "mrcnn":
+        model = get_mask_rcnn_model(n_classes)
+    elif model_name == "krcnn":
+        n_keypoints = config["n_keypoints"]
+        model = get_keypoint_rcnn_model(n_classes, n_keypoints)
+
+    model.name = model_name
+
+    return model
+
+
 def get_mask_rcnn_model(num_classes):
     # Load an instance segmentation model pre-trained on COCO.
     model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)

@@ -5,7 +5,7 @@ import torchvision_detection_references.transforms as T
 from dataset import Dataset
 from os import path
 from utilities import get_time_stamp, set_random_seed
-from models import get_mask_rcnn_model, get_keypoint_rcnn_model
+from models import get_model
 from training import create_trainer
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
@@ -32,16 +32,7 @@ def main():
     set_random_seed(config["random_seed"])
 
     # Model ------------------------------------------------------------------------------------------------------------
-    model_name = config["model_name"]
-    n_classes = config["n_classes"]
-
-    if model_name == "mrcnn":
-        model = get_mask_rcnn_model(n_classes)
-    elif model_name == "krcnn":
-        n_keypoints = config["n_keypoints"]
-        model = get_keypoint_rcnn_model(n_classes, n_keypoints)
-
-    model.name = model_name
+    model = get_model(config)
 
     # Paths ------------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
@@ -100,11 +91,11 @@ def main():
 
         # Validation
         print(" Validation:")
-        if model_name == "mrcnn":
+        if model.name == "mrcnn":
             evaluator_val.run(data_loader_val)
             metrics["AP"].print()
             tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
-        elif model_name == "krcnn":
+        elif model.name == "krcnn":
             # TODO: Write evaluator.
             pass
 
