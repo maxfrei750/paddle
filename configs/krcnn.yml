@@ -1,7 +1,7 @@
 general:
   random_seed: 12345
 model:
-  model_name: mrcnn
+  name: mrcnn
   n_classes: 2  # Background and Fiber
   n_keypoints: 20
 data:

@@ -7,7 +7,7 @@ from torch import nn
 
 
 def get_model(config):
-    model_name = config["model"]["model_name"].lower()
+    model_name = config["model"]["name"].lower()
     n_classes = config["model"]["n_classes"]
 
     expected_model_names = ["krcnn", "mrcnn"]
