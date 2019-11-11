@@ -1,4 +1,5 @@
 from collections import UserDict
+import os
 
 import yaml
 try:
@@ -14,6 +15,7 @@ class Config(UserDict):
             return Config(yaml.load(file, Loader=Loader))
 
     def save(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as file:
             yaml.dump(self.data, file)
 
