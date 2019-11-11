@@ -24,11 +24,11 @@ def main():
     test_mode = True
 
     if test_mode:
-        config["subset_train"] += "_mini"
-        config["subset_val"] += "_mini"
+        config["data"]["subset_train"] += "_mini"
+        config["data"]["subset_val"] += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
-    set_random_seed(config["random_seed"])
+    set_random_seed(config["general"]["random_seed"])
 
     # Model ------------------------------------------------------------------------------------------------------------
     model = get_model(config)
@@ -126,7 +126,7 @@ def main():
     def log_training_losses(engine):
         epoch_iteration = engine.state.epoch_iteration
 
-        if (epoch_iteration - 1) % config["print_frequency"] == 0:
+        if (epoch_iteration - 1) % config["logging"]["print_frequency"] == 0:
             output = engine.state.output
             delimiter = "    "
 
@@ -157,7 +157,7 @@ def main():
 
     # Training ---------------------------------------------------------------------------------------------------------
     try:
-        trainer.run(data_loader_train, max_epochs=config["max_epochs"])
+        trainer.run(data_loader_train, max_epochs=config["training"]["max_epochs"])
     finally:
         pass
         tensorboard_writer.close()

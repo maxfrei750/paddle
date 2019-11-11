@@ -7,13 +7,13 @@ from torch import nn
 
 
 def get_model(config):
-    model_name = config["model_name"]
-    n_classes = config["n_classes"]
+    model_name = config["model"]["model_name"]
+    n_classes = config["model"]["n_classes"]
 
     if model_name == "mrcnn":
         model = get_mask_rcnn_model(n_classes)
     elif model_name == "krcnn":
-        n_keypoints = config["n_keypoints"]
+        n_keypoints = config["model"]["n_keypoints"]
         model = get_keypoint_rcnn_model(n_classes, n_keypoints)
 
     model.name = model_name

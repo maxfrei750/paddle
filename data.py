@@ -106,12 +106,12 @@ class Dataset(torch.utils.data.Dataset):
 
 
 def get_data_loaders(data_root, config, transforms=None, collate_fn=None):
-    subset_train = config["subset_train"]
-    subset_val = config["subset_val"]
-    batch_size_train = config["batch_size_train"]
-    batch_size_val = config["batch_size_val"]
-    class_names = config["class_names"]
-    n_data_loader_workers = config["n_data_loader_workers"]
+    subset_train = config["data"]["subset_train"]
+    subset_val = config["data"]["subset_val"]
+    batch_size_train = config["data"]["batch_size_train"]
+    batch_size_val = config["data"]["batch_size_val"]
+    class_names = config["data"]["class_names"]
+    n_data_loader_workers = config["data"]["n_data_loader_workers"]
 
     dataset_train = Dataset(data_root,
                             subset_train,

@@ -28,8 +28,9 @@ def main():
     import os
     config = Config.load(os.path.join("configs", "mrcnn.yml"))
     print(config)
-    print(config["model_name"])
+    print(config["model"]["model_name"])
     print(config["teasdasfkljdslgas"])
+    print(config["data"]["class_names"][1])
 
 
 if __name__ == "__main__":
