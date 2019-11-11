@@ -1,8 +1,7 @@
 import torch
-from torch.utils.data import DataLoader
 from torchvision_detection_references.utils import collate_fn
 import torchvision_detection_references.transforms as T
-from data import Dataset
+from data import get_data_loaders
 from os import path
 from utilities import get_time_stamp, set_random_seed
 from models import get_model
@@ -41,7 +40,8 @@ def main():
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
-    data_loader_train, data_loader_val = get_data_loaders(data_root, config)
+    data_loader_train, data_loader_val = \
+        get_data_loaders(data_root, config, collate_fn=collate_fn, transforms=get_transform())
 
     # Tensorboard ------------------------------------------------------------------------------------------------------
     tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
@@ -174,39 +174,6 @@ def get_transform():
     transforms.append(T.RandomHorizontalFlip(0.5))
     transforms.append(T.RandomVerticalFlip(0.5))
     return T.Compose(transforms)
-
-
-def get_data_loaders(data_root, config):
-    subset_train = config["subset_train"]
-    subset_val = config["subset_val"]
-    batch_size_train = config["batch_size_train"]
-    batch_size_val = config["batch_size_val"]
-
-    if "class_names" in config:
-        class_names = config["class_names"]
-    else:
-        class_names = None
-
-    dataset_train = Dataset(data_root,
-                            subset_train,
-                            transforms=get_transform(),
-                            class_name_dict=class_names)
-    data_loader_train = DataLoader(dataset_train,
-                                   batch_size=batch_size_train,
-                                   shuffle=True,
-                                   num_workers=4,
-                                   collate_fn=collate_fn)
-
-    dataset_val = Dataset(data_root,
-                          subset_val,
-                          class_name_dict=class_names)
-    data_loader_val = DataLoader(dataset_val,
-                                 batch_size=batch_size_val,
-                                 shuffle=True,
-                                 num_workers=4,
-                                 collate_fn=collate_fn)
-
-    return data_loader_train, data_loader_val
 
 
 if __name__ == "__main__":

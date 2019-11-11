@@ -6,6 +6,7 @@ from PIL import Image
 from glob import glob
 from torchvision.transforms import functional as F
 import pandas as pd
+from torch.utils.data import DataLoader
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -102,6 +103,36 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.sample_folders)
+
+
+def get_data_loaders(data_root, config, transforms=None, collate_fn=None):
+    subset_train = config["subset_train"]
+    subset_val = config["subset_val"]
+    batch_size_train = config["batch_size_train"]
+    batch_size_val = config["batch_size_val"]
+    class_names = config["class_names"]
+    n_data_loader_workers = config["n_data_loader_workers"]
+
+    dataset_train = Dataset(data_root,
+                            subset_train,
+                            transforms=transforms,
+                            class_name_dict=class_names)
+    data_loader_train = DataLoader(dataset_train,
+                                   batch_size=batch_size_train,
+                                   shuffle=True,
+                                   num_workers=n_data_loader_workers,
+                                   collate_fn=collate_fn)
+
+    dataset_val = Dataset(data_root,
+                          subset_val,
+                          class_name_dict=class_names)
+    data_loader_val = DataLoader(dataset_val,
+                                 batch_size=batch_size_val,
+                                 shuffle=True,
+                                 num_workers=n_data_loader_workers,
+                                 collate_fn=collate_fn)
+
+    return data_loader_train, data_loader_val
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ class_names:
   1: fiber
 batch_size_train: 2
 batch_size_val: 1
+n_data_loader_workers: 4
 max_epochs: 10
 random_seed: 12345
 print_frequency: 10
