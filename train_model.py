@@ -37,9 +37,7 @@ def main():
     # Paths ------------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
     log_dir = path.join("logs", model.name + "_" + time_stamp)
-    # TODO: Create symlink.
-    data_root = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
-                          "individual_fibers_no_clutter_no_loops")
+    data_root = path.join("datasets", "IUTA", "easy_images", "individual_fibers_no_clutter_no_loops")
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
