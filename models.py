@@ -7,8 +7,12 @@ from torch import nn
 
 
 def get_model(config):
-    model_name = config["model"]["model_name"]
+    model_name = config["model"]["model_name"].lower()
     n_classes = config["model"]["n_classes"]
+
+    expected_model_names = ["krcnn", "mrcnn"]
+    assert model_name in expected_model_names, \
+        f"Unknown modelname '{model_name}'. Expected modelname to be in {expected_model_names}."
 
     if model_name == "mrcnn":
         model = get_mask_rcnn_model(n_classes)
