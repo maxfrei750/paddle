@@ -17,12 +17,6 @@ class Config(UserDict):
         with open(path, "w") as file:
             yaml.dump(self.data, file)
 
-    def __getitem__(self, key):
-        if key not in self:
-            return None
-        else:
-            return super().__getitem__(key)
-
 
 def main():
     import os
