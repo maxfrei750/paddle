@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision_detection_references.utils import collate_fn
 import torchvision_detection_references.transforms as T
-from dataset import Dataset
+from data import Dataset
 from os import path
 from utilities import get_time_stamp, set_random_seed
 from models import get_model
