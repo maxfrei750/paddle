@@ -6,6 +6,7 @@ import torch
 from visualization import visualize_detection
 import numpy as np
 from ignite.engine import Events
+from ignite.handlers import ModelCheckpoint
 
 
 def create_trainer(model, optimizer, data_loader, device=None):
@@ -148,3 +149,25 @@ def setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_
 
             log_msg = delimiter.join(log_items)
             print(log_msg)
+
+
+def setup_checkpointers(model, log_dir, trainer, evaluator_val):
+    def score_function(engine):
+        return engine.state.metrics["AP"]
+
+    best_model_saver = ModelCheckpoint(log_dir,
+                                       filename_prefix="model",
+                                       score_name="AP",
+                                       score_function=score_function,
+                                       n_saved=1,
+                                       atomic=True,
+                                       create_dir=True)
+    evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {model.name: model})
+    
+    last_model_saver = ModelCheckpoint(log_dir,
+                                       filename_prefix="checkpoint",
+                                       save_interval=1,
+                                       n_saved=1,
+                                       atomic=True,
+                                       create_dir=True)
+    trainer.add_event_handler(Events.COMPLETED, last_model_saver, {model.name: model})

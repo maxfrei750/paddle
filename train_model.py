@@ -5,11 +5,10 @@ from data import get_data_loaders
 from os import path
 from utilities import get_time_stamp, set_random_seed
 from models import get_model
-from training import create_trainer, get_optimizer, get_lr_scheduler, setup_logging_callbacks
+from training import create_trainer, get_optimizer, get_lr_scheduler, setup_logging_callbacks, setup_checkpointers
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
-from ignite.handlers import ModelCheckpoint
 from config import Config
 
 
@@ -73,22 +72,7 @@ def main():
     setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer)
 
     # Checkpointers ----------------------------------------------------------------------------------------------------
-    best_model_saver = ModelCheckpoint(log_dir,
-                                       filename_prefix="model",
-                                       score_name="AP",
-                                       score_function=score_function,
-                                       n_saved=1,
-                                       atomic=True,
-                                       create_dir=True)
-    evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {model.name: model})
-
-    last_model_saver = ModelCheckpoint(log_dir,
-                                       filename_prefix="checkpoint",
-                                       save_interval=1,
-                                       n_saved=1,
-                                       atomic=True,
-                                       create_dir=True)
-    trainer.add_event_handler(Events.COMPLETED, last_model_saver, {model.name: model})
+    setup_checkpointers(model, log_dir, trainer, evaluator_val)
 
     # Training ---------------------------------------------------------------------------------------------------------
     try:
@@ -98,10 +82,6 @@ def main():
         tensorboard_writer.close()
 
     # TODO: Early stopping
-
-
-def score_function(engine):
-    return engine.state.metrics["AP"]
 
 
 def get_transform():
