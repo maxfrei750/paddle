@@ -163,7 +163,7 @@ def setup_checkpointers(model, log_dir, trainer, evaluator_val):
                                        atomic=True,
                                        create_dir=True)
     evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {model.name: model})
-    
+
     last_model_saver = ModelCheckpoint(log_dir,
                                        filename_prefix="checkpoint",
                                        save_interval=1,

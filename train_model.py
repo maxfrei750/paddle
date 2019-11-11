@@ -16,6 +16,8 @@ def main():
     # Parameters -------------------------------------------------------------------------------------------------------
     test_mode = True
     config_file_name = "mrcnn.yml"
+    log_dir_base = "logs"
+    data_root = path.join("datasets", "IUTA", "easy_images", "individual_fibers_no_clutter_no_loops")
 
     # Config -----------------------------------------------------------------------------------------------------------
     config = Config.load(path.join("configs", config_file_name))
@@ -34,18 +36,10 @@ def main():
     # Model ------------------------------------------------------------------------------------------------------------
     model = get_model(config)
 
-    # Paths ------------------------------------------------------------------------------------------------------------
-    time_stamp = get_time_stamp()
-    log_dir = path.join("logs", model.name + "_" + time_stamp)
-    data_root = path.join("datasets", "IUTA", "easy_images", "individual_fibers_no_clutter_no_loops")
-
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
     data_loader_train, data_loader_val = \
         get_data_loaders(data_root, config, collate_fn=collate_fn, transforms=get_transform())
-
-    # Tensorboard ------------------------------------------------------------------------------------------------------
-    tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
 
     # Optimizer --------------------------------------------------------------------------------------------------------
     optimizer = get_optimizer(model, config)
@@ -68,7 +62,12 @@ def main():
     evaluator_val = create_supervised_evaluator(model, metrics=metrics, device=device)
 
     # Logging ----------------------------------------------------------------------------------------------------------
+    time_stamp = get_time_stamp()
+    log_dir = path.join(log_dir_base, model.name + "_" + time_stamp)
+
     config.save(path.join(log_dir, "config_" + model.name + ".yml"))
+
+    tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
     setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer)
 
     # Checkpointers ----------------------------------------------------------------------------------------------------
