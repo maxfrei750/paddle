@@ -5,7 +5,7 @@ from data import get_data_loaders
 from os import path
 from utilities import get_time_stamp, set_random_seed
 from models import get_model
-from training import create_trainer
+from training import create_trainer, get_optimizer
 from ignite.engine import create_supervised_evaluator, Events
 from metrics import AveragePrecision
 from tensorboardX import SummaryWriter
@@ -51,9 +51,7 @@ def main():
     model = model.to(device)
 
     # Optimizer --------------------------------------------------------------------------------------------------------
-    parameters = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(parameters, lr=0.005, momentum=0.9, weight_decay=0.0005)
-    # optimizer = torch.optim.Adam(parameters, lr=1e-3)
+    optimizer = get_optimizer(model, config)
 
     # Trainer ----------------------------------------------------------------------------------------------------------
     trainer = create_trainer(model, optimizer, data_loader_train, device)

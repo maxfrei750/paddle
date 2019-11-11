@@ -2,6 +2,7 @@ import math
 import sys
 from ignite.engine import Engine
 import torchvision_detection_references.utils as utils
+import torch
 
 
 def create_trainer(model, optimizer, data_loader, device=None):
@@ -61,3 +62,18 @@ def create_trainer(model, optimizer, data_loader, device=None):
         return output_dict
 
     return Engine(_update)
+
+
+def get_optimizer(model, config):
+    optimizer_name = config["optimizer"]["name"].lower()
+
+    expected_optimizer_names = ["sgd", "adam"]
+    assert optimizer_name in expected_optimizer_names, \
+        f"Unknown optimizer name '{optimizer_name}'. Expected optimizer name to be in {expected_optimizer_names}."
+
+    trainable_parameters = [p for p in model.parameters() if p.requires_grad]
+
+    if optimizer_name == "sgd":
+        return torch.optim.SGD(trainable_parameters, **config["optimizer"]["parameters"])
+    elif optimizer_name == "adam":
+        return torch.optim.Adam(trainable_parameters, **config["optimizer"]["parameters"])

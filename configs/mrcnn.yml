@@ -15,3 +15,9 @@ training:
   max_epochs: 10
 logging:
   print_frequency: 10
+optimizer:
+  name: sgd
+  parameters:
+    lr: 0.005
+    momentum: 0.9
+    weight_decay: 0.0005
