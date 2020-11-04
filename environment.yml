@@ -1,4 +1,4 @@
-name: mrcnn_pytorch
+name: MaskRCNN
 channels:
 - pytorch
 - defaults
