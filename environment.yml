@@ -16,8 +16,7 @@ dependencies:
 - tqdm
 - scikit-image
 - cython
-- pip
-- pip:
-  - git+https://github.com/maxfrei750/cocoapi.git#subdirectory=PythonAPI
-#  - git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
-#  - git+https://github.com/waleedka/coco.git#subdirectory=PythonAPI  # for linux
+- pycocotools
+#- pip
+#- pip:
+#  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
