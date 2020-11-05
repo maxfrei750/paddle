@@ -17,6 +17,8 @@ dependencies:
 - scikit-image
 - cython
 - pycocotools
+- albumentations
+- opencv
 #- pip
 #- pip:
 #  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
