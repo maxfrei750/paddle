@@ -38,6 +38,7 @@ class Dataset(torch.utils.data.Dataset):
 
         image = Image.open(image_path)
         image = image.convert("RGB")
+        image = np.array(image)
 
         n_instances = len(mask_paths)
 
@@ -53,15 +54,32 @@ class Dataset(torch.utils.data.Dataset):
             mask = np.array(mask)
             masks.append(mask)
 
-        boxes = torch.as_tensor(boxes, dtype=torch.float32)
         # TODO: Support multiple classes.
-        labels = torch.ones((n_instances,), dtype=torch.int64)
+        labels = np.ones((n_instances,), dtype=np.int64)
+
+        if self.transforms is not None:
+            transformed_data = self.transforms(
+                image=image, masks=masks, bboxes=boxes, class_labels=labels
+            )
+
+            image = transformed_data["image"]
+            masks = transformed_data["masks"]
+            boxes = transformed_data["bboxes"]
+            labels = transformed_data["class_labels"]
+
+            # Filter empty masks.
+            masks = [mask for mask in masks if np.any(mask)]
+
+            n_instances = len(labels)
+
+        labels = torch.as_tensor(labels)
         scores = torch.ones((n_instances,), dtype=torch.float32)
-        masks = torch.tensor(np.array(masks), dtype=torch.uint8)
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        masks = torch.tensor(np.array(masks, dtype=np.uint8))
         image_id = torch.tensor([index])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # Assume that there are no crowd instances.
-        iscrowd = torch.zeros((n_instances,), dtype=torch.int64)
+        iscrowd = torch.zeros((n_instances,), dtype=torch.uint8)
 
         target = {
             "boxes": boxes,
@@ -74,9 +92,6 @@ class Dataset(torch.utils.data.Dataset):
         }
 
         image = F.to_tensor(image)
-
-        if self.transforms is not None:
-            image, target = self.transforms(image, target)
 
         return image, target
 
