@@ -5,7 +5,7 @@ from tensorboardX import SummaryWriter
 import albumentations
 import torch
 from config import Config
-from data import get_data_loaders
+from data import get_data_loader
 from ignite.engine import Events, create_supervised_evaluator
 from metrics import AveragePrecision
 from models import get_model
@@ -42,22 +42,43 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Model ------------------------------------------------------------------------------------------------------------
-    model = get_model(config)
+    model = get_model(n_classes=config["model"]["n_classes"])
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
-    data_loader_training, data_loader_validation = get_data_loaders(
-        data_root, config, collate_fn=collate_fn, transforms=get_transform()
+
+    data_loader_training = get_data_loader(
+        data_root,
+        subset=config["data"]["subset_training"],
+        batch_size=config["data"]["batch_size_training"],
+        class_names=config["data"]["class_names"],
+        num_workers=config["data"]["n_data_loader_workers"],
+        transforms=get_transform(),
+        collate_fn=collate_fn,
+    )
+
+    data_loader_validation = get_data_loader(
+        data_root,
+        subset=config["data"]["subset_validation"],
+        batch_size=config["data"]["batch_size_validation"],
+        class_names=config["data"]["class_names"],
+        num_workers=config["data"]["n_data_loader_workers"],
+        transforms=get_transform(),
+        collate_fn=collate_fn,
     )
 
     # Optimizer --------------------------------------------------------------------------------------------------------
-    optimizer = get_optimizer(model, config)
+    optimizer = get_optimizer(
+        model,
+        optimizer_name=config["optimizer"]["name"],
+        optimizer_parameters=config["optimizer"]["parameters"],
+    )
 
     # Trainer ----------------------------------------------------------------------------------------------------------
     trainer = create_trainer(model, optimizer, data_loader_training, device)
 
     # Learning rate scheduler ------------------------------------------------------------------------------------------
-    lr_scheduler = get_lr_scheduler(optimizer, config)
+    lr_scheduler = get_lr_scheduler(optimizer, config["lr_scheduler"])
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def step_lr_scheduler(engine):
@@ -77,13 +98,13 @@ def main():
     tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
     setup_logging_callbacks(
         model,
-        config,
         device,
         data_loader_validation,
         tensorboard_writer,
         evaluator_validation,
         metrics,
         trainer,
+        config["logging"]["print_frequency"],
     )
 
     # Checkpointers ----------------------------------------------------------------------------------------------------

@@ -100,35 +100,15 @@ class Dataset(torch.utils.data.Dataset):
         return len(self.sample_folders)
 
 
-def get_data_loaders(data_root, config, transforms=None, collate_fn=None):
-    subset_training = config["data"]["subset_training"]
-    subset_validation = config["data"]["subset_validation"]
-    batch_size_training = config["data"]["batch_size_training"]
-    batch_size_validation = config["data"]["batch_size_validation"]
-    class_names = config["data"]["class_names"]
-    n_data_loader_workers = config["data"]["n_data_loader_workers"]
-
-    dataset_train = Dataset(
-        data_root, subset_training, transforms=transforms, class_name_dict=class_names
-    )
-    data_loader_train = DataLoader(
-        dataset_train,
-        batch_size=batch_size_training,
-        shuffle=True,
-        num_workers=n_data_loader_workers,
-        collate_fn=collate_fn,
+def get_data_loader(
+    data_root, subset, batch_size, class_names, num_workers, transforms=None, collate_fn=None
+):
+    dataset = Dataset(data_root, subset, transforms=transforms, class_name_dict=class_names)
+    data_loader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn
     )
 
-    dataset_val = Dataset(data_root, subset_validation, class_name_dict=class_names)
-    data_loader_val = DataLoader(
-        dataset_val,
-        batch_size=batch_size_validation,
-        shuffle=True,
-        num_workers=n_data_loader_workers,
-        collate_fn=collate_fn,
-    )
-
-    return data_loader_train, data_loader_val
+    return data_loader
 
 
 if __name__ == "__main__":

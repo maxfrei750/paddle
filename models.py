@@ -3,8 +3,7 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 
-def get_model(config):
-    n_classes = config["model"]["n_classes"]
+def get_model(n_classes):
     model = get_mask_rcnn_resnet50_model(n_classes)
 
     # TODO: Replace with

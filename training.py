@@ -69,9 +69,7 @@ def create_trainer(model, optimizer, data_loader, device=None):
     return Engine(_update)
 
 
-def get_optimizer(model, config):
-    optimizer_name = config["optimizer"]["name"].lower()
-
+def get_optimizer(model, optimizer_name, optimizer_parameters):
     expected_optimizer_names = ["sgd", "adam"]
     assert (
         optimizer_name in expected_optimizer_names
@@ -80,17 +78,24 @@ def get_optimizer(model, config):
     trainable_parameters = [p for p in model.parameters() if p.requires_grad]
 
     if optimizer_name == "sgd":
-        return torch.optim.SGD(trainable_parameters, **config["optimizer"]["parameters"])
+        return torch.optim.SGD(trainable_parameters, **optimizer_parameters)
     elif optimizer_name == "adam":
-        return torch.optim.Adam(trainable_parameters, **config["optimizer"]["parameters"])
+        return torch.optim.Adam(trainable_parameters, **optimizer_parameters)
 
 
-def get_lr_scheduler(optimizer, config):
-    return torch.optim.lr_scheduler.StepLR(optimizer, **config["lr_scheduler"])
+def get_lr_scheduler(optimizer, lr_scheduler_parameters):
+    return torch.optim.lr_scheduler.StepLR(optimizer, **lr_scheduler_parameters)
 
 
 def setup_logging_callbacks(
-    model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer
+    model,
+    device,
+    data_loader_val,
+    tensorboard_writer,
+    evaluator_val,
+    metrics,
+    trainer,
+    print_frequency,
 ):
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_epoch_summary(engine):
@@ -142,7 +147,7 @@ def setup_logging_callbacks(
     def log_training_losses(engine):
         epoch_iteration = engine.state.epoch_iteration
 
-        if (epoch_iteration - 1) % config["logging"]["print_frequency"] == 0:
+        if (epoch_iteration - 1) % print_frequency == 0:
             output = engine.state.output
             delimiter = "    "
 
