@@ -1,31 +1,39 @@
-import torch
-from torchvision_detection_references.utils import collate_fn
-import torchvision_detection_references.transforms as T
-from data import get_data_loaders
 from os import path
-from utilities import get_time_stamp, set_random_seed
-from models import get_model
-from training import create_trainer, get_optimizer, get_lr_scheduler, setup_logging_callbacks, setup_checkpointers
-from ignite.engine import create_supervised_evaluator, Events
-from metrics import AveragePrecision
+
+import albumentations
+import torch
+from ignite.engine import Events, create_supervised_evaluator
 from tensorboardX import SummaryWriter
+
 from config import Config
+from data import get_data_loaders
+from metrics import AveragePrecision
+from models import get_model
+from torchvision_detection_references.utils import collate_fn
+from training import (
+    create_trainer,
+    get_lr_scheduler,
+    get_optimizer,
+    setup_checkpointers,
+    setup_logging_callbacks,
+)
+from utilities import get_time_stamp, set_random_seed
 
 
 def main():
     # Parameters -------------------------------------------------------------------------------------------------------
-    test_mode = True
-    config_file_name = "mrcnn.yml"
+    test_mode = False
+    config_name = "maskrcnn"
     log_dir_base = "logs"
-    data_root = path.join("datasets", "IUTA", "easy_images", "individual_fibers_no_clutter_no_loops")
+    data_root = path.join("data")
 
     # Config -----------------------------------------------------------------------------------------------------------
-    config = Config.load(path.join("configs", config_file_name))
+    config = Config.load(path.join("configs", config_name + ".yml"))
 
     # Testmode ---------------------------------------------------------------------------------------------------------
     if test_mode:
-        config["data"]["subset_train"] += "_mini"
-        config["data"]["subset_val"] += "_mini"
+        config["data"]["subset_training"] += "_mini"
+        config["data"]["subset_validation"] += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
     set_random_seed(config["general"]["random_seed"])
@@ -38,14 +46,15 @@ def main():
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
-    data_loader_train, data_loader_val = \
-        get_data_loaders(data_root, config, collate_fn=collate_fn, transforms=get_transform())
+    data_loader_training, data_loader_validation = get_data_loaders(
+        data_root, config, collate_fn=collate_fn, transforms=get_transform()
+    )
 
     # Optimizer --------------------------------------------------------------------------------------------------------
     optimizer = get_optimizer(model, config)
 
     # Trainer ----------------------------------------------------------------------------------------------------------
-    trainer = create_trainer(model, optimizer, data_loader_train, device)
+    trainer = create_trainer(model, optimizer, data_loader_training, device)
 
     # Learning rate scheduler ------------------------------------------------------------------------------------------
     lr_scheduler = get_lr_scheduler(optimizer, config)
@@ -55,27 +64,34 @@ def main():
         lr_scheduler.step()
 
     # Evaluation -------------------------------------------------------------------------------------------------------
-    metrics = {
-        "AP": AveragePrecision(data_loader_val, device)
-    }
+    metrics = {"AP": AveragePrecision(data_loader_validation, device)}
 
     evaluator_val = create_supervised_evaluator(model, metrics=metrics, device=device)
 
     # Logging ----------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
-    log_dir = path.join(log_dir_base, model.name + "_" + time_stamp)
+    log_dir = path.join(log_dir_base, config_name + "_" + time_stamp)
 
-    config.save(path.join(log_dir, "config_" + model.name + ".yml"))
+    config.save(path.join(log_dir, config_name + ".yml"))
 
     tensorboard_writer = SummaryWriter(log_dir=log_dir, max_queue=0, flush_secs=20)
-    setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer)
+    setup_logging_callbacks(
+        model,
+        config,
+        device,
+        data_loader_validation,
+        tensorboard_writer,
+        evaluator_val,
+        metrics,
+        trainer,
+    )
 
     # Checkpointers ----------------------------------------------------------------------------------------------------
     setup_checkpointers(model, log_dir, trainer, evaluator_val)
 
     # Training ---------------------------------------------------------------------------------------------------------
     try:
-        trainer.run(data_loader_train, max_epochs=config["training"]["max_epochs"])
+        trainer.run(data_loader_training, max_epochs=config["training"]["max_epochs"])
     finally:
         pass
         tensorboard_writer.close()
@@ -84,10 +100,14 @@ def main():
 
 
 def get_transform():
-    transforms = list()
-    transforms.append(T.RandomHorizontalFlip(0.5))
-    transforms.append(T.RandomVerticalFlip(0.5))
-    return T.Compose(transforms)
+    transform = albumentations.Compose(
+        [
+            albumentations.RandomCrop(width=1024, height=1024),
+        ],
+        bbox_params=albumentations.BboxParams(format="pascal_voc", label_fields=["class_labels"]),
+    )
+
+    return transform
 
 
 if __name__ == "__main__":

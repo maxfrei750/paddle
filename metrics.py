@@ -1,9 +1,10 @@
-from ignite.metrics import Metric
+import numpy as np
+import torch
 from ignite.exceptions import NotComputableError
+from ignite.metrics import Metric
+
 from torchvision_detection_references.coco_eval import CocoEvaluator
 from torchvision_detection_references.coco_utils import get_coco_api_from_dataset
-import torch
-import numpy as np
 
 
 class _CocoEvaluator(CocoEvaluator):
@@ -15,7 +16,9 @@ class _CocoEvaluator(CocoEvaluator):
 
         self.parameters = self.coco_eval[self.iou_type].params
 
-    def calculate_average_precision(self, iou_threshold=None, area_range="all", n_detections_max=100):
+    def calculate_average_precision(
+        self, iou_threshold=None, area_range="all", n_detections_max=100
+    ):
         coco_eval = self.coco_eval[self.iou_type]
 
         p = self.parameters
@@ -24,7 +27,7 @@ class _CocoEvaluator(CocoEvaluator):
         mind = [i for i, mDet in enumerate(p.maxDets) if mDet == n_detections_max]
 
         # dimension of precision: [TxRxKxAxM]
-        s = coco_eval.eval['precision']
+        s = coco_eval.eval["precision"]
         # IoU
         if iou_threshold is not None:
             t = np.where(iou_threshold == p.iouThrs)[0]
@@ -44,7 +47,14 @@ class AveragePrecision(Metric):
     Calculate coco evaluation.
     """
 
-    def __init__(self, data_loader, device, iou_threshold=None, area_range="all", n_determinations_max=100):
+    def __init__(
+        self,
+        data_loader,
+        device,
+        iou_threshold=None,
+        area_range="all",
+        n_determinations_max=100,
+    ):
         self._data_loader = data_loader
         self._device = device
         self._coco_evaluator = None
@@ -76,14 +86,19 @@ class AveragePrecision(Metric):
         targets = [{k: v.to(self._device) for k, v in t.items()} for t in targets]
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
 
-        res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
+        res = {
+            target["image_id"].item(): output
+            for target, output in zip(targets, outputs)
+        }
 
         self._coco_evaluator.update(res)
         torch.set_num_threads(n_threads)
 
     def compute(self):
         if not self._has_data:
-            raise NotComputableError("Average precision must have at least one sample before it can be computed.")
+            raise NotComputableError(
+                "Average precision must have at least one sample before it can be computed."
+            )
 
         n_threads = torch.get_num_threads()
         # FIXME remove this and make paste_masks_in_image run on the GPU
@@ -91,10 +106,11 @@ class AveragePrecision(Metric):
 
         self._coco_evaluator.synchronize_between_processes()
         self._coco_evaluator.accumulate()
-        average_precision = \
-            self._coco_evaluator.calculate_average_precision(iou_threshold=self.iou_threshold,
-                                                             area_range=self.area_range,
-                                                             n_detections_max=self.n_determinations_max)
+        average_precision = self._coco_evaluator.calculate_average_precision(
+            iou_threshold=self.iou_threshold,
+            area_range=self.area_range,
+            n_detections_max=self.n_determinations_max,
+        )
 
         torch.set_num_threads(n_threads)
 
@@ -105,17 +121,24 @@ class AveragePrecision(Metric):
     def print(self):
         p = self.parameters
 
-        format_string = ' {:<18} {} @[ IoU={:<9} | area={} | n_detections_max={:>3d} ] = {:0.3f}'
-        title_string = 'Average Precision'
-        type_string = '(AP)'
-        iou_string = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
-            if self.iou_threshold is None else '{:0.2f}'.format(self.iou_threshold)
+        format_string = (
+            " {:<18} {} @[ IoU={:<9} | area={} | n_detections_max={:>3d} ] = {:0.3f}"
+        )
+        title_string = "Average Precision"
+        type_string = "(AP)"
+        iou_string = (
+            "{:0.2f}:{:0.2f}".format(p.iouThrs[0], p.iouThrs[-1])
+            if self.iou_threshold is None
+            else "{:0.2f}".format(self.iou_threshold)
+        )
 
-        print(format_string.format(title_string,
-                                   type_string,
-                                   iou_string,
-                                   self.area_range,
-                                   self.n_determinations_max,
-                                   self.value
-                                   )
-              )
+        print(
+            format_string.format(
+                title_string,
+                type_string,
+                iou_string,
+                self.area_range,
+                self.n_determinations_max,
+                self.value,
+            )
+        )

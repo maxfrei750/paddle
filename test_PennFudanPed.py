@@ -1,14 +1,16 @@
-from PIL import Image
 import os
+
 import numpy as np
 import torch
 import torch.utils.data
 import torchvision
+from PIL import Image
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from torchvision_detection_references.engine import train_one_epoch, evaluate
-from torchvision_detection_references import utils
+
 import torchvision_detection_references.transforms as T
+from torchvision_detection_references import utils
+from torchvision_detection_references.engine import evaluate, train_one_epoch
 
 
 class PennFudanDataset(torch.utils.data.Dataset):
@@ -91,9 +93,9 @@ def get_instance_segmentation_model(num_classes):
     in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
     hidden_layer = 256
     # and replace the mask predictor with a new one
-    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                       hidden_layer,
-                                                       num_classes)
+    model.roi_heads.mask_predictor = MaskRCNNPredictor(
+        in_features_mask, hidden_layer, num_classes
+    )
 
     return model
 
@@ -111,8 +113,10 @@ def get_transform(train):
 
 def main():
     # use our dataset and defined transformations
-    dataset = PennFudanDataset('datasets/PennFudanPed/', get_transform(train=True))
-    dataset_test = PennFudanDataset('datasets/PennFudanPed/', get_transform(train=False))
+    dataset = PennFudanDataset("datasets/PennFudanPed/", get_transform(train=True))
+    dataset_test = PennFudanDataset(
+        "datasets/PennFudanPed/", get_transform(train=False)
+    )
 
     # from PIL import Image
     # image_id = 1
@@ -134,14 +138,18 @@ def main():
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=2, shuffle=True, num_workers=4,
-        collate_fn=utils.collate_fn)
+        dataset, batch_size=2, shuffle=True, num_workers=4, collate_fn=utils.collate_fn
+    )
 
     data_loader_test = torch.utils.data.DataLoader(
-        dataset_test, batch_size=1, shuffle=False, num_workers=4,
-        collate_fn=utils.collate_fn)
+        dataset_test,
+        batch_size=1,
+        shuffle=False,
+        num_workers=4,
+        collate_fn=utils.collate_fn,
+    )
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     # our dataset has two classes only - background and person
     num_classes = 2
@@ -153,23 +161,20 @@ def main():
 
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=0.005,
-                                momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
 
     # and a learning rate scheduler which decreases the learning rate by
     # 10x every 3 epochs
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                                   step_size=3,
-                                                   gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
 
     # let's train it for 10 epochs
     num_epochs = 10
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        # train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
-        # lr_scheduler.step()
+        lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
@@ -184,7 +189,7 @@ def main():
 
     Image.fromarray(img.mul(255).permute(1, 2, 0).byte().numpy()).show()
 
-    Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy()).show()
+    Image.fromarray(prediction[0]["masks"][0, 0].mul(255).byte().cpu().numpy()).show()
 
 
 if __name__ == "__main__":

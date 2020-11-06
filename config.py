@@ -1,11 +1,13 @@
-from collections import UserDict
 import os
+from collections import UserDict
 
 import yaml
+
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 
 
 class Config(UserDict):
@@ -22,7 +24,8 @@ class Config(UserDict):
 
 def main():
     import os
-    config = Config.load(os.path.join("configs", "mrcnn.yml"))
+
+    config = Config.load(os.path.join("configs", "maskrcnn.yml"))
     print(config)
     print(config["model"]["model_name"])
     print(config["teasdasfkljdslgas"])

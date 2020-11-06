@@ -1,12 +1,13 @@
 import math
 import sys
-from ignite.engine import Engine
-import torchvision_detection_references.utils as utils
-import torch
-from visualization import visualize_detection
+
 import numpy as np
-from ignite.engine import Events
+import torch
+from ignite.engine import Engine, Events
 from ignite.handlers import ModelCheckpoint
+
+import torchvision_detection_references.utils as utils
+from visualization import visualize_detection
 
 
 def create_trainer(model, optimizer, data_loader, device=None):
@@ -20,10 +21,12 @@ def create_trainer(model, optimizer, data_loader, device=None):
 
         lr_scheduler = None
         if epoch == 0:
-            warmup_factor = 1. / 1000
+            warmup_factor = 1.0 / 1000
             warmup_iters = min(1000, len(data_loader) - 1)
 
-            lr_scheduler = utils.warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor)
+            lr_scheduler = utils.warmup_lr_scheduler(
+                optimizer, warmup_iters, warmup_factor
+            )
 
         images, targets = batch
 
@@ -72,22 +75,36 @@ def get_optimizer(model, config):
     optimizer_name = config["optimizer"]["name"].lower()
 
     expected_optimizer_names = ["sgd", "adam"]
-    assert optimizer_name in expected_optimizer_names, \
-        f"Unknown optimizer name '{optimizer_name}'. Expected optimizer name to be in {expected_optimizer_names}."
+    assert (
+        optimizer_name in expected_optimizer_names
+    ), f"Unknown optimizer name '{optimizer_name}'. Expected optimizer name to be in {expected_optimizer_names}."
 
     trainable_parameters = [p for p in model.parameters() if p.requires_grad]
 
     if optimizer_name == "sgd":
-        return torch.optim.SGD(trainable_parameters, **config["optimizer"]["parameters"])
+        return torch.optim.SGD(
+            trainable_parameters, **config["optimizer"]["parameters"]
+        )
     elif optimizer_name == "adam":
-        return torch.optim.Adam(trainable_parameters, **config["optimizer"]["parameters"])
+        return torch.optim.Adam(
+            trainable_parameters, **config["optimizer"]["parameters"]
+        )
 
 
 def get_lr_scheduler(optimizer, config):
     return torch.optim.lr_scheduler.StepLR(optimizer, **config["lr_scheduler"])
 
 
-def setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer):
+def setup_logging_callbacks(
+    model,
+    config,
+    device,
+    data_loader_val,
+    tensorboard_writer,
+    evaluator_val,
+    metrics,
+    trainer,
+):
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_epoch_summary(engine):
         epoch = engine.state.epoch
@@ -99,13 +116,10 @@ def setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_
 
         # Validation
         print(" Validation:")
-        if model.name == "mrcnn":
-            evaluator_val.run(data_loader_val)
-            metrics["AP"].print()
-            tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
-        elif model.name == "krcnn":
-            # TODO: Write evaluator.
-            pass
+
+        evaluator_val.run(data_loader_val)
+        metrics["AP"].print()
+        tensorboard_writer.add_scalar("validation/AP", metrics["AP"].value, epoch)
 
         example_image = next(iter(data_loader_val))[0][0]
         example_image = example_image.to(device)
@@ -115,7 +129,9 @@ def setup_logging_callbacks(model, config, device, data_loader_val, tensorboard_
             prediction = model([example_image])[0]
 
         detection_image = np.array(visualize_detection(example_image, prediction))
-        tensorboard_writer.add_image("validation/example_detection", detection_image, epoch, dataformats="HWC")
+        tensorboard_writer.add_image(
+            "validation/example_detection", detection_image, epoch, dataformats="HWC"
+        )
 
     @trainer.on(Events.EPOCH_STARTED)
     def log_epoch(engine):
@@ -155,19 +171,23 @@ def setup_checkpointers(model, log_dir, trainer, evaluator_val):
     def score_function(engine):
         return engine.state.metrics["AP"]
 
-    best_model_saver = ModelCheckpoint(log_dir,
-                                       filename_prefix="model",
-                                       score_name="AP",
-                                       score_function=score_function,
-                                       n_saved=1,
-                                       atomic=True,
-                                       create_dir=True)
-    evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {model.name: model})
+    best_model_saver = ModelCheckpoint(
+        log_dir,
+        filename_prefix="model",
+        score_name="AP",
+        score_function=score_function,
+        n_saved=1,
+        atomic=True,
+        create_dir=True,
+    )
+    evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {"MaskRCNN": model})
 
-    last_model_saver = ModelCheckpoint(log_dir,
-                                       filename_prefix="checkpoint",
-                                       save_interval=1,
-                                       n_saved=1,
-                                       atomic=True,
-                                       create_dir=True)
-    trainer.add_event_handler(Events.COMPLETED, last_model_saver, {model.name: model})
+    last_model_saver = ModelCheckpoint(
+        log_dir,
+        filename_prefix="checkpoint",
+        save_interval=1,
+        n_saved=1,
+        atomic=True,
+        create_dir=True,
+    )
+    trainer.add_event_handler(Events.COMPLETED, last_model_saver, {"MaskRCNN": model})

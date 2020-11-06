@@ -1,12 +1,12 @@
+from glob import glob
 from os import path
+
 import numpy as np
 import torch
 import torch.utils.data
 from PIL import Image
-from glob import glob
-from torchvision.transforms import functional as F
-import pandas as pd
 from torch.utils.data import DataLoader
+from torchvision.transforms import functional as F
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -15,7 +15,9 @@ class Dataset(torch.utils.data.Dataset):
         self.root = root
 
         self.subset_path = path.join(root, subset)
-        assert path.isdir(self.subset_path), "The specified subset folder does not exist: " + subset
+        assert path.isdir(self.subset_path), (
+            "The specified subset folder does not exist: " + subset
+        )
 
         self.subset = subset
         self.sample_folders = glob(path.join(root, subset, "**"))
@@ -23,9 +25,7 @@ class Dataset(torch.utils.data.Dataset):
         self.transforms = transforms
 
         if class_name_dict is None:
-            self.class_name_dict = {
-                1: "particle"
-            }
+            self.class_name_dict = {1: "particle"}
         else:
             self.class_name_dict = class_name_dict
 
@@ -34,7 +34,6 @@ class Dataset(torch.utils.data.Dataset):
 
         image_path = glob(path.join(sample_folder, "images", "*"))[0]
         mask_paths = glob(path.join(sample_folder, "masks", "*"))
-        spline_paths = glob(path.join(sample_folder, "splines", "*.csv"))
 
         # TODO: Support multiple classes.
         #  instance_class_path = path.join(sample_folder, "*.txt")
@@ -56,31 +55,15 @@ class Dataset(torch.utils.data.Dataset):
             mask = np.array(mask)
             masks.append(mask)
 
-        key_point_sets = list()
-        spline_widths = list()
-
-        for spline_path in spline_paths:
-            spline_data = pd.read_csv(spline_path)
-
-            spline_width = spline_data["width"][0]
-            spline_widths.append(spline_width)
-
-            key_point_set = spline_data[["x", "y"]]
-            # Assume that all keypoints are visible.
-            key_point_set["visibility"] = 1
-            key_point_sets.append(key_point_set.to_numpy())
-
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         # TODO: Support multiple classes.
         labels = torch.ones((n_instances,), dtype=torch.int64)
         scores = torch.ones((n_instances,), dtype=torch.float32)
-        masks = torch.as_tensor(masks, dtype=torch.uint8)
+        masks = torch.tensor(np.array(masks), dtype=torch.uint8)
         image_id = torch.tensor([index])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # Assume that there are no crowd instances.
         iscrowd = torch.zeros((n_instances,), dtype=torch.int64)
-        key_point_sets = torch.as_tensor(key_point_sets, dtype=torch.float32)
-        spline_widths = torch.as_tensor(spline_widths, dtype=torch.float32)
 
         target = {
             "boxes": boxes,
@@ -90,8 +73,6 @@ class Dataset(torch.utils.data.Dataset):
             "image_id": image_id,
             "area": area,
             "iscrowd": iscrowd,
-            "keypoints": key_point_sets,
-            "spline_widths": spline_widths
         }
 
         image = F.to_tensor(image)
@@ -106,53 +87,52 @@ class Dataset(torch.utils.data.Dataset):
 
 
 def get_data_loaders(data_root, config, transforms=None, collate_fn=None):
-    subset_train = config["data"]["subset_train"]
-    subset_val = config["data"]["subset_val"]
-    batch_size_train = config["data"]["batch_size_train"]
-    batch_size_val = config["data"]["batch_size_val"]
+    subset_training = config["data"]["subset_training"]
+    subset_validation = config["data"]["subset_validation"]
+    batch_size_training = config["data"]["batch_size_training"]
+    batch_size_validation = config["data"]["batch_size_validation"]
     class_names = config["data"]["class_names"]
     n_data_loader_workers = config["data"]["n_data_loader_workers"]
 
-    dataset_train = Dataset(data_root,
-                            subset_train,
-                            transforms=transforms,
-                            class_name_dict=class_names)
-    data_loader_train = DataLoader(dataset_train,
-                                   batch_size=batch_size_train,
-                                   shuffle=True,
-                                   num_workers=n_data_loader_workers,
-                                   collate_fn=collate_fn)
+    dataset_train = Dataset(
+        data_root, subset_training, transforms=transforms, class_name_dict=class_names
+    )
+    data_loader_train = DataLoader(
+        dataset_train,
+        batch_size=batch_size_training,
+        shuffle=True,
+        num_workers=n_data_loader_workers,
+        collate_fn=collate_fn,
+    )
 
-    dataset_val = Dataset(data_root,
-                          subset_val,
-                          class_name_dict=class_names)
-    data_loader_val = DataLoader(dataset_val,
-                                 batch_size=batch_size_val,
-                                 shuffle=True,
-                                 num_workers=n_data_loader_workers,
-                                 collate_fn=collate_fn)
+    dataset_val = Dataset(data_root, subset_validation, class_name_dict=class_names)
+    data_loader_val = DataLoader(
+        dataset_val,
+        batch_size=batch_size_validation,
+        shuffle=True,
+        num_workers=n_data_loader_workers,
+        collate_fn=collate_fn,
+    )
 
     return data_loader_train, data_loader_val
 
 
-if __name__ == '__main__':
-    from visualization import display_detection
+if __name__ == "__main__":
     import random
+
     import torch.cuda as cuda
 
-    test_root_path = path.join("D:\\", "sciebo", "Dissertation", "Referenzdaten", "IUTA", "easy_images",
-                               "individual_fibers_no_clutter_no_loops")
+    from visualization import display_detection
 
-    class_name_dict = {
-        1: "fiber"
-    }
+    test_root_path = "data"
 
+    class_name_dict = {1: "particle"}
 
-    dataset = Dataset(test_root_path,
-                      subset="test",
-                      class_name_dict=class_name_dict)
+    dataset = Dataset(
+        test_root_path, subset="validation", class_name_dict=class_name_dict
+    )
 
-    sample_id = random.randint(1, len(dataset))
+    sample_id = random.randint(1, len(dataset) - 1)
     image, target = dataset[sample_id]
 
     if cuda.is_available():
@@ -161,7 +141,6 @@ if __name__ == '__main__':
         for key in target:
             target[key] = target[key].to("cuda")
 
-    display_detection(image,
-                      target,
-                      class_name_dict=dataset.class_name_dict,
-                      do_display_mask=False)
+    display_detection(
+        image, target, class_name_dict=dataset.class_name_dict, do_display_mask=True
+    )

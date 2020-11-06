@@ -1,18 +1,17 @@
 general:
-  random_seed: 12345
+  random_seed: 42
 model:
-  name: mrcnn
-  n_classes: 2  # Background and Fiber
+  n_classes: 2  # Background and Particle
 data:
   class_names:
-    1: fiber
-  batch_size_train: 2
-  batch_size_val: 1
+    1: particle
+  batch_size_training: 2
+  batch_size_validation: 1
   n_data_loader_workers: 4
-  subset_train: training
-  subset_val: validation
+  subset_training: training
+  subset_validation: validation
 training:
-  max_epochs: 10
+  max_epochs: 100
 logging:
   print_frequency: 10
 optimizer:

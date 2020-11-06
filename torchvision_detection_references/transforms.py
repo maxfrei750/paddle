@@ -1,4 +1,5 @@
 import random
+
 from torchvision.transforms import functional as F
 
 
@@ -6,9 +7,11 @@ def _flip_keypoints_horizontal(key_points, width):
     key_points[:, :, 0] = width - key_points[:, :, 0]
     return key_points
 
+
 def _flip_keypoints_vertical(key_points, height):
     key_points[:, :, 1] = height - key_points[:, :, 1]
     return key_points
+
 
 class Compose(object):
     def __init__(self, transforms):
