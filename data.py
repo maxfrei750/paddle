@@ -41,46 +41,38 @@ class Dataset(torch.utils.data.Dataset):
         image = image.convert("RGB")
         image = np.array(image)
 
-        n_instances = len(mask_paths)
+        num_instances = len(mask_paths)
 
         masks = list()
-        boxes = list()
 
         for mask_path in mask_paths:
             mask = Image.open(mask_path).convert("1")
-
-            box = list(mask.getbbox())
-            boxes.append(box)
-
             mask = np.array(mask)
             masks.append(mask)
 
-        # TODO: Support multiple classes.
-        labels = np.ones((n_instances,), dtype=np.int64)
-
         if self.transforms is not None:
-            transformed_data = self.transforms(
-                image=image, masks=masks, bboxes=boxes, class_labels=labels
-            )
+            transformed_data = self.transforms(image=image, masks=masks)
 
             image = transformed_data["image"]
             masks = transformed_data["masks"]
-            boxes = transformed_data["bboxes"]
-            labels = transformed_data["class_labels"]
 
             # Filter empty masks.
-            masks = [mask for mask in masks if np.any(mask)]
+            masks = _remove_empty_masks(masks)
 
-            n_instances = len(labels)
+            num_instances = len(masks)
+
+        # TODO: Support multiple classes.
+        labels = np.ones((num_instances,), dtype=np.int64)
+        boxes = _extract_bounding_boxes(masks)
 
         labels = torch.as_tensor(labels)
-        scores = torch.ones((n_instances,), dtype=torch.float32)
+        scores = torch.ones((num_instances,), dtype=torch.float32)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         masks = torch.tensor(np.array(masks, dtype=np.uint8))
         image_id = torch.tensor([index])
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
         # Assume that there are no crowd instances.
-        iscrowd = torch.zeros((n_instances,), dtype=torch.uint8)
+        iscrowd = torch.zeros((num_instances,), dtype=torch.uint8)
 
         target = {
             "boxes": boxes,
@@ -98,6 +90,23 @@ class Dataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.sample_folders)
+
+
+def _extract_bounding_boxes(masks):
+    boxes = list()
+    for mask in masks:
+        pos = np.where(mask)
+        xmin = np.min(pos[1])
+        xmax = np.max(pos[1]) + 1
+        ymin = np.min(pos[0])
+        ymax = np.max(pos[0]) + 1
+        boxes.append([xmin, ymin, xmax, ymax])
+
+    return boxes
+
+
+def _remove_empty_masks(masks):
+    return [mask for mask in masks if np.any(mask)]
 
 
 def get_data_loader(
