@@ -2,9 +2,10 @@ from glob import glob
 from os import path
 
 import numpy as np
+from PIL import Image
+
 import torch
 import torch.utils.data
-from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision.transforms import functional as F
 

@@ -1,8 +1,8 @@
 import numpy as np
+
 import torch
 from ignite.exceptions import NotComputableError
 from ignite.metrics import Metric
-
 from torchvision_detection_references.coco_eval import CocoEvaluator
 from torchvision_detection_references.coco_utils import get_coco_api_from_dataset
 
@@ -48,12 +48,7 @@ class AveragePrecision(Metric):
     """
 
     def __init__(
-        self,
-        data_loader,
-        device,
-        iou_threshold=None,
-        area_range="all",
-        n_determinations_max=100,
+        self, data_loader, device, iou_threshold=None, area_range="all", n_determinations_max=100
     ):
         self._data_loader = data_loader
         self._device = device

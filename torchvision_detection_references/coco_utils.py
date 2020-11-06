@@ -1,11 +1,12 @@
 import copy
 import os
 
+from PIL import Image
+
 import torch
 import torch.utils.data
 import torchvision
 import transforms as T
-from PIL import Image
 from pycocotools import mask as coco_mask
 from pycocotools.coco import COCO
 
@@ -224,10 +225,7 @@ def get_coco(root, image_set, transforms, mode="instances"):
             "train2017",
             os.path.join("annotations", anno_file_template.format(mode, "train")),
         ),
-        "val": (
-            "val2017",
-            os.path.join("annotations", anno_file_template.format(mode, "val")),
-        ),
+        "val": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val"))),
         # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
     }
 

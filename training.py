@@ -2,11 +2,11 @@ import math
 import sys
 
 import numpy as np
+
 import torch
+import torchvision_detection_references.utils as utils
 from ignite.engine import Engine, Events
 from ignite.handlers import ModelCheckpoint
-
-import torchvision_detection_references.utils as utils
 from visualization import visualize_detection
 
 
@@ -90,14 +90,7 @@ def get_lr_scheduler(optimizer, config):
 
 
 def setup_logging_callbacks(
-    model,
-    config,
-    device,
-    data_loader_val,
-    tensorboard_writer,
-    evaluator_val,
-    metrics,
-    trainer,
+    model, config, device, data_loader_val, tensorboard_writer, evaluator_val, metrics, trainer
 ):
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_epoch_summary(engine):

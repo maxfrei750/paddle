@@ -2,11 +2,12 @@ import random
 import warnings
 
 import numpy as np
-import torch
 from matplotlib import cm
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
+
+import torch
 from torchvision import transforms
 
 

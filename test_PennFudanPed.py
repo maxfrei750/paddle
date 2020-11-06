@@ -1,14 +1,14 @@
 import os
 
 import numpy as np
+from PIL import Image
+
 import torch
 import torch.utils.data
 import torchvision
-from PIL import Image
+import torchvision_detection_references.transforms as T
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-
-import torchvision_detection_references.transforms as T
 from torchvision_detection_references import utils
 from torchvision_detection_references.engine import evaluate, train_one_epoch
 
@@ -111,8 +111,8 @@ def get_transform(train):
 
 def main():
     # use our dataset and defined transformations
-    dataset = PennFudanDataset("datasets/PennFudanPed/", get_transform(train=True))
-    dataset_test = PennFudanDataset("datasets/PennFudanPed/", get_transform(train=False))
+    dataset = PennFudanDataset("data/PennFudanPed/", get_transform(train=True))
+    dataset_test = PennFudanDataset("data/PennFudanPed/", get_transform(train=False))
 
     # from PIL import Image
     # image_id = 1
@@ -138,11 +138,7 @@ def main():
     )
 
     data_loader_test = torch.utils.data.DataLoader(
-        dataset_test,
-        batch_size=1,
-        shuffle=False,
-        num_workers=4,
-        collate_fn=utils.collate_fn,
+        dataset_test, batch_size=1, shuffle=False, num_workers=4, collate_fn=utils.collate_fn
     )
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")

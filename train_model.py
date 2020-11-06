@@ -1,12 +1,12 @@
 from os import path
 
-import albumentations
-import torch
-from ignite.engine import Events, create_supervised_evaluator
 from tensorboardX import SummaryWriter
 
+import albumentations
+import torch
 from config import Config
 from data import get_data_loaders
+from ignite.engine import Events, create_supervised_evaluator
 from metrics import AveragePrecision
 from models import get_model
 from torchvision_detection_references.utils import collate_fn
@@ -66,7 +66,7 @@ def main():
     # Evaluation -------------------------------------------------------------------------------------------------------
     metrics = {"AP": AveragePrecision(data_loader_validation, device)}
 
-    evaluator_val = create_supervised_evaluator(model, metrics=metrics, device=device)
+    evaluator_validation = create_supervised_evaluator(model, metrics=metrics, device=device)
 
     # Logging ----------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
@@ -81,13 +81,13 @@ def main():
         device,
         data_loader_validation,
         tensorboard_writer,
-        evaluator_val,
+        evaluator_validation,
         metrics,
         trainer,
     )
 
     # Checkpointers ----------------------------------------------------------------------------------------------------
-    setup_checkpointers(model, log_dir, trainer, evaluator_val)
+    setup_checkpointers(model, log_dir, trainer, evaluator_validation)
 
     # Training ---------------------------------------------------------------------------------------------------------
     try:
@@ -101,9 +101,7 @@ def main():
 
 def get_transform():
     transform = albumentations.Compose(
-        [
-            albumentations.RandomCrop(width=1024, height=1024),
-        ],
+        [albumentations.RandomCrop(width=1024, height=1024)],
         bbox_params=albumentations.BboxParams(format="pascal_voc", label_fields=["class_labels"]),
     )
 
