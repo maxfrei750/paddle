@@ -42,7 +42,11 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Model ------------------------------------------------------------------------------------------------------------
-    model = get_model(n_classes=config["model"]["n_classes"])
+    model = get_model(
+        num_classes=config["model"]["n_classes"],
+        pretrained_backbone=config["model"]["pretrained_backbone"],
+        trainable_backbone_layers=config["model"]["trainable_backbone_layers"],
+    )
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
