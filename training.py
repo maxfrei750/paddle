@@ -175,11 +175,6 @@ def setup_checkpointers(model, log_dir, trainer, evaluator_val):
     evaluator_val.add_event_handler(Events.COMPLETED, best_model_saver, {"MaskRCNN": model})
 
     last_model_saver = ModelCheckpoint(
-        log_dir,
-        filename_prefix="checkpoint",
-        save_interval=1,
-        n_saved=1,
-        atomic=True,
-        create_dir=True,
+        log_dir, filename_prefix="checkpoint", n_saved=1, atomic=True, create_dir=True
     )
     trainer.add_event_handler(Events.COMPLETED, last_model_saver, {"MaskRCNN": model})
