@@ -11,10 +11,10 @@ import torch
 from torchvision import transforms
 
 
-def get_random_colors(n_colors):
+def get_random_colors(num_colors):
     colors = list()
 
-    for i_color in range(n_colors):
+    for i_color in range(num_colors):
         # color = cm.hsv(random.uniform(0, 0.6))
 
         colormap = cm.get_cmap("viridis")
