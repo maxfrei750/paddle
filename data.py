@@ -15,9 +15,7 @@ class Dataset(torch.utils.data.Dataset):
         self.root = root
 
         self.subset_path = path.join(root, subset)
-        assert path.isdir(self.subset_path), (
-            "The specified subset folder does not exist: " + subset
-        )
+        assert path.isdir(self.subset_path), "The specified subset folder does not exist: " + subset
 
         self.subset = subset
         self.sample_folders = glob(path.join(root, subset, "**"))
@@ -128,9 +126,7 @@ if __name__ == "__main__":
 
     class_name_dict = {1: "particle"}
 
-    dataset = Dataset(
-        test_root_path, subset="validation", class_name_dict=class_name_dict
-    )
+    dataset = Dataset(test_root_path, subset="validation", class_name_dict=class_name_dict)
 
     sample_id = random.randint(1, len(dataset) - 1)
     image, target = dataset[sample_id]
@@ -141,6 +137,4 @@ if __name__ == "__main__":
         for key in target:
             target[key] = target[key].to("cuda")
 
-    display_detection(
-        image, target, class_name_dict=dataset.class_name_dict, do_display_mask=True
-    )
+    display_detection(image, target, class_name_dict=dataset.class_name_dict, do_display_mask=True)

@@ -28,8 +28,6 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True):
     in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
     hidden_layer = 256
     # Replace the mask predictor with a new one.
-    model.roi_heads.mask_predictor = MaskRCNNPredictor(
-        in_features_mask, hidden_layer, num_classes
-    )
+    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask, hidden_layer, num_classes)
 
     return model

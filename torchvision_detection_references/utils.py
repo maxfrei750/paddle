@@ -105,9 +105,7 @@ def all_gather(data):
     for _ in size_list:
         tensor_list.append(torch.empty((max_size,), dtype=torch.uint8, device="cuda"))
     if local_size != max_size:
-        padding = torch.empty(
-            size=(max_size - local_size,), dtype=torch.uint8, device="cuda"
-        )
+        padding = torch.empty(size=(max_size - local_size,), dtype=torch.uint8, device="cuda")
         tensor = torch.cat((tensor, padding), dim=0)
     dist.all_gather(tensor_list, tensor)
 
@@ -163,9 +161,7 @@ class MetricLogger(object):
             return self.meters[attr]
         if attr in self.__dict__:
             return self.__dict__[attr]
-        raise AttributeError(
-            "'{}' object has no attribute '{}'".format(type(self).__name__, attr)
-        )
+        raise AttributeError("'{}' object has no attribute '{}'".format(type(self).__name__, attr))
 
     def __str__(self):
         loss_str = []
@@ -338,9 +334,7 @@ def init_distributed_mode(args):
 
     torch.cuda.set_device(args.gpu)
     args.dist_backend = "nccl"
-    print(
-        "| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True
-    )
+    print("| distributed init (rank {}): {}".format(args.rank, args.dist_url), flush=True)
     torch.distributed.init_process_group(
         backend=args.dist_backend,
         init_method=args.dist_url,

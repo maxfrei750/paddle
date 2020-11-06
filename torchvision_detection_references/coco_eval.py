@@ -108,9 +108,7 @@ class CocoEvaluator(object):
             labels = prediction["labels"].tolist()
 
             rles = [
-                mask_util.encode(
-                    np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F")
-                )[0]
+                mask_util.encode(np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F"))[0]
                 for mask in masks
             ]
             for rle in rles:
@@ -263,9 +261,7 @@ def loadRes(self, resFile):
         imgIds = set([img["id"] for img in res.dataset["images"]]) & set(
             [ann["image_id"] for ann in anns]
         )
-        res.dataset["images"] = [
-            img for img in res.dataset["images"] if img["id"] in imgIds
-        ]
+        res.dataset["images"] = [img for img in res.dataset["images"] if img["id"] in imgIds]
         for id, ann in enumerate(anns):
             ann["id"] = id + 1
     elif "bbox" in anns[0] and not anns[0]["bbox"] == []:
@@ -315,9 +311,7 @@ def evaluate(self):
     # add backward compatibility if useSegm is specified in params
     if p.useSegm is not None:
         p.iouType = "segm" if p.useSegm == 1 else "bbox"
-        print(
-            "useSegm (deprecated) is not None. Running {} evaluation".format(p.iouType)
-        )
+        print("useSegm (deprecated) is not None. Running {} evaluation".format(p.iouType))
     # print('Evaluate annotation type *{}*'.format(p.iouType))
     p.imgIds = list(np.unique(p.imgIds))
     if p.useCats:
@@ -333,11 +327,7 @@ def evaluate(self):
         computeIoU = self.computeIoU
     elif p.iouType == "keypoints":
         computeIoU = self.computeOks
-    self.ious = {
-        (imgId, catId): computeIoU(imgId, catId)
-        for imgId in p.imgIds
-        for catId in catIds
-    }
+    self.ious = {(imgId, catId): computeIoU(imgId, catId) for imgId in p.imgIds for catId in catIds}
 
     evaluateImg = self.evaluateImg
     maxDet = p.maxDets[-1]

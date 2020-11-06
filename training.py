@@ -24,9 +24,7 @@ def create_trainer(model, optimizer, data_loader, device=None):
             warmup_factor = 1.0 / 1000
             warmup_iters = min(1000, len(data_loader) - 1)
 
-            lr_scheduler = utils.warmup_lr_scheduler(
-                optimizer, warmup_iters, warmup_factor
-            )
+            lr_scheduler = utils.warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor)
 
         images, targets = batch
 
@@ -82,13 +80,9 @@ def get_optimizer(model, config):
     trainable_parameters = [p for p in model.parameters() if p.requires_grad]
 
     if optimizer_name == "sgd":
-        return torch.optim.SGD(
-            trainable_parameters, **config["optimizer"]["parameters"]
-        )
+        return torch.optim.SGD(trainable_parameters, **config["optimizer"]["parameters"])
     elif optimizer_name == "adam":
-        return torch.optim.Adam(
-            trainable_parameters, **config["optimizer"]["parameters"]
-        )
+        return torch.optim.Adam(trainable_parameters, **config["optimizer"]["parameters"])
 
 
 def get_lr_scheduler(optimizer, config):

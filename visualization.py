@@ -110,9 +110,7 @@ def visualize_detection(
                 mask = img_as_float(mask * 255)
             mask = mask >= 0.5
 
-            result = _overlay_image_with_mask(
-                result, mask, color, do_display_outlines_only
-            )
+            result = _overlay_image_with_mask(result, mask, color, do_display_outlines_only)
 
         if box is not None and do_display_box:
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
@@ -128,12 +126,7 @@ def visualize_detection(
 
             caption += ": {:.3f}".format(score)
 
-        if (
-            label is not None
-            and do_display_label
-            or score is not None
-            and do_display_score
-        ):
+        if label is not None and do_display_label or score is not None and do_display_score:
             x, y = box[:2]
             y -= font_size + 2
             ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)

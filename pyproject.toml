@@ -1,0 +1,28 @@
+[tool.black]
+line-length = 100
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the root of the project
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | external         # also separately exclude a folder named external in the root of the project
+)
+'''
+
+[tool.isort]
+#multi_line_output=3
+#use_parentheses=true
+#include_trailing_comma=true
+line_length=100
+atomic=true
+skip_glob="*/__init__.py"
+skip=["output"]

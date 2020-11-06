@@ -86,10 +86,7 @@ class AveragePrecision(Metric):
         targets = [{k: v.to(self._device) for k, v in t.items()} for t in targets]
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
 
-        res = {
-            target["image_id"].item(): output
-            for target, output in zip(targets, outputs)
-        }
+        res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}
 
         self._coco_evaluator.update(res)
         torch.set_num_threads(n_threads)
@@ -121,9 +118,7 @@ class AveragePrecision(Metric):
     def print(self):
         p = self.parameters
 
-        format_string = (
-            " {:<18} {} @[ IoU={:<9} | area={} | n_detections_max={:>3d} ] = {:0.3f}"
-        )
+        format_string = " {:<18} {} @[ IoU={:<9} | area={} | n_detections_max={:>3d} ] = {:0.3f}"
         title_string = "Average Precision"
         type_string = "(AP)"
         iou_string = (
