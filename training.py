@@ -120,7 +120,9 @@ def setup_logging_callbacks(
         with torch.no_grad():
             prediction = model([example_image])[0]
 
-        detection_image = np.array(visualize_detection(example_image, prediction))
+        detection_image = np.array(
+            visualize_detection(example_image, prediction, score_threshold=0.5)
+        )
         tensorboard_writer.add_image(
             "validation/example_detection", detection_image, epoch, dataformats="HWC"
         )
