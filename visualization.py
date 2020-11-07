@@ -40,6 +40,7 @@ def visualize_detection(
     do_display_score=True,
     do_display_mask=True,
     class_name_dict=None,
+    score_threshold=0,
 ):
     font_size = 16
 
@@ -104,6 +105,10 @@ def visualize_detection(
     colors = get_random_colors(num_instances)
 
     for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
+        if score:
+            if score <= score_threshold:
+                continue
+
         if mask is not None and do_display_mask:
             mask = mask.squeeze()
 
