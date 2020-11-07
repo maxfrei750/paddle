@@ -1,11 +1,7 @@
-# TODO: Adapt FibeR-CNN training parameters
-
 general:
   random_seed: 42
 model:
   n_classes: 2  # Background and Particle
-  pretrained_backbone: True
-  trainable_backbone_layers: 3
 data:
   class_names:
     1: particle
