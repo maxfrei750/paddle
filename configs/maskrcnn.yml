@@ -3,6 +3,7 @@ general:
 model:
   n_classes: 2  # Background and Particle
 data:
+  root_folder: "data"
   class_names:
     1: particle
   batch_size_training: 2
@@ -13,6 +14,7 @@ data:
 training:
   max_epochs: 100
 logging:
+  root_folder: "logs"
   print_frequency: 10
 optimizer:
   name: sgd

@@ -21,19 +21,9 @@ from utilities import get_time_stamp, set_random_seed
 
 
 def main():
-    # Parameters -------------------------------------------------------------------------------------------------------
-    test_mode = False
-    config_name = "maskrcnn"
-    log_dir_base = "logs"
-    data_root = path.join("data")
-
     # Config -----------------------------------------------------------------------------------------------------------
+    config_name = "maskrcnn"
     config = Config.load(path.join("configs", config_name + ".yml"))
-
-    # Testmode ---------------------------------------------------------------------------------------------------------
-    if test_mode:
-        config["data"]["subset_training"] += "_mini"
-        config["data"]["subset_validation"] += "_mini"
 
     # Reproducibility --------------------------------------------------------------------------------------------------
     set_random_seed(config["general"]["random_seed"])
@@ -46,6 +36,7 @@ def main():
 
     # Data -------------------------------------------------------------------------------------------------------------
     # TODO: Test pillow-SIMD
+    data_root = config["data"]["root_folder"]
 
     data_loader_training = get_data_loader(
         data_root,
@@ -90,6 +81,7 @@ def main():
 
     # Logging ----------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
+    log_dir_base = config["logging"]["root_folder"]
     log_dir = path.join(log_dir_base, config_name + "_" + time_stamp)
 
     config.save(path.join(log_dir, config_name + ".yml"))
