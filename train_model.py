@@ -63,7 +63,6 @@ def main():
         batch_size=config["data"]["batch_size_validation"],
         class_names=config["data"]["class_names"],
         num_workers=config["data"]["n_data_loader_workers"],
-        transforms=get_transform(),
         collate_fn=collate_fn,
     )
 
