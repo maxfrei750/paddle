@@ -206,7 +206,7 @@ def training(config):
         batch_size=config["data"]["batch_size_training"],
         class_names=config["data"]["class_names"],
         num_workers=config["data"]["n_data_loader_workers"],
-        transforms=get_transform(),
+        transforms=get_transform(training=True),
         collate_fn=collate_fn,
     )
     data_loader_validation = get_data_loader(
@@ -215,6 +215,7 @@ def training(config):
         batch_size=config["data"]["batch_size_validation"],
         class_names=config["data"]["class_names"],
         num_workers=config["data"]["n_data_loader_workers"],
+        transforms=get_transform(training=False),
         collate_fn=collate_fn,
     )
     # Optimizer --------------------------------------------------------------------------------------------------------
