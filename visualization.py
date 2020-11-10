@@ -153,3 +153,8 @@ def _overlay_image_with_mask(image, mask, color, do_display_outlines_only):
     mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
     image = Image.composite(mask_colored, image, mask)
     return image
+
+
+def save_visualization(image, prediction, visualization_image_path, **kwargs):
+    visualization_image = visualize_detection(image, prediction, **kwargs)
+    visualization_image.save(visualization_image_path)
