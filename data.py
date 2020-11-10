@@ -63,7 +63,7 @@ class Dataset(torch.utils.data.Dataset):
 
         # TODO: Support multiple classes.
         labels = np.ones((num_instances,), dtype=np.int64)
-        boxes = _extract_bounding_boxes(masks)
+        boxes = extract_bounding_boxes(masks)
 
         labels = torch.as_tensor(labels)
         scores = torch.ones((num_instances,), dtype=torch.float32)
@@ -92,17 +92,23 @@ class Dataset(torch.utils.data.Dataset):
         return len(self.sample_folders)
 
 
-def _extract_bounding_boxes(masks):
+def extract_bounding_boxes(masks):
     boxes = list()
     for mask in masks:
-        pos = np.where(mask)
-        xmin = np.min(pos[1])
-        xmax = np.max(pos[1]) + 1
-        ymin = np.min(pos[0])
-        ymax = np.max(pos[0]) + 1
-        boxes.append([xmin, ymin, xmax, ymax])
+        box = extract_bounding_box(mask)
+        boxes.append(box)
 
     return boxes
+
+
+def extract_bounding_box(mask):
+    pos = np.where(mask)
+    xmin = np.min(pos[1])
+    xmax = np.max(pos[1]) + 1
+    ymin = np.min(pos[0])
+    ymax = np.max(pos[0]) + 1
+    box = [xmin, ymin, xmax, ymax]
+    return box
 
 
 def _remove_empty_masks(masks):
