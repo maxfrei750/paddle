@@ -8,6 +8,7 @@ from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
 
 import torch
+from data import extract_bounding_box
 from torchvision import transforms
 
 
@@ -31,6 +32,7 @@ def display_detection(*args, **kwargs):
     result.show()
 
 
+# TODO: Replace detection with individual arguments and adapt display_detection and save_visualization.
 def visualize_detection(
     image,
     detection,
@@ -74,32 +76,32 @@ def visualize_detection(
             value = value.cpu().numpy()
             detection[key] = value
 
-    for key in ["masks", "boxes", "scores", "labels"]:
+    for key in ["masks", "boxes"]:
         if key in detection.keys():
             num_instances = len(detection[key])
             break
 
-        raise ValueError("Detection does not have any visualizable information.")
+        raise ValueError("Detection must have either masks or boxes.")
 
     if "masks" in detection:
         masks = detection["masks"]
     else:
-        masks = [None]
+        masks = [None] * num_instances
 
     if "boxes" in detection:
         boxes = detection["boxes"]
     else:
-        boxes = [None]
+        boxes = [None] * num_instances
 
     if "scores" in detection:
         scores = detection["scores"]
     else:
-        scores = [None]
+        scores = [None] * num_instances
 
     if "labels" in detection:
         labels = detection["labels"]
     else:
-        labels = [None]
+        labels = [None] * num_instances
 
     result = image.convert("RGB")
     colors = get_random_colors(num_instances)
@@ -117,6 +119,9 @@ def visualize_detection(
             mask = mask >= 0.5
 
             result = _overlay_image_with_mask(result, mask, color, do_display_outlines_only)
+
+        if (do_display_label or do_display_score or do_display_box) and box is None:
+            box = extract_bounding_box(mask)
 
         if box is not None and do_display_box:
             ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
