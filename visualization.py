@@ -58,6 +58,8 @@ def visualize_detection(
         image, np.ndarray
     ), "Expected image to be of class torch.Tensor or numpy.ndarray."
 
+    image = image.squeeze()
+
     if isinstance(image, torch.Tensor):
         image = image.cpu().numpy()
 
