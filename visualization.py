@@ -1,8 +1,10 @@
 import random
 import warnings
+from statistics import gmean, gstd
 
 import numpy as np
 from matplotlib import cm
+from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
@@ -18,7 +20,7 @@ def get_viridis_colors(num_colors):
     color_max = (0.369, 0.788, 0.384)
 
     if num_colors == 1:
-        return color_min
+        return [color_min]
 
     colormap = LinearSegmentedColormap.from_list("custom_viridis", colors=[color_min, color_max])
 
@@ -179,3 +181,39 @@ def _overlay_image_with_mask(image, mask, color, do_display_outlines_only):
 def save_visualization(image, prediction, visualization_image_path, **kwargs):
     visualization_image = visualize_detection(image, prediction, **kwargs)
     visualization_image.save(visualization_image_path)
+
+
+def plot_particle_size_distributions(
+    particle_size_lists, score_lists=None, labels=None, measurand_name="Diameter", unit="px"
+):
+    num_particle_size_distributions = len(particle_size_lists)
+    colors = get_viridis_colors(num_particle_size_distributions)
+
+    hist_kwargs = {"density": True, "histtype": "step"}
+
+    if not labels:
+        labels = [f"PSD {i}" for i in range(1, num_particle_size_distributions + 1)]
+
+    if not score_lists:
+        score_lists = [None] * num_particle_size_distributions
+
+    bins = None
+
+    for particle_sizes, scores, color, label in zip(
+        particle_size_lists, score_lists, colors, labels
+    ):
+        geometric_mean = gmean(particle_sizes, weights=scores)
+        geometric_standard_deviation = gstd(particle_sizes, weights=scores)
+
+        label = f"{label}\n  $d_g={geometric_mean:.0f}$ {unit}\n  $\sigma_g={geometric_standard_deviation:.2f}$"
+
+        _, bins, _ = plt.hist(
+            particle_sizes, bins=bins, color=color, weights=scores, label=label, **hist_kwargs
+        )
+
+    plt.ylabel("")
+    plt.legend()
+
+    plt.xlabel(f"{measurand_name}/{unit}")
+
+    plt.ylabel("Probability Density")

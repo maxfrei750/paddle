@@ -5,6 +5,7 @@ from glob import glob
 from os import path
 
 import numpy as np
+import yaml
 
 import torch
 
@@ -25,3 +26,8 @@ def set_random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+
+def log_parameters_as_yaml(yaml_file_path, **kwargs):
+    with open(yaml_file_path, "w") as file:
+        yaml.dump(kwargs, file)

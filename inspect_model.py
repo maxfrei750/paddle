@@ -1,31 +1,26 @@
 from pathlib import Path
-from statistics import gmean, gstd
 
 import matplotlib.pyplot as plt
-import numpy as np
-import yaml
 
 import torch
-from config import Config
 from data import Dataset
-from ignite.handlers import Checkpoint
-from models import get_model
-from postprocessing import filter_border_particles
+from deployment import load_trained_model
+from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
 from torch.utils.data import DataLoader
 from transforms import get_transform
-from utilities import get_best_model_path
-from visualization import get_viridis_colors, save_visualization
+from utilities import get_best_model_path, log_parameters_as_yaml
+from visualization import plot_particle_size_distributions, save_visualization
 
 
 def inspect_model():
     score_threshold = 0.5
     num_subsamples_per_image = 10
     log_root = "logs"
-    model_folder = "maskrcnn_2020-11-10_17-31-25"
+    model_root = "maskrcnn_2020-11-10_17-31-25"
 
     device = "cuda"
 
-    model_folder_path = Path(log_root) / model_folder
+    model_folder_path = Path(log_root) / model_root
     result_folder_path = model_folder_path / "results"
     visualization_image_folder_path = result_folder_path / "images"
 
@@ -34,27 +29,18 @@ def inspect_model():
 
     parameter_file_path = result_folder_path / "parameters.yaml"
 
-    with open(parameter_file_path, "w") as file:
-        yaml.dump(
-            {
-                "score_threshold": score_threshold,
-                "num_subsamples_per_image": num_subsamples_per_image,
-            },
-            file,
-        )
+    log_parameters_as_yaml(
+        parameter_file_path,
+        score_threshold=score_threshold,
+        num_subsamples_per_image=num_subsamples_per_image,
+    )
 
-    best_model_path = get_best_model_path(model_folder_path, "model_")
+    model_path = get_best_model_path(model_folder_path, "model_")
+    model = load_trained_model(model_path, device)
 
-    config_path = list(model_folder_path.glob("*.yml"))[0]
-
-    config = Config.load(config_path)
-    model = get_model(config["model"]["n_classes"])
-    model.to(device)
-    checkpoint = torch.load(best_model_path, map_location=device)
-    Checkpoint.load_objects(to_load={"model": model}, checkpoint=checkpoint)
-    model.eval()
-
-    dataset_gt = Dataset(config["data"]["root_folder"], config["data"]["subset_validation"])
+    data_root = "data"
+    subset_validation = "validation"
+    dataset_gt = Dataset(data_root, subset_validation)
 
     masks_gt = []
     for _, target in dataset_gt:
@@ -65,11 +51,7 @@ def inspect_model():
     masks_pred = []
     scores_pred = []
 
-    dataset_pred = Dataset(
-        config["data"]["root_folder"],
-        config["data"]["subset_validation"],
-        transforms=get_transform(training=False),
-    )
+    dataset_pred = Dataset(data_root, subset_validation, transforms=get_transform(training=False))
 
     dataloader = DataLoader(dataset_pred, batch_size=1)
     dataiterator = iter(dataloader)
@@ -117,52 +99,15 @@ def inspect_model():
     area_equivalent_diameters_pred = calculate_area_equivalent_diameters(masks_pred)
     area_equivalent_diameters_gt = calculate_area_equivalent_diameters(masks_gt)
 
-    compare_particle_size_distributions(
-        area_equivalent_diameters_gt,
-        area_equivalent_diameters_pred,
-        scores_pred,
+    plot_particle_size_distributions(
+        [area_equivalent_diameters_gt, area_equivalent_diameters_pred],
+        score_lists=[None, scores_pred],
+        labels=["Manual", "Prediction"],
         measurand_name="Area Equivalent Diameter",
     )
 
     particle_size_distribution_path = result_folder_path / "particlesizedistribution.pdf"
     plt.savefig(particle_size_distribution_path)
-
-
-def calculate_area_equivalent_diameters(masks):
-    masks = np.array(masks)
-    masks = masks.reshape(masks.shape[0], -1)
-    areas = np.asarray(masks).sum(axis=1)
-    return list(np.sqrt(4 * areas / np.pi))
-
-
-def compare_particle_size_distributions(
-    ground_truth, prediction, scores=None, measurand_name="Diameter", unit="px"
-):
-    colors = get_viridis_colors(2)
-
-    hist_kwargs = {"density": True, "histtype": "step"}
-
-    geometric_mean_gt = gmean(ground_truth)
-    geometric_mean_pred = gmean(prediction, weights=scores)
-
-    geometric_std_gt = gstd(ground_truth)
-    geometric_std_pred = gstd(prediction, weights=scores)
-
-    label_gt = (
-        f"Ground Truth\n  $d_g={geometric_mean_gt:.0f}$ {unit}\n  $\sigma_g={geometric_std_gt:.2f}$"
-    )
-    label_pred = f"Prediction\n  $d_g={geometric_mean_pred:.0f}$ {unit}\n  $\sigma_g={geometric_std_pred:.2f}$"
-
-    p_gt, bins, _ = plt.hist(ground_truth, color=colors[0], label=label_gt, **hist_kwargs)
-    q_pred, _, _ = plt.hist(
-        prediction, bins=bins, color=colors[1], weights=scores, label=label_pred, **hist_kwargs
-    )
-    plt.ylabel("")
-    plt.legend()
-
-    plt.xlabel(f"{measurand_name}/{unit}")
-
-    plt.ylabel("Probability Density")
 
 
 if __name__ == "__main__":

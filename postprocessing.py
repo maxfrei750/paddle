@@ -14,3 +14,10 @@ def filter_border_particles(masks, scores=None):
         return masks, scores
 
     return masks
+
+
+def calculate_area_equivalent_diameters(masks):
+    masks = np.array(masks)
+    masks = masks.reshape(masks.shape[0], -1)
+    areas = np.asarray(masks).sum(axis=1)
+    return list(np.sqrt(4 * areas / np.pi))
