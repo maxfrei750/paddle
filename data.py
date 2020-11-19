@@ -1,5 +1,5 @@
 from glob import glob
-from os import path
+from pathlib import Path
 
 import numpy as np
 from PIL import Image
@@ -12,14 +12,20 @@ from torchvision.transforms import functional as F
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, root, subset, transforms=None, class_name_dict=None):
-        assert path.isdir(root), "The specified root does not exist: " + root
-        self.root = root
 
-        self.subset_path = path.join(root, subset)
-        assert path.isdir(self.subset_path), "The specified subset folder does not exist: " + subset
+        root = Path(root)
+        self.root = root
+        assert root.is_dir(), "The specified root does not exist: " + root
+
+        self.subset_path = root / subset
+        assert self.subset_path.is_dir(), "The specified subset folder does not exist: " + subset
 
         self.subset = subset
-        self.sample_folders = glob(path.join(root, subset, "**"))
+
+        # For large datasets it might be better to keep the glob-generator.
+        self.image_paths = list(self.subset_path.glob("image_*.*"))
+
+        assert self.image_paths, "No images found based on 'image_*.*'."
 
         self.transforms = transforms
 
@@ -29,13 +35,13 @@ class Dataset(torch.utils.data.Dataset):
             self.class_name_dict = class_name_dict
 
     def __getitem__(self, index):
-        sample_folder = self.sample_folders[index]
+        image_path = self.image_paths[index]
 
-        image_path = glob(path.join(sample_folder, "images", "*"))[0]
-        mask_paths = glob(path.join(sample_folder, "masks", "*"))
+        sample_name = image_path.stem[6:]
+
+        mask_paths = list(self.subset_path.glob(f"mask_{sample_name}*.*"))
 
         # TODO: Support multiple classes.
-        #  instance_class_path = path.join(sample_folder, "*.txt")
 
         image = Image.open(image_path)
         image = image.convert("RGB")
@@ -89,7 +95,7 @@ class Dataset(torch.utils.data.Dataset):
         return image, target
 
     def __len__(self):
-        return len(self.sample_folders)
+        return len(self.image_paths)
 
 
 def extract_bounding_boxes(masks):
