@@ -16,3 +16,18 @@ def load_trained_model(model_path, device):
     Checkpoint.load_objects(to_load={"model": model}, checkpoint=checkpoint)
     model.eval()
     return model
+
+
+def analyze_image(model, image):
+    image = image.squeeze()
+
+    device = next(model.parameters()).device
+    with torch.no_grad():
+        prediction = model([image.to(device)])[0]
+
+    for measurand in ["scores", "labels", "boxes"]:
+        prediction[measurand] = list(prediction[measurand].cpu().numpy())
+
+    prediction["masks"] = list(prediction["masks"].squeeze().round().cpu().numpy().astype("bool"))
+
+    return prediction

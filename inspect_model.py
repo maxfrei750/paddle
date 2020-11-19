@@ -2,29 +2,32 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-import torch
 from data import Dataset
-from deployment import load_trained_model
+from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
 from torch.utils.data import DataLoader
 from transforms import get_transform
-from utilities import get_best_model_path, log_parameters_as_yaml
+from utilities import get_best_model_path, log_parameters_as_yaml, set_random_seed
 from visualization import plot_particle_size_distributions, save_visualization
 
 
 def inspect_model():
     score_threshold = 0.5
     num_subsamples_per_image = 10
+    random_seed = 42
     log_root = "logs"
     model_root = "maskrcnn_2020-11-10_17-31-25"
-
+    data_root = "data"
+    subset_validation = "validation"
     device = "cuda"
 
+    set_random_seed(random_seed)
+
     model_folder_path = Path(log_root) / model_root
-    result_folder_path = model_folder_path / "results"
+    result_folder_path = model_folder_path / "results" / subset_validation
     visualization_image_folder_path = result_folder_path / "images"
 
-    result_folder_path.mkdir(exist_ok=True)
+    result_folder_path.mkdir(exist_ok=True, parents=True)
     visualization_image_folder_path.mkdir(exist_ok=True)
 
     parameter_file_path = result_folder_path / "parameters.yaml"
@@ -33,19 +36,18 @@ def inspect_model():
         parameter_file_path,
         score_threshold=score_threshold,
         num_subsamples_per_image=num_subsamples_per_image,
+        random_seed=random_seed,
     )
 
     model_path = get_best_model_path(model_folder_path, "model_")
     model = load_trained_model(model_path, device)
 
-    data_root = "data"
-    subset_validation = "validation"
     dataset_gt = Dataset(data_root, subset_validation)
 
     masks_gt = []
     for _, target in dataset_gt:
         masks_gt_sample = list(target["masks"].cpu().numpy().astype("bool"))
-        masks_gt_sample = filter_border_particles(masks_gt_sample)
+        masks_gt_sample = filter_border_particles({"masks": masks_gt_sample})["masks"]
         masks_gt += masks_gt_sample
 
     masks_pred = []
@@ -69,23 +71,15 @@ def inspect_model():
             dataiterator = iter(dataloader)
             image, target = next(dataiterator)
 
-        image = image.squeeze()
+        prediction = analyze_image(model, image)
 
-        with torch.no_grad():
-            prediction = model([image.to(device)])[0]
-
-        scores_pred_sample = list(prediction["scores"].cpu().numpy())
-        masks_pred_sample = list(prediction["masks"].squeeze().round().cpu().numpy().astype("bool"))
-
-        masks_pred_sample, scores_pred_sample = filter_border_particles(
-            masks_pred_sample, scores_pred_sample
-        )
+        prediction = filter_border_particles(prediction)
 
         visualization_image_path = visualization_image_folder_path / f"{subsample_id}.png"
 
         save_visualization(
             image,
-            {"masks": masks_pred_sample, "scores": scores_pred_sample},
+            prediction,
             visualization_image_path,
             score_threshold=score_threshold,
             do_display_box=False,
@@ -93,8 +87,8 @@ def inspect_model():
             do_display_score=True,
         )
 
-        masks_pred += masks_pred_sample
-        scores_pred += scores_pred_sample
+        masks_pred += prediction["masks"]
+        scores_pred += prediction["scores"]
 
     area_equivalent_diameters_pred = calculate_area_equivalent_diameters(masks_pred)
     area_equivalent_diameters_gt = calculate_area_equivalent_diameters(masks_gt)

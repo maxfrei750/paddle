@@ -4,16 +4,23 @@ import numpy as np
 from skimage.segmentation import clear_border
 
 
-def filter_border_particles(masks, scores=None):
+def filter_border_particles(annotation):
+    masks = annotation["masks"]
+
     cleared_masks = [clear_border(mask, buffer_size=2) for mask in masks]
     do_keep = [np.any(mask) for mask in cleared_masks]
-    masks = list(compress(masks, do_keep))
 
-    if scores:
-        scores = list(compress(scores, do_keep))
-        return masks, scores
+    annotation = filter_annotation(annotation, do_keep)
 
-    return masks
+    return annotation
+
+
+def filter_annotation(annotation, do_keep):
+    for key, value in annotation.items():
+        if key in ["scores", "masks", "boxes", "labels"]:
+            annotation[key] = list(compress(annotation[key], do_keep))
+
+    return annotation
 
 
 def calculate_area_equivalent_diameters(masks):
