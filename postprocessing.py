@@ -15,6 +15,15 @@ def filter_border_particles(annotation):
     return annotation
 
 
+def filter_low_score_particles(annotation, score_threshold):
+    scores = annotation["scores"]
+    do_keep = [score >= score_threshold for score in scores]
+
+    annotation = filter_annotation(annotation, do_keep)
+
+    return annotation
+
+
 def filter_annotation(annotation, do_keep):
     for key, value in annotation.items():
         if key in ["scores", "masks", "boxes", "labels"]:
