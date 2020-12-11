@@ -3,10 +3,10 @@ general:
 model:
   n_classes: 2  # Background and Particle
 data:
-  root_folder: "data"
+  root_folder: "data/sem"
   class_names:
     1: particle
-  batch_size_training: 2
+  batch_size_training: 1
   batch_size_validation: 1
   n_data_loader_workers: 4
   subset_training: training
