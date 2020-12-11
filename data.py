@@ -37,9 +37,9 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         image_path = self.image_paths[index]
 
-        sample_name = image_path.stem[6:]
+        image_name = image_path.stem[6:]
 
-        mask_paths = list(self.subset_path.glob(f"mask_{sample_name}*.*"))
+        mask_paths = list(self.subset_path.glob(f"mask_{image_name}*.*"))
 
         # TODO: Support multiple classes.
 
@@ -71,12 +71,17 @@ class Dataset(torch.utils.data.Dataset):
         labels = np.ones((num_instances,), dtype=np.int64)
         boxes = extract_bounding_boxes(masks)
 
+        if len(boxes):
+            areas = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        else:
+            areas = []
+
         labels = torch.as_tensor(labels)
         scores = torch.ones((num_instances,), dtype=torch.float32)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         masks = torch.tensor(np.array(masks, dtype=np.uint8))
         image_id = torch.tensor([index])
-        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        areas = torch.as_tensor(areas)
         # Assume that there are no crowd instances.
         iscrowd = torch.zeros((num_instances,), dtype=torch.uint8)
 
@@ -86,8 +91,9 @@ class Dataset(torch.utils.data.Dataset):
             "scores": scores,
             "masks": masks,
             "image_id": image_id,
-            "area": area,
+            "area": areas,
             "iscrowd": iscrowd,
+            "image_name": image_name,
         }
 
         image = F.to_tensor(image)
@@ -103,6 +109,8 @@ def extract_bounding_boxes(masks):
     for mask in masks:
         box = extract_bounding_box(mask)
         boxes.append(box)
+
+    boxes = np.asarray(boxes)
 
     return boxes
 
@@ -151,7 +159,8 @@ if __name__ == "__main__":
     if cuda.is_available():
         image = image.to("cuda")
 
-        for key in target:
-            target[key] = target[key].to("cuda")
+        for key, value in target.items():
+            if isinstance(value, torch.Tensor):
+                target[key] = value.to("cuda")
 
     display_detection(image, target, class_name_dict=dataset.class_name_dict, do_display_mask=True)

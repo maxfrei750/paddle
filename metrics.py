@@ -1,8 +1,8 @@
 import numpy as np
-
 import torch
 from ignite.exceptions import NotComputableError
 from ignite.metrics import Metric
+
 from torchvision_detection_references.coco_eval import CocoEvaluator
 from torchvision_detection_references.coco_utils import get_coco_api_from_dataset
 
@@ -78,7 +78,10 @@ class AveragePrecision(Metric):
 
         outputs, targets = state
 
-        targets = [{k: v.to(self._device) for k, v in t.items()} for t in targets]
+        targets = [
+            {k: v.to(self._device) for k, v in t.items() if isinstance(v, torch.Tensor)}
+            for t in targets
+        ]
         outputs = [{k: v.to(cpu_device) for k, v in t.items()} for t in outputs]
 
         res = {target["image_id"].item(): output for target, output in zip(targets, outputs)}

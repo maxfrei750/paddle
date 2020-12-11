@@ -37,7 +37,9 @@ def create_trainer(model, optimizer, data_loader, device=None):
         images, targets = batch
 
         images = list(image.to(device) for image in images)
-        targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+        targets = [
+            {k: v.to(device) for k, v in t.items() if isinstance(v, torch.Tensor)} for t in targets
+        ]
 
         loss_dict = model(images, targets)
 
