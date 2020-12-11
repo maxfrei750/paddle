@@ -19,6 +19,7 @@ dependencies:
 - pycocotools
 - albumentations
 - opencv
+- fire
 #- pip
 #- pip:
 #  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
