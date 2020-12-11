@@ -3,13 +3,13 @@ import sys
 from os import path
 
 import numpy as np
-from tensorboardX import SummaryWriter
-
 import torch
-import torchvision_detection_references.utils as utils
-from data import get_data_loader
 from ignite.engine import Engine, Events, create_supervised_evaluator
 from ignite.handlers import ModelCheckpoint
+from tensorboardX import SummaryWriter
+
+import torchvision_detection_references.utils as utils
+from data import get_data_loader
 from metrics import AveragePrecision
 from models import get_model
 from torchvision_detection_references.utils import collate_fn
@@ -193,17 +193,28 @@ def setup_checkpointers(model, log_dir, trainer, evaluator_val):
 
 
 def training(config):
-    # Reproducibility --------------------------------------------------------------------------------------------------
     set_random_seed(config["general"]["random_seed"])
-    # Device -----------------------------------------------------------------------------------------------------------
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    # Model ------------------------------------------------------------------------------------------------------------
     model = get_model(n_classes=config["model"]["n_classes"])
-    # Data -------------------------------------------------------------------------------------------------------------
-    # TODO: Test pillow-SIMD
-    data_root = config["data"]["root_folder"]
+    data_loader_training, data_loader_validation = get_data_loaders(config)
+    optimizer = get_optimizer(
+        model,
+        optimizer_name=config["optimizer"]["name"],
+        optimizer_parameters=config["optimizer"]["parameters"],
+    )
+    trainer = get_trainer(config, data_loader_training, device, model, optimizer)
+    tensorboard_writer = setup_logging(config, data_loader_validation, device, model, trainer)
+
+    try:
+        trainer.run(data_loader_training, max_epochs=config["training"]["max_epochs"])
+    finally:
+        tensorboard_writer.close()
+    # TODO: Early stopping
+
+
+def get_data_loaders(config):
     data_loader_training = get_data_loader(
-        data_root,
+        config["data"]["root_folder"],
         subset=config["data"]["subset_training"],
         batch_size=config["data"]["batch_size_training"],
         class_names=config["data"]["class_names"],
@@ -212,7 +223,7 @@ def training(config):
         collate_fn=collate_fn,
     )
     data_loader_validation = get_data_loader(
-        data_root,
+        config["data"]["root_folder"],
         subset=config["data"]["subset_validation"],
         batch_size=config["data"]["batch_size_validation"],
         class_names=config["data"]["class_names"],
@@ -220,13 +231,10 @@ def training(config):
         transforms=get_transform(training=False),
         collate_fn=collate_fn,
     )
-    # Optimizer --------------------------------------------------------------------------------------------------------
-    optimizer = get_optimizer(
-        model,
-        optimizer_name=config["optimizer"]["name"],
-        optimizer_parameters=config["optimizer"]["parameters"],
-    )
-    # Trainer ----------------------------------------------------------------------------------------------------------
+    return data_loader_training, data_loader_validation
+
+
+def get_trainer(config, data_loader_training, device, model, optimizer):
     trainer = create_trainer(model, optimizer, data_loader_training, device)
     # Learning rate scheduler ------------------------------------------------------------------------------------------
     lr_scheduler = get_lr_scheduler(optimizer, config["lr_scheduler"])
@@ -235,7 +243,10 @@ def training(config):
     def step_lr_scheduler(engine):
         lr_scheduler.step()
 
-    # Evaluation -------------------------------------------------------------------------------------------------------
+    return trainer
+
+
+def setup_logging(config, data_loader_validation, device, model, trainer):
     metrics = {"AP": AveragePrecision(data_loader_validation, device)}
     evaluator_validation = create_supervised_evaluator(model, metrics=metrics, device=device)
     # Logging ----------------------------------------------------------------------------------------------------------
@@ -256,10 +267,4 @@ def training(config):
     )
     # Checkpointers ----------------------------------------------------------------------------------------------------
     setup_checkpointers(model, log_dir, trainer, evaluator_validation)
-    # Training ---------------------------------------------------------------------------------------------------------
-    try:
-        trainer.run(data_loader_training, max_epochs=config["training"]["max_epochs"])
-    finally:
-        pass
-        tensorboard_writer.close()
-    # TODO: Early stopping
+    return tensorboard_writer
