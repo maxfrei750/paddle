@@ -1,8 +1,11 @@
 import albumentations
 
 
-def get_transform(training=False):
-    transforms = [albumentations.RandomCrop(width=1024, height=1024)]
+def get_transform(training=False, cropping_rectangle=None):
+    transforms = []
+
+    if cropping_rectangle:
+        transforms.append(albumentations.Crop(*cropping_rectangle))
 
     if training:
         transforms += [

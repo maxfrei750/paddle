@@ -219,7 +219,9 @@ def get_data_loaders(config):
         batch_size=config["data"]["batch_size_training"],
         class_names=config["data"]["class_names"],
         num_workers=config["data"]["n_data_loader_workers"],
-        transforms=get_transform(training=True),
+        transforms=get_transform(
+            training=True, cropping_rectangle=config["data"]["cropping_rectangle"]
+        ),
         collate_fn=collate_fn,
     )
     data_loader_validation = get_data_loader(
@@ -228,7 +230,9 @@ def get_data_loaders(config):
         batch_size=config["data"]["batch_size_validation"],
         class_names=config["data"]["class_names"],
         num_workers=config["data"]["n_data_loader_workers"],
-        transforms=get_transform(training=False),
+        transforms=get_transform(
+            training=False, cropping_rectangle=config["data"]["cropping_rectangle"]
+        ),
         collate_fn=collate_fn,
     )
     return data_loader_training, data_loader_validation

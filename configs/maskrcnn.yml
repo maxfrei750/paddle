@@ -11,6 +11,11 @@ data:
   n_data_loader_workers: 4
   subset_training: training
   subset_validation: validation
+  cropping_rectangle:
+    - 0
+    - 0
+    - 1280
+    - 896
 training:
   max_epochs: 100
 logging:
