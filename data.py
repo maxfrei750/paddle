@@ -1,11 +1,9 @@
-from glob import glob
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
-
 import torch
 import torch.utils.data
+from PIL import Image
 from torch.utils.data import DataLoader
 from torchvision.transforms import functional as F
 
@@ -138,29 +136,3 @@ def get_data_loader(
     )
 
     return data_loader
-
-
-if __name__ == "__main__":
-    import random
-
-    import torch.cuda as cuda
-
-    from visualization import display_detection
-
-    test_root_path = "data"
-
-    class_name_dict = {1: "particle"}
-
-    dataset = Dataset(test_root_path, subset="validation", class_name_dict=class_name_dict)
-
-    sample_id = random.randint(1, len(dataset) - 1)
-    image, target = dataset[sample_id]
-
-    if cuda.is_available():
-        image = image.to("cuda")
-
-        for key, value in target.items():
-            if isinstance(value, torch.Tensor):
-                target[key] = value.to("cuda")
-
-    display_detection(image, target, class_name_dict=dataset.class_name_dict, do_display_mask=True)
