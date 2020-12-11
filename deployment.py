@@ -11,7 +11,7 @@ def load_trained_model(model_path, device):
     model_path = Path(model_path)
     config_path = list(model_path.parent.glob("*.yml"))[0]
     config = Config.load(config_path)
-    model = get_model(config["model"]["n_classes"])
+    model = get_model(config["model"]["n_classes"], config["model"]["n_detections_per_image_max"])
     model.to(device)
     checkpoint = torch.load(model_path, map_location=device)
     Checkpoint.load_objects(to_load={"model": model}, checkpoint=checkpoint)

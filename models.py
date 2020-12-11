@@ -3,8 +3,10 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 
-def get_model(n_classes):
-    model = get_mask_rcnn_resnet50_model(n_classes)
+def get_model(n_classes, n_detections_per_image_max=100):
+    model = get_mask_rcnn_resnet50_model(
+        n_classes, n_detections_per_image_max=n_detections_per_image_max
+    )
 
     # TODO: Replace with
     # model = torchvision.models.detection.maskrcnn_resnet50_fpn(
@@ -16,9 +18,11 @@ def get_model(n_classes):
     return model
 
 
-def get_mask_rcnn_resnet50_model(num_classes, pretrained=True):
+def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_image_max=100):
     # Load an instance segmentation model pre-trained on COCO.
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=pretrained)
+    model = torchvision.models.detection.maskrcnn_resnet50_fpn(
+        pretrained=pretrained, box_detections_per_img=n_detections_per_image_max
+    )
     # Get the number of input features for the classifier.
     in_features = model.roi_heads.box_predictor.cls_score.in_features
     # replace the pre-trained head with a new one

@@ -195,7 +195,7 @@ def setup_checkpointers(model, log_dir, trainer, evaluator_val):
 def training(config):
     set_random_seed(config["general"]["random_seed"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = get_model(n_classes=config["model"]["n_classes"])
+    model = get_model(config["model"]["n_classes"], config["model"]["n_detections_per_image_max"])
     data_loader_training, data_loader_validation = get_data_loaders(config)
     optimizer = get_optimizer(
         model,
@@ -251,7 +251,13 @@ def get_trainer(config, data_loader_training, device, model, optimizer):
 
 
 def setup_logging(config, data_loader_validation, device, model, trainer):
-    metrics = {"AP": AveragePrecision(data_loader_validation, device)}
+    metrics = {
+        "AP": AveragePrecision(
+            data_loader_validation,
+            device,
+            n_determinations_max=config["model"]["n_detections_per_image_max"],
+        )
+    }
     evaluator_validation = create_supervised_evaluator(model, metrics=metrics, device=device)
     # Logging ----------------------------------------------------------------------------------------------------------
     time_stamp = get_time_stamp()
