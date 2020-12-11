@@ -1,6 +1,6 @@
 import os
 import random
-import typing
+from typing import Union
 
 import fire
 
@@ -8,7 +8,7 @@ from data import Dataset
 from visualization import display_detection
 
 
-def inspect_data(data_root: typing.Union[str, bytes, os.PathLike], subset: str = "training"):
+def inspect_data(data_root: Union[str, bytes, os.PathLike], subset: str = "training"):
     """Inspect a dataset.
 
     :param data_root: Root folder of the dataset.
