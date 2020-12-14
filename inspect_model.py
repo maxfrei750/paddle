@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 
 import fire
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ def inspect_model(
     log_root: AnyPath = "logs",
     data_root: AnyPath = "data",
     subset: str = "validation",
+    cropping_rectangle: List[int] = None,
     num_subsamples_per_image: int = 1,
     score_threshold: float = 0.5,
     random_seed: int = 42,
@@ -67,7 +69,11 @@ def inspect_model(
     masks_pred = []
     scores_pred = []
 
-    dataset_pred = Dataset(data_root, subset, transforms=get_transform(training=False))
+    dataset_pred = Dataset(
+        data_root,
+        subset,
+        transforms=get_transform(training=False, cropping_rectangle=cropping_rectangle),
+    )
 
     dataloader_pred = DataLoader(
         dataset_pred,
