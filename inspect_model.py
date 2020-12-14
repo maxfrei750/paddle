@@ -9,7 +9,7 @@ from data import Dataset
 from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
 from transforms import get_transform
-from utilities import AnyPath, get_best_checkpoint_path, log_parameters_as_yaml, set_random_seed
+from utilities import AnyPath, get_last_checkpoint_path, log_parameters_as_yaml, set_random_seed
 from visualization import plot_particle_size_distributions, save_visualization
 
 
@@ -55,7 +55,7 @@ def inspect_model(
         random_seed=random_seed,
     )
 
-    model_path = get_best_checkpoint_path(model_folder_path, "model")
+    model_path = get_last_checkpoint_path(model_folder_path)
     model = load_trained_model(model_path, device)
 
     dataset_gt = Dataset(data_root, subset)
