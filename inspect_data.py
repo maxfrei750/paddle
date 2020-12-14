@@ -3,7 +3,6 @@ import random
 from typing import Union
 
 import fire
-
 from data import Dataset
 from visualization import display_detection
 

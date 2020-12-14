@@ -1,9 +1,8 @@
 from pathlib import Path
 
 import torch
-from ignite.handlers import Checkpoint
-
 from config import Config
+from ignite.handlers import Checkpoint
 from models import get_model
 
 

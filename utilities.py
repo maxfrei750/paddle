@@ -6,8 +6,9 @@ from pathlib import Path
 from typing import Any, Union
 
 import numpy as np
-import torch
 import yaml
+
+import torch
 
 AnyPath = Union[str, bytes, os.PathLike]
 
