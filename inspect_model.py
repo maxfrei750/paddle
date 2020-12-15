@@ -9,12 +9,18 @@ from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
 from torch.utils.data import DataLoader
 from transforms import get_transform
-from utilities import AnyPath, get_last_checkpoint_path, log_parameters_as_yaml, set_random_seed
+from utilities import (
+    AnyPath,
+    get_last_checkpoint_path,
+    get_latest_log_folder_path,
+    log_parameters_as_yaml,
+    set_random_seed,
+)
 from visualization import plot_particle_size_distributions, save_visualization
 
 
 def inspect_model(
-    model_id: str,
+    model_id: str = None,
     log_root: AnyPath = "logs",
     data_root: AnyPath = "data",
     subset: str = "validation",
@@ -26,7 +32,7 @@ def inspect_model(
 ):
     """Inspect a model by applying it to a validation dataset and store the results in the model folder.
 
-    :param model_id: Identifier of the model.
+    :param model_id: Identifier of the model or None. If None, then the latest trained model is inspected. Default: None
     :param log_root: Path of the log folder. Default: "logs"
     :param data_root: Path of the data folder. Default: "data"
     :param subset: Name of the subset to use for the validation. Default: "validation"
@@ -38,6 +44,9 @@ def inspect_model(
     """
 
     set_random_seed(random_seed)
+
+    if model_id is None:
+        model_id = get_latest_log_folder_path(log_root)
 
     model_folder_path = Path(log_root) / model_id
     result_folder_path = model_folder_path / "results" / subset
