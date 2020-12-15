@@ -72,3 +72,16 @@ def log_parameters_as_yaml(yaml_file_path: AnyPath, **kwargs: Any):
     """
     with open(yaml_file_path, "w") as file:
         yaml.dump(kwargs, file)
+
+
+def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
+    """Get the id of the model that has been trained last.
+
+    :param log_root: Path where log folders are located.
+    :return: Id of the model that has been trained last.
+    """
+    log_root = Path(log_root)
+    log_folders = [folder for folder in log_root.glob("*") if folder.is_dir()]
+    last_log_folder = max(log_folders, key=os.path.getctime)
+    last_model_id = last_log_folder.name
+    return last_model_id
