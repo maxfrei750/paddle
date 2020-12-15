@@ -47,7 +47,10 @@ def get_last_checkpoint_path(log_dir: AnyPath) -> AnyPath:
     """
     log_dir = Path(log_dir)
     log_file_paths = sorted(list(log_dir.glob("checkpoint_*_*.pt")))
-    last_checkpoint_path = log_file_paths[-1]
+    try:
+        last_checkpoint_path = log_file_paths[-1]
+    except IndexError:
+        raise FileNotFoundError(f"Could not find checkpoint file in folder: {log_dir}")
     return last_checkpoint_path
 
 
