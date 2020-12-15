@@ -2,7 +2,7 @@ general:
   random_seed: 42
 model:
   n_classes: 2  # Background and Particle
-  n_detections_per_image_max: 200
+  n_detections_per_image_max: 300
 data:
   root_folder: "data/sem"
   class_names:
