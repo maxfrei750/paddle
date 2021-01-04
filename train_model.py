@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import fire
+
 from config import Config
 from training import training
 

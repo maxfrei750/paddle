@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import List
 
-import matplotlib.pyplot as plt
-
 import fire
+import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader
+
 from data import Dataset
 from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
-from torch.utils.data import DataLoader
 from transforms import get_transform
 from utilities import (
     AnyPath,
