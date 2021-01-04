@@ -20,6 +20,7 @@ dependencies:
 - albumentations
 - opencv
 - fire
-#- pip
-#- pip:
+- pip
+- pip:
+    - diplib
 #  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
