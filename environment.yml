@@ -8,6 +8,7 @@ dependencies:
 - torchvision
 - cudatoolkit=10.1
 - ignite
+- pytorch-lightning
 - tensorboard
 - tensorboardx
 - matplotlib
