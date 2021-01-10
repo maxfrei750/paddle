@@ -2,7 +2,7 @@ import random
 
 import fire
 
-from data import Dataset
+from data import MaskRCNNDataset
 from utilities import AnyPath
 from visualization import display_detection
 
@@ -14,7 +14,7 @@ def inspect_data(data_root: AnyPath, subset: str = "training"):
     :param subset: Subset of the dataset. Default: "training"
     """
 
-    dataset = Dataset(data_root, subset=subset)
+    dataset = MaskRCNNDataset(data_root, subset=subset)
 
     sample_id = random.randint(0, len(dataset) - 1)
     image, target = dataset[sample_id]

@@ -5,7 +5,7 @@ import fire
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
-from data import Dataset
+from data import MaskRCNNDataset
 from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
 from transforms import get_transform
@@ -67,7 +67,7 @@ def inspect_model(
     model_path = get_last_checkpoint_path(model_folder_path)
     model = load_trained_model(model_path, device)
 
-    dataset_gt = Dataset(data_root, subset)
+    dataset_gt = MaskRCNNDataset(data_root, subset)
 
     masks_gt = []
     for _, target in dataset_gt:
@@ -78,7 +78,7 @@ def inspect_model(
     masks_pred = []
     scores_pred = []
 
-    dataset_pred = Dataset(
+    dataset_pred = MaskRCNNDataset(
         data_root,
         subset,
         transforms=get_transform(training=False, cropping_rectangle=cropping_rectangle),
