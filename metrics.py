@@ -1,8 +1,8 @@
 import numpy as np
-
 import torch
 from ignite.exceptions import NotComputableError
 from ignite.metrics import Metric
+
 from torchvision_detection_references.coco_eval import CocoEvaluator
 from torchvision_detection_references.coco_utils import get_coco_api_from_dataset
 

@@ -1,14 +1,14 @@
 import os
 
 import numpy as np
-from PIL import Image
-
 import torch
 import torch.utils.data
 import torchvision
-import torchvision_detection_references.transforms as T
+from PIL import Image
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+
+import torchvision_detection_references.transforms as T
 from torchvision_detection_references import utils
 from torchvision_detection_references.engine import evaluate, train_one_epoch
 

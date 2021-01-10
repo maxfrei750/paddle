@@ -3,13 +3,13 @@ import sys
 from os import path
 
 import numpy as np
-from tensorboardX import SummaryWriter
-
 import torch
-import torchvision_detection_references.utils as utils
-from data import get_data_loader
 from ignite.engine import Engine, Events, create_supervised_evaluator
 from ignite.handlers import ModelCheckpoint
+from tensorboardX import SummaryWriter
+
+import torchvision_detection_references.utils as utils
+from data import get_data_loader
 from metrics import AveragePrecision
 from models import get_model
 from torchvision_detection_references.utils import collate_fn

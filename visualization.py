@@ -3,16 +3,16 @@ import warnings
 from statistics import gmean, gstd
 
 import numpy as np
+import torch
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
-
-import torch
-from data import extract_bounding_box
 from torchvision import transforms
+
+from data import extract_bounding_box
 
 
 def get_viridis_colors(num_colors):
