@@ -7,8 +7,6 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
-from lr_schedulers import LearningRateWarmup
-
 
 def get_model(num_classes, num_detections_per_image_max=100):
     model = get_mask_rcnn_resnet50_model(
@@ -51,8 +49,6 @@ class LightningMaskRCNN(pl.LightningModule):
         self.learning_rate = learning_rate
         self.learning_rate_step_size = 30
         self.gamma = 0.1
-        self.warmup_factor = 0.001
-        self.warmup_duration = 1000
 
     def forward(self, x):
         return self.model(x)
@@ -72,26 +68,14 @@ class LightningMaskRCNN(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
 
-        schedulers = [
-            {
-                "scheduler": LearningRateWarmup(
-                    optimizer,
-                    warmup_duration=self.warmup_duration,
-                    warmup_factor=self.warmup_factor,
-                ),
-                "interval": "step",
-                "frequency": 1,
-                "strict": True,
-            },
-            {
-                "scheduler": ExponentialLR(optimizer, gamma=self.gamma),
-                "interval": "epoch",
-                "frequency": self.learning_rate_step_size,
-                "strict": True,
-            },
-        ]
+        scheduler = {
+            "scheduler": ExponentialLR(optimizer, gamma=self.gamma),
+            "interval": "epoch",
+            "frequency": self.learning_rate_step_size,
+            "strict": True,
+        }
 
-        return [optimizer], schedulers
+        return [optimizer], [scheduler]
 
 
 if __name__ == "__main__":
