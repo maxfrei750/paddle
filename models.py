@@ -80,9 +80,14 @@ class LightningMaskRCNN(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
+    from pytorch_lightning import loggers as pl_loggers
     from pytorch_lightning.callbacks import LearningRateMonitor
 
     from data import MaskRCNNDataModule
+
+    log_root = "lightning_logs"
+
+    max_epochs = 100
 
     cropping_rectangle = (0, 0, 1280, 896)
 
@@ -92,9 +97,12 @@ if __name__ == "__main__":
         data_root=data_root, cropping_rectangle=cropping_rectangle, batch_size=1
     )
 
-    lr_monitor = LearningRateMonitor(logging_interval="step")
+    learning_rate_monitor = LearningRateMonitor()
+    tensorboard_logger = pl_loggers.TensorBoardLogger(log_root)
 
     maskrcnn = LightningMaskRCNN()
 
-    trainer = pl.Trainer(gpus=1, max_epochs=100, callbacks=[lr_monitor])
+    trainer = pl.Trainer(
+        gpus=1, max_epochs=max_epochs, callbacks=[learning_rate_monitor], logger=tensorboard_logger
+    )
     trainer.fit(maskrcnn, datamodule=data_module)
