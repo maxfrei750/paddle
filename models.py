@@ -46,6 +46,7 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 
 
 # TODO: Docstrings
+# TODO: Use typing.
 # TODO: Log images
 # TODO: Add hyperparameters as init parameters
 # TODO: Test native pytorch vision maskrcnn
