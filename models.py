@@ -119,12 +119,12 @@ if __name__ == "__main__":
 
     from data import MaskRCNNDataModule
 
-    data_root = Path("data") / "tem"
+    data_root = Path("data") / "sem"
     log_root = "lightning_logs"
     max_epochs = 100
     cropping_rectangle = (0, 0, 1280, 896)
     fast_dev_run = False
-    batch_size = 2
+    batch_size = 1
     gpus = 1
 
     data_module = MaskRCNNDataModule(
