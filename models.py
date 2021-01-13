@@ -48,7 +48,6 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 # TODO: Docstrings
 # TODO: Use typing.
 # TODO: Log images
-# TODO: Add hyperparameters as init parameters
 # TODO: Test native pytorch vision maskrcnn
 # TODO: Add Hyperparameter: num_detections_max
 # TODO: Test Adam
@@ -56,7 +55,13 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 
 
 class LightningMaskRCNN(pl.LightningModule):
-    def __init__(self, num_classes=2, learning_rate=0.005):
+    def __init__(
+        self,
+        num_classes=2,
+        learning_rate=0.005,
+        learning_rate_step_size=30,
+        learning_rate_drop_factor=0.1,
+    ):
         super().__init__()
         self.save_hyperparameters()
 
@@ -71,8 +76,8 @@ class LightningMaskRCNN(pl.LightningModule):
         )
 
         self.learning_rate = learning_rate
-        self.learning_rate_step_size = 30
-        self.gamma = 0.1
+        self.learning_rate_step_size = learning_rate_step_size
+        self.learning_rate_drop_factor = learning_rate_drop_factor
 
     def forward(self, images, targets=None):
         return self.model(images, targets)
@@ -104,7 +109,7 @@ class LightningMaskRCNN(pl.LightningModule):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
 
         scheduler = {
-            "scheduler": ExponentialLR(optimizer, gamma=self.gamma),
+            "scheduler": ExponentialLR(optimizer, gamma=self.learning_rate_drop_factor),
             "interval": "epoch",
             "frequency": self.learning_rate_step_size,
             "strict": True,
