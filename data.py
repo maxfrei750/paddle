@@ -151,6 +151,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
         if num_workers is None:
             self.num_workers = multiprocessing.cpu_count()
+        else:
+            self.num_workers = num_workers
 
         self.train_dataset = None
         self.val_dataset = None
