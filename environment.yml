@@ -4,6 +4,7 @@ channels:
 - defaults
 - conda-forge
 dependencies:
+- python>=3.8
 - pytorch
 - torchvision
 - cudatoolkit=10.1
