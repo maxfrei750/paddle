@@ -51,6 +51,8 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 class LightningMaskRCNN(pl.LightningModule):
     def __init__(self, num_classes=2, learning_rate=0.005):
         super().__init__()
+        self.save_hyperparameters()
+
         self.model = get_model(num_classes=num_classes)
 
         self.validation_metrics = ModuleDict(
