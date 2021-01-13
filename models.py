@@ -46,6 +46,12 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 
 
 # TODO: Docstrings
+# TODO: Log images
+# TODO: Add hyperparameters as init parameters
+# TODO: Test native pytorch vision maskrcnn
+# TODO: Add Hyperparameter: num_detections_max
+# TODO: Test Adam
+# TODO: Test drop lr on plateau
 
 
 class LightningMaskRCNN(pl.LightningModule):
