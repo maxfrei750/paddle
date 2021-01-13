@@ -1,11 +1,15 @@
 from pathlib import Path
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torchvision
+from torch.nn import ModuleDict
 from torch.optim.lr_scheduler import ExponentialLR
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
+
+from metrics import AveragePrecision
 
 
 def get_model(num_classes, num_detections_per_image_max=100):
@@ -41,29 +45,51 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
     return model
 
 
+# TODO: Docstrings
+
+
 class LightningMaskRCNN(pl.LightningModule):
     def __init__(self, num_classes=2, learning_rate=0.005):
         super().__init__()
         self.model = get_model(num_classes=num_classes)
 
+        self.validation_metrics = ModuleDict(
+            {
+                # "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
+                # "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
+                "mAP": AveragePrecision(iou_thresholds=np.arange(0.5, 1, 0.05), iou_type="mask"),
+            }
+        )
+
         self.learning_rate = learning_rate
         self.learning_rate_step_size = 30
         self.gamma = 0.1
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, images, targets=None):
+        return self.model(images, targets)
 
     def training_step(self, batch, batch_idx):
         images, targets = batch
-        partial_losses = self.model(images, targets)
+        partial_losses = self(images, targets)
         loss = sum(partial_loss for partial_loss in partial_losses.values())
 
-        self.log("loss", loss)
+        self.log("train/loss", loss)
 
         for key, value in partial_losses.items():
-            self.log(key, value)
+            self.log("train/" + key, value)
 
         return loss
+
+    def validation_step(self, batch, batch_idx):
+        images, targets = batch
+        predictions = self(images, targets)
+
+        return {"predictions": predictions, "targets": targets}
+
+    def validation_step_end(self, outputs):
+        for metric_name, metric in self.validation_metrics.items():
+            metric(outputs["predictions"], outputs["targets"])
+            self.log(f"val/{metric_name}", metric)
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
@@ -85,24 +111,29 @@ if __name__ == "__main__":
 
     from data import MaskRCNNDataModule
 
-    log_root = "lightning_logs"
-
-    max_epochs = 100
-
-    cropping_rectangle = (0, 0, 1280, 896)
-
     data_root = Path("data") / "tem"
+    log_root = "lightning_logs"
+    max_epochs = 100
+    cropping_rectangle = (0, 0, 1280, 896)
+    fast_dev_run = False
+    batch_size = 2
+    gpus = 1
 
     data_module = MaskRCNNDataModule(
-        data_root=data_root, cropping_rectangle=cropping_rectangle, batch_size=1
+        data_root=data_root,
+        cropping_rectangle=cropping_rectangle,
+        batch_size=batch_size,
     )
 
     learning_rate_monitor = LearningRateMonitor()
     tensorboard_logger = pl_loggers.TensorBoardLogger(log_root)
 
     maskrcnn = LightningMaskRCNN()
-
     trainer = pl.Trainer(
-        gpus=1, max_epochs=max_epochs, callbacks=[learning_rate_monitor], logger=tensorboard_logger
+        gpus=gpus,
+        max_epochs=max_epochs,
+        callbacks=[learning_rate_monitor],
+        logger=tensorboard_logger,
+        fast_dev_run=fast_dev_run,
     )
     trainer.fit(maskrcnn, datamodule=data_module)

@@ -216,13 +216,13 @@ class MaskRCNNDataModule(pl.LightningDataModule):
             collate_fn=self.collate,
         )
 
-    # def val_dataloader(self) -> DataLoader:
-    #     return DataLoader(
-    #         self.val_dataset,
-    #         batch_size=self.batch_size,
-    #         num_workers=self.num_workers,
-    #         collate_fn=self.collate,
-    #     )
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            collate_fn=self.collate,
+        )
 
     def test_dataloader(self) -> DataLoader:
         return DataLoader(
