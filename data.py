@@ -1,6 +1,6 @@
 import multiprocessing
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple
 
 import albumentations
 import numpy as np
@@ -13,9 +13,43 @@ from torchvision.transforms import functional as F
 
 from utilities import AnyPath
 
+# Custom types
+Mask = np.ndarray
+Batch = Tuple[Tuple[torch.Tensor, ...], Tuple[dict, ...]]
+
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
-    def __init__(self, root, subset, transforms=None, class_name_dict=None):
+    """Data set for Mask R-CNN training, validation or test data.
+
+    :param root: Path, where data is stored in the following structure:
+        root/
+            subset/
+                image_a.png
+                image_b.png
+                image_c.png
+                ...
+                mask_a_1.png
+                mask_a_2.png
+                mask_a_3.png
+                ...
+                mask_b_1.png
+                mask_b_2.png
+                ...
+            subset2/
+                ...
+            ...
+    :param subset: Name of the subset to use.
+    :param transform: torchvision or albumentation transform.
+    :param class_name_dict: Dictionary, to map class indices to class names.
+    """
+
+    def __init__(
+        self,
+        root: AnyPath,
+        subset: str,
+        transform: Optional[Any] = None,
+        class_name_dict: Optional[dict] = None,
+    ) -> None:
 
         root = Path(root)
         self.root = root
@@ -26,19 +60,24 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.subset = subset
 
-        # For large datasets it might be better to keep the glob-generator.
         self.image_paths = list(self.subset_path.glob("image_*.*"))
 
         assert self.image_paths, "No images found based on 'image_*.*'."
 
-        self.transforms = transforms
+        self.transform = transform
 
         if class_name_dict is None:
             self.class_name_dict = {1: "particle"}
         else:
             self.class_name_dict = class_name_dict
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, dict]:
+        """Retrieve a sample from the dataset.
+
+        :param index: Index of the sample to retrieve.
+        :return: Tuple containing an image as torch tensor and a dict holding the available ground truth data.
+        """
+
         image_path = self.image_paths[index]
 
         image_name = image_path.stem[6:]
@@ -60,14 +99,14 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             mask = np.array(mask)
             masks.append(mask)
 
-        if self.transforms is not None:
-            transformed_data = self.transforms(image=image, masks=masks)
+        if self.transform is not None:
+            transformed_data = self.transform(image=image, masks=masks)
 
             image = transformed_data["image"]
             masks = transformed_data["masks"]
 
             # Filter empty masks.
-            masks = _remove_empty_masks(masks)
+            masks = self._remove_empty_masks(masks)
 
             num_instances = len(masks)
 
@@ -104,11 +143,27 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         return image, target
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Retrieve the number of samples in the data set."""
         return len(self.image_paths)
 
+    @staticmethod
+    def _remove_empty_masks(masks: List[Mask]):
+        """Remove empty masks from list of masks.
 
-def extract_bounding_boxes(masks):
+        :param masks: List of masks (HxW numpy arrays).
+        :return: List of non-empty masks (HxW numpy arrays with at least one non-zero element).
+        """
+
+        return [mask for mask in masks if np.any(mask)]
+
+
+def extract_bounding_boxes(masks: List[Mask]):
+    """Extract the bounding boxes of multiple masks.
+
+    :param masks: List of masks (HxW numpy arrays).
+    :return: List of bounding boxes (4x1 numpy arrays).
+    """
     boxes = list()
     for mask in masks:
         box = extract_bounding_box(mask)
@@ -119,21 +174,47 @@ def extract_bounding_boxes(masks):
     return boxes
 
 
-def extract_bounding_box(mask):
+def extract_bounding_box(mask: Mask):
+    """Extract the bounding box of a mask.
+
+    :param mask: HxW numpy array
+    :return: bounding box (4x1 numpy array).
+    """
     pos = np.where(mask)
     xmin = np.min(pos[1])
     xmax = np.max(pos[1]) + 1
     ymin = np.min(pos[0])
     ymax = np.max(pos[0]) + 1
-    box = [xmin, ymin, xmax, ymax]
-    return box
-
-
-def _remove_empty_masks(masks):
-    return [mask for mask in masks if np.any(mask)]
+    return [xmin, ymin, xmax, ymax]
 
 
 class MaskRCNNDataModule(pl.LightningDataModule):
+    """LightningDataModule to supply Mask R-CNN training, validation and test data.
+
+    :param data_root: Path, where data is stored in the following structure:
+        data_root/
+            training/
+                image_a.png
+                image_b.png
+                image_c.png
+                ...
+                mask_a_1.png
+                mask_a_2.png
+                mask_a_3.png
+                ...
+                mask_b_1.png
+                mask_b_2.png
+                ...
+            validation/
+                ...
+            test/
+                ...
+    :param class_name_dict: Dictionary, to map class indices to class names.
+    :param cropping_rectangle:
+    :param batch_size:
+    :param num_workers:
+    """
+
     def __init__(
         self,
         data_root: AnyPath,
@@ -141,7 +222,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
-    ):
+    ) -> None:
+
         super().__init__()
 
         self.data_root = Path(data_root)
@@ -162,38 +244,45 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.val_transforms = self.get_transforms(train=False)
         self.test_transforms = self.get_transforms(train=False)
 
-    def prepare_data(self, *args, **kwargs):
+    def prepare_data(self) -> None:
+        """Do nothing."""
         pass
 
-    def setup(self, stage=None):
+    def setup(self, stage: Optional[Literal["fit", "test"]] = None) -> None:
+        """Set up the training, validation and test data sets.
+
+        :param stage: Either "fit", when used for training and validation or "test", when used for testing of a model.
+        """
+
         if stage == "fit" or stage is None:
             self.train_dataset = MaskRCNNDataset(
                 self.data_root,
                 subset="training",
-                transforms=self.train_transforms,
+                transform=self.train_transforms,
                 class_name_dict=self.class_name_dict,
             )
 
             self.val_dataset = MaskRCNNDataset(
                 self.data_root,
                 subset="validation",
-                transforms=self.val_transforms,
+                transform=self.val_transforms,
                 class_name_dict=self.class_name_dict,
             )
-
-            # self.dims = tuple(self.train_dataset[0][0].shape)
 
         if stage == "test" or stage is None:
             self.test_dataset = MaskRCNNDataset(
                 self.data_root,
                 subset="test",
-                transforms=self.test_transforms,
+                transform=self.test_transforms,
                 class_name_dict=self.class_name_dict,
             )
 
-            # self.dims = tuple(self.test_dataset[0][0].shape)
+    def get_transforms(self, train: bool = False) -> albumentations.Compose:
+        """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for training).
 
-    def get_transforms(self, train=False) -> albumentations.Compose:
+        :param train: Specify, whether to apply image augmentation or not.
+        :return: Composed transforms.
+        """
         transforms = []
 
         if self.cropping_rectangle:
@@ -209,6 +298,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         return albumentations.Compose(transforms)
 
     def train_dataloader(self) -> DataLoader:
+        """Returns a dataloader for training."""
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -217,6 +307,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
+        """Returns a dataloader for validation."""
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -225,6 +316,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
+        """Returns a dataloader for testing."""
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
@@ -232,7 +324,13 @@ class MaskRCNNDataModule(pl.LightningDataModule):
             collate_fn=self.collate,
         )
 
-    def transfer_batch_to_device(self, batch: Any, device: torch.device) -> Any:
+    def transfer_batch_to_device(self, batch: Batch, device: torch.device) -> Batch:
+        """Transfer a uncollated_batch of data to a device (e.g. GPU).
+
+        :param batch: Batch of data. Tuple containing a tuple of images and a tuple of targets.
+        :param device: Target device.
+        :return: Batch on target device.
+        """
         images, targets = batch
 
         images = tuple(image.to(device) for image in images)
@@ -243,5 +341,10 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         return images, targets
 
     @staticmethod
-    def collate(batch):
-        return tuple(zip(*batch))
+    def collate(uncollated_batch: List[Tuple[torch.Tensor, dict]]) -> Batch:
+        """Defines how to collate batches.
+
+        :param uncollated_batch: Uncollated batch of data. List containing tuples of images and targets.
+        :return: Collated batch. Tuple containing a tuple of images and a tuple of targets.
+        """
+        return tuple(zip(*uncollated_batch))
