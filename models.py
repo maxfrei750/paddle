@@ -4,11 +4,13 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 import torchvision
+from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import ModuleDict
 from torch.optim.lr_scheduler import ExponentialLR
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
+from callbacks import ExampleDetectionMonitor
 from metrics import AveragePrecision
 
 
@@ -47,11 +49,11 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 
 # TODO: Docstrings
 # TODO: Use typing.
-# TODO: Log images
 # TODO: Test native pytorch vision maskrcnn
 # TODO: Add Hyperparameter: num_detections_max
 # TODO: Test Adam
 # TODO: Test drop lr on plateau
+# TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -120,17 +122,16 @@ class LightningMaskRCNN(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
-    from pytorch_lightning import loggers as pl_loggers
     from pytorch_lightning.callbacks import LearningRateMonitor
 
     from data import MaskRCNNDataModule
 
-    data_root = Path("data") / "sem"
+    data_root = Path("data") / "tem"
     log_root = "lightning_logs"
     max_epochs = 100
     cropping_rectangle = (0, 0, 1280, 896)
     fast_dev_run = False
-    batch_size = 1
+    batch_size = 2
     gpus = 1
     random_seed = 42
 
@@ -142,15 +143,16 @@ if __name__ == "__main__":
         batch_size=batch_size,
     )
 
-    learning_rate_monitor = LearningRateMonitor()
-    tensorboard_logger = pl_loggers.TensorBoardLogger(log_root)
+    model = LightningMaskRCNN()
 
-    maskrcnn = LightningMaskRCNN()
+    callbacks = [LearningRateMonitor(), ExampleDetectionMonitor()]
+
     trainer = pl.Trainer(
         gpus=gpus,
         max_epochs=max_epochs,
-        callbacks=[learning_rate_monitor],
-        logger=tensorboard_logger,
+        callbacks=callbacks,
+        logger=TensorBoardLogger(log_root),
         fast_dev_run=fast_dev_run,
     )
-    trainer.fit(maskrcnn, datamodule=data_module)
+
+    trainer.fit(model, datamodule=data_module)
