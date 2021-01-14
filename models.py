@@ -132,6 +132,9 @@ if __name__ == "__main__":
     fast_dev_run = False
     batch_size = 1
     gpus = 1
+    random_seed = 42
+
+    pl.seed_everything(random_seed)
 
     data_module = MaskRCNNDataModule(
         data_root=data_root,
