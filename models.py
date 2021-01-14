@@ -13,44 +13,8 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from callbacks import ExampleDetectionMonitor
 from metrics import AveragePrecision
 
-
-def get_model(num_classes, num_detections_per_image_max=100):
-    model = get_mask_rcnn_resnet50_model(
-        num_classes, n_detections_per_image_max=num_detections_per_image_max
-    )
-
-    # TODO: Replace with
-    # model = torchvision.models.detection.maskrcnn_resnet50_fpn(
-    #     num_classes=num_classes,
-    #     pretrained=True,
-    #     trainable_backbone_layers=config["model"]["trainable_backbone_layers"],
-    # )
-
-    return model
-
-
-def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_image_max=100):
-    # Load an instance segmentation model pre-trained on COCO.
-    model = torchvision.models.detection.maskrcnn_resnet50_fpn(
-        pretrained=pretrained, box_detections_per_img=n_detections_per_image_max
-    )
-    # Get the number of input features for the classifier.
-    in_features = model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-    # Get the number of input features for the mask classifier.
-    in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 256
-    # Replace the mask predictor with a new one.
-    model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask, hidden_layer, num_classes)
-
-    return model
-
-
 # TODO: Docstrings
 # TODO: Use typing.
-# TODO: Test native pytorch vision maskrcnn
-# TODO: Add Hyperparameter: num_detections_max
 # TODO: Test Adam
 # TODO: Test drop lr on plateau
 # TODO: Test cyclical learning rate.
@@ -66,6 +30,7 @@ class LightningMaskRCNN(pl.LightningModule):
     def __init__(
         self,
         num_classes=2,
+        num_detections_per_image_max=100,
         learning_rate=0.005,
         learning_rate_step_size=30,
         learning_rate_drop_factor=0.1,
@@ -73,7 +38,10 @@ class LightningMaskRCNN(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.model = get_model(num_classes=num_classes)
+        self.num_classes = num_classes
+        self.num_detections_per_image_max = num_detections_per_image_max
+
+        self.model = self.get_model()
 
         self.validation_metrics = ModuleDict(
             {
@@ -86,6 +54,24 @@ class LightningMaskRCNN(pl.LightningModule):
         self.learning_rate = learning_rate
         self.learning_rate_step_size = learning_rate_step_size
         self.learning_rate_drop_factor = learning_rate_drop_factor
+
+    def get_model(self):
+        # Load an instance segmentation model pre-trained on COCO.
+        model = torchvision.models.detection.maskrcnn_resnet50_fpn(
+            pretrained=True, box_detections_per_img=self.num_detections_per_image_max
+        )
+
+        # Replace the pretrained box and the mask heads.
+        in_features_box = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_features_box, self.num_classes)
+
+        in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
+        hidden_layer = 256
+        model.roi_heads.mask_predictor = MaskRCNNPredictor(
+            in_features_mask, hidden_layer, self.num_classes
+        )
+
+        return model
 
     def forward(self, images, targets=None):
         return self.model(images, targets)
