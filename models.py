@@ -53,7 +53,13 @@ def get_mask_rcnn_resnet50_model(num_classes, pretrained=True, n_detections_per_
 # TODO: Add Hyperparameter: num_detections_max
 # TODO: Test Adam
 # TODO: Test drop lr on plateau
+# TODO: Test cyclical learning rate.
 # TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
+# TODO: Add script arguments.
+# TODO: Move training script.
+# TODO: Test lr_finder.
+# TODO: Test early stopping.
+# TODO: Optional: Add configs.
 
 
 class LightningMaskRCNN(pl.LightningModule):
