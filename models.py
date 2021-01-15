@@ -21,9 +21,9 @@ from metrics import AveragePrecision
 # TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
 # TODO: Add script arguments.
 # TODO: Move training script.
-# TODO: Test lr_finder.
 # TODO: Test early stopping.
 # TODO: Optional: Add configs.
+# TODO: Test adding weight_decay= 0.0005 to SGD.
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -118,7 +118,9 @@ if __name__ == "__main__":
 
     from data import MaskRCNNDataModule
 
-    data_root = Path("data") / "tem"
+    find_optimum_learning_rate = True
+
+    data_root = Path("data") / "sem"
     log_root = "lightning_logs"
     max_epochs = 100
     cropping_rectangle = (0, 0, 1280, 896)
@@ -136,6 +138,11 @@ if __name__ == "__main__":
     )
 
     model = LightningMaskRCNN()
+
+    if find_optimum_learning_rate:
+        lr_tuner = pl.Trainer(auto_lr_find=True, gpus=gpus)
+        lr_tuner.tune(model, datamodule=data_module)
+        exit()
 
     callbacks = [LearningRateMonitor(), ExampleDetectionMonitor()]
 
