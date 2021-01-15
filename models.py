@@ -6,7 +6,7 @@ import torch
 import torchvision
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import ModuleDict
-from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import ExponentialLR, ReduceLROnPlateau
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
@@ -32,8 +32,6 @@ class LightningMaskRCNN(pl.LightningModule):
         num_classes=2,
         num_detections_per_image_max=100,
         learning_rate=0.005,
-        learning_rate_step_size=30,
-        learning_rate_drop_factor=0.1,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -52,8 +50,6 @@ class LightningMaskRCNN(pl.LightningModule):
         )
 
         self.learning_rate = learning_rate
-        self.learning_rate_step_size = learning_rate_step_size
-        self.learning_rate_drop_factor = learning_rate_drop_factor
 
     def get_model(self):
         # Load an instance segmentation model pre-trained on COCO.
@@ -102,14 +98,11 @@ class LightningMaskRCNN(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
 
-        scheduler = {
-            "scheduler": ExponentialLR(optimizer, gamma=self.learning_rate_drop_factor),
-            "interval": "epoch",
-            "frequency": self.learning_rate_step_size,
-            "strict": True,
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": ReduceLROnPlateau(optimizer, mode="max"),
+            "monitor": "val/mAP",
         }
-
-        return [optimizer], [scheduler]
 
 
 if __name__ == "__main__":
@@ -118,16 +111,17 @@ if __name__ == "__main__":
 
     from data import MaskRCNNDataModule
 
-    find_optimum_learning_rate = True
+    find_optimum_learning_rate = False
 
     data_root = Path("data") / "sem"
     log_root = "lightning_logs"
     max_epochs = 100
     cropping_rectangle = (0, 0, 1280, 896)
     fast_dev_run = False
-    batch_size = 2
-    gpus = 1
+    batch_size = 1
+    gpus = -1
     random_seed = 42
+    learning_rate = 0.0003
 
     pl.seed_everything(random_seed)
 
