@@ -6,7 +6,7 @@ import torch
 import torchvision
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import ModuleDict
-from torch.optim.lr_scheduler import ExponentialLR, ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
@@ -16,14 +16,13 @@ from metrics import AveragePrecision
 # TODO: Docstrings
 # TODO: Use typing.
 # TODO: Test Adam
-# TODO: Test drop lr on plateau
 # TODO: Test cyclical learning rate.
 # TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
 # TODO: Add script arguments.
 # TODO: Move training script.
-# TODO: Test early stopping.
 # TODO: Optional: Add configs.
 # TODO: Test adding weight_decay= 0.0005 to SGD.
+# TODO: Add checkpointer: https://pytorch-lightning.readthedocs.io/en/stable/weights_loading.html#automatic-saving
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -32,6 +31,7 @@ class LightningMaskRCNN(pl.LightningModule):
         num_classes=2,
         num_detections_per_image_max=100,
         learning_rate=0.005,
+        learning_rate_scheduler_patience=10,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -50,6 +50,7 @@ class LightningMaskRCNN(pl.LightningModule):
         )
 
         self.learning_rate = learning_rate
+        self.learning_rate_scheduler_patience = learning_rate_scheduler_patience
 
     def get_model(self):
         # Load an instance segmentation model pre-trained on COCO.
@@ -100,14 +101,16 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return {
             "optimizer": optimizer,
-            "lr_scheduler": ReduceLROnPlateau(optimizer, mode="max"),
+            "lr_scheduler": ReduceLROnPlateau(
+                optimizer, mode="max", patience=self.learning_rate_scheduler_patience
+            ),
             "monitor": "val/mAP",
         }
 
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
-    from pytorch_lightning.callbacks import LearningRateMonitor
+    from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 
     from data import MaskRCNNDataModule
 
@@ -118,10 +121,12 @@ if __name__ == "__main__":
     max_epochs = 100
     cropping_rectangle = (0, 0, 1280, 896)
     fast_dev_run = False
-    batch_size = 1
+    batch_size = 8
     gpus = -1
     random_seed = 42
-    learning_rate = 0.0003
+    learning_rate = 0.005
+    learning_rate_scheduler_patience = 10
+    early_stopping_patience = 20
 
     pl.seed_everything(random_seed)
 
@@ -131,14 +136,21 @@ if __name__ == "__main__":
         batch_size=batch_size,
     )
 
-    model = LightningMaskRCNN()
+    model = LightningMaskRCNN(
+        learning_rate=learning_rate,
+        learning_rate_scheduler_patience=learning_rate_scheduler_patience,
+    )
 
     if find_optimum_learning_rate:
         lr_tuner = pl.Trainer(auto_lr_find=True, gpus=gpus)
         lr_tuner.tune(model, datamodule=data_module)
         exit()
 
-    callbacks = [LearningRateMonitor(), ExampleDetectionMonitor()]
+    callbacks = [
+        EarlyStopping(monitor="val/mAP", mode="max", patience=early_stopping_patience),
+        LearningRateMonitor(),
+        ExampleDetectionMonitor(),
+    ]
 
     trainer = pl.Trainer(
         gpus=gpus,
