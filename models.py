@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -161,4 +162,9 @@ if __name__ == "__main__":
         fast_dev_run=fast_dev_run,
     )
 
+    # TODO: Remove this filter, as soon as torchvision>0.8.2 is released.
+    warnings.filterwarnings(
+        "ignore",
+        message="The default behavior for interpolate/upsample with float scale_factor changed",
+    )
     trainer.fit(model, datamodule=data_module)
