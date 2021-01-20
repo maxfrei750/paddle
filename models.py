@@ -110,7 +110,7 @@ class LightningMaskRCNN(pl.LightningModule):
 
 if __name__ == "__main__":
     from pytorch_lightning import Trainer
-    from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
+    from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 
     from data import MaskRCNNDataModule
 
@@ -147,6 +147,7 @@ if __name__ == "__main__":
         exit()
 
     callbacks = [
+        ModelCheckpoint(monitor="val/mAP", mode="max"),
         EarlyStopping(monitor="val/mAP", mode="max", patience=early_stopping_patience),
         LearningRateMonitor(),
         ExampleDetectionMonitor(),
