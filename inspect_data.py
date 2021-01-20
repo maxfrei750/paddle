@@ -1,14 +1,13 @@
-import os
 import random
-from typing import Union
 
 import fire
 
 from data import Dataset
+from utilities import AnyPath
 from visualization import display_detection
 
 
-def inspect_data(data_root: Union[str, bytes, os.PathLike], subset: str = "training"):
+def inspect_data(data_root: AnyPath, subset: str = "training"):
     """Inspect a dataset.
 
     :param data_root: Root folder of the dataset.
@@ -17,7 +16,7 @@ def inspect_data(data_root: Union[str, bytes, os.PathLike], subset: str = "train
 
     dataset = Dataset(data_root, subset=subset)
 
-    sample_id = random.randint(1, len(dataset) - 1)
+    sample_id = random.randint(0, len(dataset) - 1)
     image, target = dataset[sample_id]
 
     display_detection(
