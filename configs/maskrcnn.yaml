@@ -1,0 +1,30 @@
+hydra:
+  run:
+    dir: logs/${hydra:job.config_name}/${now:%Y-%m-%d_%H-%M-%S}
+program:
+  random_seed: 42
+  search_optimum_learning_rate: False
+callbacks:
+  early_stopping_patience: 20
+trainer:
+  fast_dev_run: False
+  gpus: -1
+  max_epochs: 300
+model:
+  num_classes: 2  # Background and Particle
+  num_detections_per_image_max: 100
+  learning_rate: 0.005
+  drop_lr_on_plateau_patience: 10
+datamodule:
+  data_root: data/sem
+  class_names:
+    1: particle
+  batch_size: 8
+  train_subset: training
+  val_subset: validation
+  test_subset: test
+  cropping_rectangle:
+    - 0
+    - 0
+    - 1280
+    - 896

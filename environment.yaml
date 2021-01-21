@@ -20,9 +20,11 @@ dependencies:
 - cython
 - pycocotools
 - albumentations
-- opencv
 - fire
+- hydra-core
 - pip
 - pip:
     - diplib
+    - opencv-python
+    - git+https://github.com/omry/omegaconf.git@master
 #  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows

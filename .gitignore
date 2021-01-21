@@ -78,6 +78,5 @@ datasets
 
 # Logs
 logs
-lightning_logs
 data
 development

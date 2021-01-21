@@ -40,7 +40,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             ...
     :param subset: Name of the subset to use.
     :param transform: torchvision or albumentation transform.
-    :param class_name_dict: Dictionary, to map class indices to class names.
+    :param class_names: Dictionary, to map class indices to class names.
     """
 
     def __init__(
@@ -48,7 +48,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         root: AnyPath,
         subset: str,
         transform: Optional[Any] = None,
-        class_name_dict: Optional[dict] = None,
+        class_names: Optional[dict] = None,
     ) -> None:
 
         root = Path(root)
@@ -66,10 +66,10 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.transform = transform
 
-        if class_name_dict is None:
+        if class_names is None:
             self.class_name_dict = {1: "particle"}
         else:
-            self.class_name_dict = class_name_dict
+            self.class_name_dict = class_names
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, dict]:
         """Retrieve a sample from the dataset.
@@ -209,25 +209,29 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 ...
             test/
                 ...
-    :param class_name_dict: Dictionary, to map class indices to class names.
-    :param cropping_rectangle:
-    :param batch_size:
-    :param num_workers:
+    :param class_names: Dictionary, to map class indices to class names.
+    :param cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping of
+        images. Applied before all other transforms.
+    :param batch_size: Number of samples per batch.
+    :param num_workers: Number of workers to load data. If None, defaults to the number of threads of the CPU.
     """
 
     def __init__(
         self,
         data_root: AnyPath,
-        class_name_dict: Optional[dict] = None,
+        class_names: Optional[dict] = None,
         cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
+        train_subset="training",
+        val_subset="validation",
+        test_subset="test",
     ) -> None:
 
         super().__init__()
 
         self.data_root = Path(data_root)
-        self.class_name_dict = class_name_dict
+        self.class_name_dict = class_names
         self.cropping_rectangle = cropping_rectangle
         self.batch_size = batch_size
 
@@ -235,6 +239,10 @@ class MaskRCNNDataModule(pl.LightningDataModule):
             self.num_workers = multiprocessing.cpu_count()
         else:
             self.num_workers = num_workers
+
+        self.train_subset = train_subset
+        self.val_subset = val_subset
+        self.test_subset = test_subset
 
         self.train_dataset = None
         self.val_dataset = None
@@ -257,24 +265,24 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         if stage == "fit" or stage is None:
             self.train_dataset = MaskRCNNDataset(
                 self.data_root,
-                subset="training",
+                subset=self.train_subset,
                 transform=self.train_transforms,
-                class_name_dict=self.class_name_dict,
+                class_names=self.class_name_dict,
             )
 
             self.val_dataset = MaskRCNNDataset(
                 self.data_root,
-                subset="validation",
+                subset=self.val_subset,
                 transform=self.val_transforms,
-                class_name_dict=self.class_name_dict,
+                class_names=self.class_name_dict,
             )
 
         if stage == "test" or stage is None:
             self.test_dataset = MaskRCNNDataset(
                 self.data_root,
-                subset="test",
+                subset=self.test_subset,
                 transform=self.test_transforms,
-                class_name_dict=self.class_name_dict,
+                class_names=self.class_name_dict,
             )
 
     def get_transforms(self, train: bool = False) -> albumentations.Compose:
