@@ -8,7 +8,6 @@ import pytorch_lightning as pl
 import torch
 import torch.utils.data
 from PIL import Image
-from torch.utils.data import DataLoader
 from torchvision.transforms import functional as F
 
 from utilities import AnyPath
@@ -305,27 +304,27 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
         return albumentations.Compose(transforms)
 
-    def train_dataloader(self) -> DataLoader:
+    def train_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for training."""
-        return DataLoader(
+        return torch.utils.data.DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=self.collate,
         )
 
-    def val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for validation."""
-        return DataLoader(
+        return torch.utils.data.DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=self.collate,
         )
 
-    def test_dataloader(self) -> DataLoader:
+    def test_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for testing."""
-        return DataLoader(
+        return torch.utils.data.DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
