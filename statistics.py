@@ -13,6 +13,7 @@ def gstd(a, weights=None):
 
 # Customization of scipy.stats.gmean
 # See also: https://github.com/scipy/scipy/issues/13065
+# TODO: Replace with scipy version, when scipy 1.7.0 is released.
 def gmean(a, axis=0, dtype=None, weights=None):
     """
     Compute the geometric mean along the specified axis.
