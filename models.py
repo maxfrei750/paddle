@@ -17,15 +17,21 @@ class LightningMaskRCNN(pl.LightningModule):
     def __init__(
         self,
         num_classes=2,
-        num_detections_per_image_max=100,
         learning_rate=0.005,
         drop_lr_on_plateau_patience=10,
+        model_kwargs=None,
     ):
         super().__init__()
         self.save_hyperparameters()
 
         self.num_classes = num_classes
-        self.num_detections_per_image_max = num_detections_per_image_max
+        self.learning_rate = learning_rate
+        self.drop_lr_on_plateau_patience = drop_lr_on_plateau_patience
+
+        if model_kwargs is None:
+            self.model_kwargs = {}
+        else:
+            self.model_kwargs = model_kwargs
 
         self.model = self.get_model()
 
@@ -37,13 +43,11 @@ class LightningMaskRCNN(pl.LightningModule):
             }
         )
 
-        self.learning_rate = learning_rate
-        self.drop_lr_on_plateau_patience = drop_lr_on_plateau_patience
-
     def get_model(self):
         # Load an instance segmentation model pre-trained on COCO.
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(
-            pretrained=True, box_detections_per_img=self.num_detections_per_image_max
+            pretrained=True,
+            **self.model_kwargs,
         )
 
         # Replace the pretrained box and the mask heads.

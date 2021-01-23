@@ -12,9 +12,10 @@ trainer:
   max_epochs: 300
 model:
   num_classes: 2  # Background and Particle
-  num_detections_per_image_max: 100
   learning_rate: 0.005
   drop_lr_on_plateau_patience: 10
+  model_kwargs:  # see torchvision.models.detection.mask_rcnn.MaskRCNN
+    box_detections_per_img: 100
 datamodule:
   data_root: data/sem
   class_names:
