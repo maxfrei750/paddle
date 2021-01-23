@@ -13,8 +13,6 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, Mode
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.nn import ModuleDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 from callbacks import ExampleDetectionMonitor
 from data import MaskRCNNDataModule
@@ -26,7 +24,6 @@ from metrics import AveragePrecision
 # TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
 # TODO: Move training script.
 # TODO: Test adding weight_decay= 0.0005 to SGD.
-from utilities import get_time_stamp
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -64,11 +61,13 @@ class LightningMaskRCNN(pl.LightningModule):
 
         # Replace the pretrained box and the mask heads.
         in_features_box = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features_box, self.num_classes)
+        model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(
+            in_features_box, self.num_classes
+        )
 
         in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
         hidden_layer = 256
-        model.roi_heads.mask_predictor = MaskRCNNPredictor(
+        model.roi_heads.mask_predictor = torchvision.models.detection.mask_rcnn.MaskRCNNPredictor(
             in_features_mask, hidden_layer, self.num_classes
         )
 
