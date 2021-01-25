@@ -22,7 +22,7 @@ def inspect_data(data_root: AnyPath, subset: str = "training"):
     display_detection(
         image,
         target,
-        class_name_dict=dataset.class_name_dict,
+        map_label_to_class_name=dataset.map_label_to_class_name,
         do_display_box=False,
         do_display_label=False,
         do_display_score=False,

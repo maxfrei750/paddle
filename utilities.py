@@ -3,7 +3,7 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, List, Union
 
 import numpy as np
 import torch
@@ -84,3 +84,12 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
     last_log_folder = max(log_folders, key=os.path.getctime)
     last_model_id = last_log_folder.name
     return last_model_id
+
+
+def all_elements_identical(x: List):
+    """Checks if all elements of a list are identical.
+
+    :param x: List
+    :return: True, if all elements of the list are identical or False, if they are not.
+    """
+    return all([element == x[0] for element in x])

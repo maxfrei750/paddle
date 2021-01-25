@@ -18,8 +18,6 @@ model:
     box_detections_per_img: 300
 datamodule:
   data_root: data/sem
-  class_names:
-    1: particle
   batch_size: 8
   train_subset: training
   val_subset: validation

@@ -14,6 +14,9 @@ from torchvision import transforms
 
 from data import extract_bounding_box
 
+# TODO: Add docstrings.
+# TODO: Add typehints.
+
 
 def get_viridis_colors(num_colors):
     color_min = (0.231, 0.322, 0.545)
@@ -62,7 +65,7 @@ def visualize_detection(
     do_display_label=True,
     do_display_score=True,
     do_display_mask=True,
-    class_name_dict=None,
+    map_label_to_class_name=None,
     score_threshold=0,
 ):
     font_size = 16
@@ -71,9 +74,6 @@ def visualize_detection(
         font = ImageFont.truetype("DejaVuSans.ttf", font_size)
     except OSError:
         font = ImageFont.truetype("arial.ttf", font_size)
-
-    if class_name_dict is None:
-        class_name_dict = {1: "particle"}
 
     assert isinstance(image, torch.Tensor) or isinstance(
         image, np.ndarray
@@ -152,7 +152,10 @@ def visualize_detection(
         caption = None
 
         if label is not None and do_display_label:
-            caption = class_name_dict[label]
+            if map_label_to_class_name is None:
+                caption = f"class{label}"
+            else:
+                caption = map_label_to_class_name[label]
 
         if score is not None and do_display_score:
             if not do_display_label:

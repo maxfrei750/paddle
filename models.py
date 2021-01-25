@@ -43,6 +43,8 @@ class LightningMaskRCNN(pl.LightningModule):
             }
         )
 
+        self.map_label_to_class_name = None
+
     def get_model(self):
         # Load an instance segmentation model pre-trained on COCO.
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(
