@@ -15,7 +15,7 @@ model:
   learning_rate: 0.005
   drop_lr_on_plateau_patience: 10
   model_kwargs:  # see torchvision.models.detection.mask_rcnn.MaskRCNN
-    box_detections_per_img: 100
+    box_detections_per_img: 300
 datamodule:
   data_root: data/sem
   class_names:
