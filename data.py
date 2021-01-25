@@ -276,6 +276,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 class_names=self.class_name_dict,
             )
 
+            # TODO: Check if class_name_dicts match.
+
         if stage == "test" or stage is None:
             self.test_dataset = MaskRCNNDataset(
                 self.data_root,

@@ -16,6 +16,7 @@ from models import LightningMaskRCNN
 # TODO: Docstrings
 # TODO: Use typing.
 # TODO: Remove obsolete functions remaining from ignite-lightning transition.
+# TODO: Log metric.
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
@@ -61,6 +62,7 @@ def train(config: DictConfig) -> None:
         message="The default behavior for interpolate/upsample with float scale_factor changed",
     )
 
+    # TODO: Store data_module.class_name_dict in the model.
     trainer.fit(model, datamodule=data_module)
 
 
