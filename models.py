@@ -37,11 +37,13 @@ class LightningMaskRCNN(pl.LightningModule):
 
         self.validation_metrics = ModuleDict(
             {
-                # "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
-                # "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
+                "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
+                "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
                 "mAP": AveragePrecision(iou_thresholds=np.arange(0.5, 1, 0.05), iou_type="mask"),
             }
         )
+
+        self.main_validation_metric_name = "mAP"
 
         self.map_label_to_class_name = None
 
@@ -91,6 +93,9 @@ class LightningMaskRCNN(pl.LightningModule):
         for metric_name, metric in self.validation_metrics.items():
             metric(outputs["predictions"], outputs["targets"])
             self.log(f"val/{metric_name}", metric)
+
+            if metric_name == self.main_validation_metric_name:
+                self.log("hp_metric", metric)
 
     def configure_optimizers(self):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
