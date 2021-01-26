@@ -18,19 +18,15 @@ from models import LightningMaskRCNN
 # TODO: Use typing.
 # TODO: Remove obsolete functions remaining from ignite-lightning transition.
 # TODO: Log metric.
-# TODO: Prevent log creation if fast_dev_run=True
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
 def train(config: DictConfig) -> None:
-    log_dir = Path.cwd()
-    log_root = log_dir.parent
-    version = log_dir.name
+    log_root, version = setup_logging()
 
-    os.chdir(hydra.utils.get_original_cwd())
-
-    logger = logging.getLogger(__name__)
-    logger.info(f"Training with the following config:\n{OmegaConf.to_yaml(config)}")
+    logging.getLogger(__name__).info(
+        f"Training with the following config:\n{OmegaConf.to_yaml(config)}"
+    )
 
     pl.seed_everything(config.program.random_seed)
 
@@ -65,6 +61,14 @@ def train(config: DictConfig) -> None:
     )
 
     trainer.fit(model, datamodule=data_module)
+
+
+def setup_logging():
+    log_dir = Path.cwd()
+    log_root = log_dir.parent
+    version = log_dir.name
+    os.chdir(hydra.utils.get_original_cwd())
+    return log_root, version
 
 
 if __name__ == "__main__":
