@@ -1,0 +1,12 @@
+defaults:
+  - maskrcnn
+model:
+  model_kwargs:  # see torchvision.models.detection.mask_rcnn.MaskRCNN
+    box_detections_per_img: 300
+datamodule:
+  data_root: data/Venator/sem
+  cropping_rectangle:
+    - 0
+    - 0
+    - 1280
+    - 896

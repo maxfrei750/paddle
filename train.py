@@ -17,12 +17,11 @@ from models import LightningMaskRCNN
 # TODO: Docstrings
 # TODO: Use typing.
 # TODO: Remove obsolete functions remaining from ignite-lightning transition.
-# TODO: Log metric.
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
 def train(config: DictConfig) -> None:
-    log_root, version = setup_logging()
+    log_root, version = setup_hydra()
 
     logging.getLogger(__name__).info(
         f"Training with the following config:\n{OmegaConf.to_yaml(config)}"
@@ -63,7 +62,7 @@ def train(config: DictConfig) -> None:
     trainer.fit(model, datamodule=data_module)
 
 
-def setup_logging():
+def setup_hydra():
     log_dir = Path.cwd()
     log_root = log_dir.parent
     version = log_dir.name

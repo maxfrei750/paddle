@@ -14,16 +14,11 @@ model:
   num_classes: 2  # Background and Particle
   learning_rate: 0.005
   drop_lr_on_plateau_patience: 10
-  model_kwargs:  # see torchvision.models.detection.mask_rcnn.MaskRCNN
-    box_detections_per_img: 300
+  model_kwargs: null  # see torchvision.models.detection.mask_rcnn.MaskRCNN
 datamodule:
-  data_root: data/sem
+  data_root: null
   batch_size: 8
   train_subset: training
   val_subset: validation
   test_subset: test
-  cropping_rectangle:
-    - 0
-    - 0
-    - 1280
-    - 896
+  cropping_rectangle: null

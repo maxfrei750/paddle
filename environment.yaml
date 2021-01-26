@@ -21,10 +21,9 @@ dependencies:
 - pycocotools
 - albumentations
 - fire
-- hydra-core
 - pip
 - pip:
     - diplib
     - opencv-python
-    - git+https://github.com/omry/omegaconf.git@master
+    - git+https://github.com/facebookresearch/hydra.git@993d6eec047a2d4e63a6f96fc62b519009902bec # TODO: Replace with hydra=1.1 as soon as it is released.
 #  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
