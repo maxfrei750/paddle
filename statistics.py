@@ -93,7 +93,3 @@ def gmean(a, axis=0, dtype=None, weights=None):
         assert weights.shape == log_a.shape, "Shape of a and weights must be identical."
 
     return np.exp(np.average(log_a, axis=axis, weights=weights))
-
-
-if __name__ == "__main__":
-    print(gmean([1, 4], weights=[1, 2]))

@@ -16,7 +16,6 @@ from models import LightningMaskRCNN
 
 # TODO: Docstrings
 # TODO: Use typing.
-# TODO: Remove obsolete functions remaining from ignite-lightning transition.
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
