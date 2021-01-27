@@ -10,22 +10,23 @@ from utilities import AnyPath
 
 
 def convert_imagej_csv_to_masks(
-    data_root: AnyPath, csv_file_name: AnyPath, output_path: AnyPath
+    data_root: AnyPath, image_folder: AnyPath, csv_file: AnyPath, output_folder: AnyPath
 ) -> None:
     """Convert circular/elliptical ImageJ annotations to binary masks. Also converts and renames
         associated input images to png.
 
     :param data_root: Path, where ImageJ results csv-file and associated images are stored.
-    :param csv_file_name: Filename of the ImageJ results csv-file.
-    :param output_path: Path, were resulting binary masks and images are stored.
-    :return:
+    :param image_folder: Path of the folder where the input images are stored, relative to data_root.
+    :param csv_file: Path of the ImageJ results csv-file, relative to data_root.
+    :param output_folder: Path of the folder, were resulting binary masks and images are stored,
+        relative to data_root.
     """
 
     data_root = Path(data_root)
-    output_path = Path(output_path)
+    output_path = data_root / output_folder
     output_path.mkdir(exist_ok=True, parents=True)
 
-    csv_path = data_root / csv_file_name
+    csv_path = data_root / csv_file
     csv_data = pd.read_csv(csv_path)
 
     image_file_names = csv_data["Label"].unique()
@@ -33,10 +34,10 @@ def convert_imagej_csv_to_masks(
     for image_file_name in image_file_names:
         annotation_data = csv_data[csv_data["Label"] == image_file_name]
 
-        image_path = data_root / image_file_name
+        image_path = data_root / image_folder / image_file_name
         image_name = Path(image_file_name).stem
         image = Image.open(image_path)
-        image.save(output_path / f"image_{image_name}.png")
+        # image.save(output_path / f"image_{image_name}.png")
 
         for annotation_index, annotation in annotation_data.iterrows():
             mask = np.zeros_like(image)
