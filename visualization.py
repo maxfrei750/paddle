@@ -1,24 +1,26 @@
 import random
 import warnings
 from statistics import gmean, gstd
+from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 import torch
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image as PILImage
+from PIL import ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
 from torchvision import transforms
 
+from custom_types import Annotation, ColorFloat, ColorInt, Image
 from data import extract_bounding_box
 
 # TODO: Add docstrings.
-# TODO: Add typehints.
 
 
-def get_viridis_colors(num_colors):
+def get_viridis_colors(num_colors: int) -> List[ColorFloat]:
     color_min = (0.231, 0.322, 0.545)
     color_max = (0.369, 0.788, 0.384)
 
@@ -36,16 +38,14 @@ def get_viridis_colors(num_colors):
     return colors
 
 
-def get_random_colors(num_colors):
-    colors = list()
+def get_random_colors(num_colors: int) -> List[ColorFloat]:
+    colors = []
 
     for i_color in range(num_colors):
         # color = cm.hsv(random.uniform(0, 0.6))
 
         colormap = cm.get_cmap("viridis")
         color = colormap(random.uniform(0, 1))
-        # Convert color to uint8.
-        color = tuple([int(round(x * 255)) for x in color])
         colors.append(color)
 
     return colors
@@ -53,17 +53,17 @@ def get_random_colors(num_colors):
 
 # TODO: Replace detection with individual arguments.
 def visualize_detection(
-    image,
-    detection,
-    do_display_box=True,
-    do_display_outlines_only=True,
-    do_display_label=True,
-    do_display_score=True,
-    do_display_mask=True,
-    map_label_to_class_name=None,
-    score_threshold=0,
-    line_width=3,
-):
+    image: Image,
+    detection: Annotation,
+    do_display_box: Optional[bool] = True,
+    do_display_outlines_only: Optional[bool] = True,
+    do_display_label: Optional[bool] = True,
+    do_display_score: Optional[bool] = True,
+    do_display_mask: Optional[bool] = True,
+    map_label_to_class_name: Optional[Dict[int, str]] = None,
+    score_threshold: Optional[float] = 0,
+    line_width: Optional[int] = 3,
+) -> PILImage:
     font_size = 16
 
     try:
@@ -123,9 +123,12 @@ def visualize_detection(
         labels = [None] * num_instances
 
     result = image.convert("RGB")
-    colors = get_random_colors(num_instances)
+    colors_float = get_random_colors(num_instances)
 
-    for mask, box, color, score, label in zip(masks, boxes, colors, scores, labels):
+    for mask, box, color_float, score, label in zip(masks, boxes, colors_float, scores, labels):
+
+        color_int = _color_float_to_int(color_float)
+
         if score:
             if score <= score_threshold:
                 continue
@@ -140,7 +143,7 @@ def visualize_detection(
             result = _overlay_image_with_mask(
                 result,
                 mask,
-                color,
+                color_int,
                 do_display_outlines_only=do_display_outlines_only,
                 outline_width=line_width,
             )
@@ -149,7 +152,7 @@ def visualize_detection(
             box = extract_bounding_box(mask)
 
         if box is not None and do_display_box:
-            ImageDraw.Draw(result).rectangle(box, outline=color, width=line_width)
+            ImageDraw.Draw(result).rectangle(box, outline=color_int, width=line_width)
 
         caption = None
 
@@ -168,22 +171,41 @@ def visualize_detection(
         if label is not None and do_display_label or score is not None and do_display_score:
             x, y = box[:2]
             y -= font_size + 2
-            ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color)
+            ImageDraw.Draw(result).text((x, y), caption, font=font, fill=color_int)
 
     return result
 
 
-def _overlay_image_with_mask(image, mask, color, do_display_outlines_only=False, outline_width=3):
+def _color_float_to_int(color_float: ColorFloat) -> ColorInt:
+    color_int = (
+        int(round(color_float[0] * 255)),
+        int(round(color_float[1] * 255)),
+        int(round(color_float[2] * 255)),
+    )
+    return color_int
+
+
+def _overlay_image_with_mask(
+    image: PILImage,
+    mask: np.ndarray,
+    color_int: ColorInt,
+    do_display_outlines_only: Optional[bool] = False,
+    outline_width: Optional[int] = 3,
+) -> PILImage:
     if do_display_outlines_only:
         mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
-    mask = Image.fromarray(mask)
-    mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
-    image = Image.composite(mask_colored, image, mask)
+    mask = PILImage.fromarray(mask)
+    mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color_int)
+    image = PILImage.composite(mask_colored, image, mask)
     return image
 
 
 def plot_particle_size_distributions(
-    particle_size_lists, score_lists=None, labels=None, measurand_name="Diameter", unit="px"
+    particle_size_lists: List[List[float]],
+    score_lists: Optional[Iterable[List[float]]] = None,
+    labels: Optional[Iterable[str]] = None,
+    measurand_name: Optional[str] = "Diameter",
+    unit: Optional[str] = "px",
 ):
     num_particle_size_distributions = len(particle_size_lists)
     colors = get_viridis_colors(num_particle_size_distributions)

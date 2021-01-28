@@ -3,13 +3,13 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List
 
 import numpy as np
 import torch
 import yaml
 
-AnyPath = Union[str, bytes, os.PathLike]
+from custom_types import AnyPath
 
 
 def get_time_stamp() -> str:
@@ -86,7 +86,7 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
     return last_model_id
 
 
-def all_elements_identical(x: List):
+def all_elements_identical(x: List) -> bool:
     """Checks if all elements of a list are identical.
 
     :param x: List

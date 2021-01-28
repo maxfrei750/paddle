@@ -4,11 +4,11 @@ from typing import List
 import fire
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
+from transforms import get_transform
 
 from data import MaskRCNNDataset
 from deployment import analyze_image, load_trained_model
 from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
-from transforms import get_transform
 from utilities import (
     AnyPath,
     get_last_checkpoint_path,
@@ -17,6 +17,8 @@ from utilities import (
     set_random_seed,
 )
 from visualization import plot_particle_size_distributions, save_visualization
+
+# TODO: Fix
 
 
 def inspect_model(

@@ -1,14 +1,11 @@
-from typing import Dict, Iterable, List, Literal, Tuple
+from typing import Iterable, List, Literal, Tuple
 
 import torch
 from pytorch_lightning.metrics import Metric
 from torch import tensor
 from torchvision.ops.boxes import box_iou
 
-Prediction = Dict
-Target = Dict
-Predictions = List[Prediction]
-Targets = Tuple[Target]
+from custom_types import Annotation
 
 
 class AveragePrecision(Metric):
@@ -46,7 +43,7 @@ class AveragePrecision(Metric):
         self.add_state("num_samples", default=tensor(0.0), dist_reduce_fx="sum")
 
     # noinspection PyMethodOverriding
-    def update(self, predictions: Predictions, targets: Targets) -> None:
+    def update(self, predictions: List[Annotation], targets: Tuple[Annotation, ...]) -> None:
         """Add new data for the calculation of the metric.
 
         :param predictions: List of dictionaries with prediction data, such as boxes and masks.
@@ -56,11 +53,11 @@ class AveragePrecision(Metric):
             self.num_samples += 1
             self.average_precision_sum += self._calculate_average_precision(prediction, target)
 
-    def compute(self):
+    def compute(self) -> float:
         """Computes metric based on the gathered data."""
         return self.average_precision_sum / self.num_samples
 
-    def _calculate_average_precision(self, prediction, target):
+    def _calculate_average_precision(self, prediction: Annotation, target: Annotation):
         """Calculate average precision of a set of detections (e.g. from a single image).
 
         Based on:
@@ -91,7 +88,7 @@ class AveragePrecision(Metric):
 
         return sum(average_precisions) / len(average_precisions)
 
-    def _calculate_iou_matrix(self, prediction: Prediction, target: Target) -> torch.Tensor:
+    def _calculate_iou_matrix(self, prediction: Annotation, target: Annotation) -> torch.Tensor:
         """Calculates a matrix containing the pairwise IoU values for every box in ``prediction`` and ``target``.
 
         :param prediction: Dictionary with prediction data. Must include boxes or masks.
@@ -105,7 +102,9 @@ class AveragePrecision(Metric):
         else:
             raise ValueError(f"Unknown iou_type: {self.iou_type}")
 
-    def _calculate_mask_iou_matrix(self, prediction: Prediction, target: Target) -> torch.Tensor:
+    def _calculate_mask_iou_matrix(
+        self, prediction: Annotation, target: Annotation
+    ) -> torch.Tensor:
         """Calculates IoU matrix, based on instance masks.
 
         :param prediction: Dictionary with prediction data. Must include boxes and masks.
@@ -160,7 +159,7 @@ class AveragePrecision(Metric):
 
         return mask_iou_matrix
 
-    def _calculate_box_iou_matrix(self, prediction: Prediction, target: Target) -> torch.Tensor:
+    def _calculate_box_iou_matrix(self, prediction: Annotation, target: Annotation) -> torch.Tensor:
         """Calculates IoU matrix, based on instance bounding boxes.
 
         Based on:
@@ -196,11 +195,11 @@ class AveragePrecision(Metric):
         return iou_matrix
 
     @staticmethod
-    def _sort_by_score(prediction: Prediction) -> Prediction:
+    def _sort_by_score(prediction: Annotation) -> Annotation:
         """Sort prediction masks and bounding boxes by score (descending).
 
         :param prediction: Dictionary with prediction data. Must include scores.
-        :return: Prediction with boxes and/or masks sorted based on their score.
+        :return: Annotation with boxes and/or masks sorted based on their score.
         """
         order = prediction["scores"].argsort(descending=True)
 

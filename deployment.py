@@ -1,10 +1,14 @@
 from pathlib import Path
 
 import torch
+from config import Config
 from ignite.handlers import Checkpoint
 
-from config import Config
 from models import get_model
+
+# TODO: Fix.
+# TODO: Add typehints
+# TODO: Add docstrings
 
 
 def load_trained_model(model_path, device):

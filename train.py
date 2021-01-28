@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Tuple
 
 import hydra
-import pytorch_lightning as pl
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning import seed_everything
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint

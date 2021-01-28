@@ -1,7 +1,12 @@
+from typing import Any
+
 import numpy as np
 
+# TODO: Add docstrings
 
-def gstd(a, weights=None):
+
+def gstd(a: Any, weights: Any = None) -> float:
+    # TODO: Replace Any with ArrayLike, as soon as it is included in numpy.
 
     log_a = np.log(a)
 

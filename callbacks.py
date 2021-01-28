@@ -1,9 +1,14 @@
 import random
+from typing import Any
 
 import numpy as np
+from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 
+from custom_types import Batch
 from visualization import visualize_detection
+
+# TODO: Add docstrings
 
 
 class ExampleDetectionMonitor(Callback):
@@ -12,11 +17,17 @@ class ExampleDetectionMonitor(Callback):
 
         self.random_visualization_batch_idx = None
 
-    def on_validation_epoch_start(self, trainer, pl_module):
+    def on_validation_epoch_start(self, trainer: Trainer, pl_module: LightningModule):
         self.random_visualization_batch_idx = random.randint(0, sum(trainer.num_val_batches) - 1)
 
     def on_validation_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+        self,
+        trainer: Trainer,
+        pl_module: LightningModule,
+        outputs: Any,
+        batch: Batch,
+        batch_idx: int,
+        dataloader_idx: int,
     ):
         # Trigger on random batch.
         if batch_idx == self.random_visualization_batch_idx:

@@ -1,21 +1,18 @@
 import multiprocessing
 from itertools import compress
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import albumentations
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.utils.data
-from PIL import Image
+from PIL import Image as PILImage
 from torchvision.transforms import functional as F
 
-from utilities import AnyPath, all_elements_identical
-
-# Custom types
-Mask = np.ndarray
-Batch = Tuple[Tuple[torch.Tensor, ...], Tuple[dict, ...]]
+from custom_types import Annotation, AnyPath, Batch, Image, Mask
+from utilities import all_elements_identical
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
@@ -80,7 +77,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.num_classes = len(self.map_label_to_class_name)
 
-    def _create_class_name_label_maps(self):
+    def _create_class_name_label_maps(self) -> Tuple[Dict[int, str], Dict[str, int]]:
         """Creates two dictionaries to map integer labels to class names and vice versa.
 
         :return: Dictionaries, which map integer labels to class names.
@@ -99,7 +96,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             }
             return map_label_to_class_name, map_class_name_to_label
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, dict]:
+    def __getitem__(self, index: int) -> Tuple[Image, Annotation]:
         """Retrieve a sample from the dataset.
 
         :param index: Index of the sample to retrieve.
@@ -118,7 +115,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             self.map_class_name_to_label[plain_text_label] for plain_text_label in plain_text_labels
         ]
 
-        image = Image.open(image_path)
+        image = PILImage.open(image_path)
         image = image.convert("RGB")
         image = np.array(image)
 
@@ -127,7 +124,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         masks = []
 
         for mask_path in mask_paths:
-            mask = Image.open(mask_path).convert("1")
+            mask = PILImage.open(mask_path).convert("1")
             mask = np.array(mask)
             masks.append(mask)
 
@@ -407,7 +404,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         return images, targets
 
     @staticmethod
-    def collate(uncollated_batch: List[Tuple[torch.Tensor, dict]]) -> Batch:
+    def collate(uncollated_batch: List[Tuple[Image, Annotation]]) -> Batch:
         """Defines how to collate batches.
 
         :param uncollated_batch: Uncollated batch of data. List containing tuples of images and targets.

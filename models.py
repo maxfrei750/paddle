@@ -1,3 +1,5 @@
+from typing import Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -5,21 +7,28 @@ import torchvision
 from torch.nn import ModuleDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+from custom_types import (
+    Annotation,
+    Batch,
+    Image,
+    Loss,
+    OptimizerConfiguration,
+    PartialLosses,
+    ValidationOutput,
+)
 from metrics import AveragePrecision
 
 # TODO: Docstrings
-# TODO: Use typing.
-# TODO: Check if validation_step_end can be integrated into validation_step, if multiple gpus are used.
 # TODO: Test adding weight_decay= 0.0005 to SGD.
 
 
 class LightningMaskRCNN(pl.LightningModule):
     def __init__(
         self,
-        num_classes=2,
-        learning_rate=0.005,
-        drop_lr_on_plateau_patience=10,
-        model_kwargs=None,
+        num_classes: int = 2,
+        learning_rate: float = 0.005,
+        drop_lr_on_plateau_patience: int = 10,
+        model_kwargs: Optional[Dict] = None,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -37,8 +46,8 @@ class LightningMaskRCNN(pl.LightningModule):
 
         self.validation_metrics = ModuleDict(
             {
-                "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
-                "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
+                # "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
+                # "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
                 "mAP": AveragePrecision(iou_thresholds=np.arange(0.5, 1, 0.05), iou_type="mask"),
             }
         )
@@ -47,7 +56,7 @@ class LightningMaskRCNN(pl.LightningModule):
 
         self.map_label_to_class_name = None
 
-    def get_model(self):
+    def get_model(self) -> torchvision.models.detection.MaskRCNN:
         # Load an instance segmentation model pre-trained on COCO.
         model = torchvision.models.detection.maskrcnn_resnet50_fpn(
             pretrained=True,
@@ -68,10 +77,12 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return model
 
-    def forward(self, images, targets=None):
+    def forward(
+        self, images: Tuple[Image, ...], targets: Optional[Tuple[Annotation, ...]] = None
+    ) -> Union[List[Annotation], PartialLosses]:
         return self.model(images, targets)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Batch, batch_idx: int) -> Loss:
         images, targets = batch
         partial_losses = self(images, targets)
         loss = sum(partial_loss for partial_loss in partial_losses.values())
@@ -83,13 +94,13 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Batch, batch_idx: int) -> ValidationOutput:
         images, targets = batch
         predictions = self(images, targets)
 
         return {"predictions": predictions, "targets": targets}
 
-    def validation_step_end(self, outputs):
+    def validation_step_end(self, outputs: ValidationOutput) -> None:
         for metric_name, metric in self.validation_metrics.items():
             metric(outputs["predictions"], outputs["targets"])
             self.log(f"val/{metric_name}", metric)
@@ -97,7 +108,9 @@ class LightningMaskRCNN(pl.LightningModule):
             if metric_name == self.main_validation_metric_name:
                 self.log("hp_metric", metric)
 
-    def configure_optimizers(self):
+    def configure_optimizers(
+        self,
+    ) -> OptimizerConfiguration:
         optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
 
         return {
