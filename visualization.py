@@ -51,12 +51,7 @@ def get_random_colors(num_colors):
     return colors
 
 
-def display_detection(*args, **kwargs):
-    result = visualize_detection(*args, **kwargs)
-    result.show()
-
-
-# TODO: Replace detection with individual arguments and adapt display_detection and save_visualization.
+# TODO: Replace detection with individual arguments.
 def visualize_detection(
     image,
     detection,
@@ -67,6 +62,7 @@ def visualize_detection(
     do_display_mask=True,
     map_label_to_class_name=None,
     score_threshold=0,
+    line_width=3,
 ):
     font_size = 16
 
@@ -141,13 +137,19 @@ def visualize_detection(
                 mask = img_as_float(mask * 255)
             mask = mask >= 0.5
 
-            result = _overlay_image_with_mask(result, mask, color, do_display_outlines_only)
+            result = _overlay_image_with_mask(
+                result,
+                mask,
+                color,
+                do_display_outlines_only=do_display_outlines_only,
+                outline_width=line_width,
+            )
 
         if (do_display_label or do_display_score or do_display_box) and box is None:
             box = extract_bounding_box(mask)
 
         if box is not None and do_display_box:
-            ImageDraw.Draw(result).rectangle(box, outline=color, width=2)
+            ImageDraw.Draw(result).rectangle(box, outline=color, width=line_width)
 
         caption = None
 
@@ -171,19 +173,13 @@ def visualize_detection(
     return result
 
 
-def _overlay_image_with_mask(image, mask, color, do_display_outlines_only):
+def _overlay_image_with_mask(image, mask, color, do_display_outlines_only=False, outline_width=3):
     if do_display_outlines_only:
-        outline_width = 3
         mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
     mask = Image.fromarray(mask)
     mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color)
     image = Image.composite(mask_colored, image, mask)
     return image
-
-
-def save_visualization(image, prediction, visualization_image_path, **kwargs):
-    visualization_image = visualize_detection(image, prediction, **kwargs)
-    visualization_image.save(visualization_image_path)
 
 
 def plot_particle_size_distributions(

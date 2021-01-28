@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+from transforms import get_transform
 
 from data import Dataset
 from deployment import analyze_image, load_trained_model
@@ -10,9 +11,10 @@ from postprocessing import (
     calculate_minimum_feret_diameters,
     filter_border_particles,
 )
-from transforms import get_transform
 from utilities import set_random_seed
 from visualization import visualize_detection
+
+# TODO: Fix
 
 
 def main():

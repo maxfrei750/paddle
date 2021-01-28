@@ -2,11 +2,11 @@ from pathlib import Path
 
 from PIL import Image
 
-from data import Dataset
+from data import MaskRCNNDataset
 from deployment import analyze_image, load_trained_model
 from postprocessing import filter_border_particles, filter_low_score_particles
 from utilities import set_random_seed
-from visualization import save_visualization
+from visualization import visualize_detection
 
 
 def slice_image(image, slice_size=1024):
@@ -57,7 +57,7 @@ def main():
     mask_folder_path = result_folder_path / "masks"
     mask_folder_path.mkdir(exist_ok=True)
 
-    dataset = Dataset(data_root, subset)
+    dataset = MaskRCNNDataset(data_root, subset)
 
     model = load_trained_model(model_file_path, device)
 
@@ -82,14 +82,17 @@ def main():
                 result_folder_path / f"visualization_{image_name}_{image_id}.png"
             )
 
-            save_visualization(
+            visualization = visualize_detection(
                 image_slice,
                 prediction,
-                visualization_image_path,
                 score_threshold=score_threshold,
                 do_display_box=False,
                 do_display_label=False,
                 do_display_score=False,
+            )
+
+            visualization.save(
+                visualization_image_path,
             )
 
             for mask_id, mask in enumerate(prediction["masks"]):
