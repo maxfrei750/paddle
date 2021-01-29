@@ -17,10 +17,14 @@ from torchvision import transforms
 from custom_types import Annotation, ColorFloat, ColorInt, Image
 from data import extract_bounding_box
 
-# TODO: Add docstrings.
-
 
 def get_viridis_colors(num_colors: int) -> List[ColorFloat]:
+    """Get a number of colors from the viridis color map, but leave out the very saturated colors
+        at the beginning and end of the colormap.
+
+    :param num_colors: Number of colors to be retrieved.
+    :return: List of colors in float format.
+    """
     color_min = (0.231, 0.322, 0.545)
     color_max = (0.369, 0.788, 0.384)
 
@@ -38,7 +42,12 @@ def get_viridis_colors(num_colors: int) -> List[ColorFloat]:
     return colors
 
 
-def get_random_colors(num_colors: int) -> List[ColorFloat]:
+def get_random_viridis_colors(num_colors: int) -> List[ColorFloat]:
+    """Get a number of random colors from the viridis color map.
+
+    :param num_colors: Number of colors to be retrieved.
+    :return: List of colors in float format.
+    """
     colors = []
 
     for i_color in range(num_colors):
@@ -51,20 +60,36 @@ def get_random_colors(num_colors: int) -> List[ColorFloat]:
     return colors
 
 
-# TODO: Replace detection with individual arguments.
+# TODO: Replace annotation with individual arguments.
 def visualize_detection(
     image: Image,
-    detection: Annotation,
+    annotation: Annotation,
     do_display_box: Optional[bool] = True,
-    do_display_outlines_only: Optional[bool] = True,
     do_display_label: Optional[bool] = True,
     do_display_score: Optional[bool] = True,
     do_display_mask: Optional[bool] = True,
+    do_display_outlines_only: Optional[bool] = True,
     map_label_to_class_name: Optional[Dict[int, str]] = None,
     score_threshold: Optional[float] = 0,
     line_width: Optional[int] = 3,
+    font_size: Optional[int] = 16,
 ) -> PILImage:
-    font_size = 16
+    """Overlay an image with an annotation of multiple instances.
+
+    :param image: Image
+    :param annotation: Dictionary storing annotation properties (e.g. masks, scores, labels,
+        bounding boxes, etc.)
+    :param do_display_box: If true and available, then bounding boxes are displayed.
+    :param do_display_label: If true and available, then labels are displayed.
+    :param do_display_score: If true and available, then scores are displayed.
+    :param do_display_mask: If true and available, then masks are displayed.
+    :param do_display_outlines_only: If true, only the outlines of masks are displayed.
+    :param map_label_to_class_name: Dictionary, which maps instance labels to class names.
+    :param score_threshold: Only detections above this score are displayed.
+    :param line_width: Line width for bounding boxes and mask outlines.
+    :param font_size: Font Size for labels and scores.
+    :return: A PIL image object of the original image with overlayed annotations.
+    """
 
     try:
         font = ImageFont.truetype("DejaVuSans.ttf", font_size)
@@ -84,53 +109,56 @@ def visualize_detection(
     if not image.shape[2] == 3 and image.shape[0] == 3:
         image = np.moveaxis(image, 0, 2)
 
+    # TODO: Catch specific warning.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         image = img_as_ubyte(image)
     image = transforms.ToPILImage()(image)
 
-    for key in detection:
-        value = detection[key]
+    # TODO: use dict.items()
+    for key in annotation:
+        value = annotation[key]
         if isinstance(value, torch.Tensor):
             value = value.cpu().numpy()
-            detection[key] = value
+            annotation[key] = value
 
     for key in ["masks", "boxes"]:
-        if key in detection.keys():
-            num_instances = len(detection[key])
+        if key in annotation.keys():
+            num_instances = len(annotation[key])
             break
 
         raise ValueError("Detection must have either masks or boxes.")
 
-    if "masks" in detection:
-        masks = detection["masks"]
+    # TODO: Use dict.get(...)
+    if "masks" in annotation:
+        masks = annotation["masks"]
     else:
         masks = [None] * num_instances
 
-    if "boxes" in detection:
-        boxes = detection["boxes"]
+    if "boxes" in annotation:
+        boxes = annotation["boxes"]
     else:
         boxes = [None] * num_instances
 
-    if "scores" in detection:
-        scores = detection["scores"]
+    if "scores" in annotation:
+        scores = annotation["scores"]
     else:
         scores = [None] * num_instances
 
-    if "labels" in detection:
-        labels = detection["labels"]
+    if "labels" in annotation:
+        labels = annotation["labels"]
     else:
         labels = [None] * num_instances
 
     result = image.convert("RGB")
-    colors_float = get_random_colors(num_instances)
+    colors_float = get_random_viridis_colors(num_instances)
 
     for mask, box, color_float, score, label in zip(masks, boxes, colors_float, scores, labels):
 
         color_int = _color_float_to_int(color_float)
 
-        if score:
-            if score <= score_threshold:
+        if score is not None:
+            if score < score_threshold:
                 continue
 
         if mask is not None and do_display_mask:
@@ -177,6 +205,11 @@ def visualize_detection(
 
 
 def _color_float_to_int(color_float: ColorFloat) -> ColorInt:
+    """Convert a color in float format into int format.
+
+    :param color_float: Color in float format.
+    :return: Color in int format.
+    """
     color_int = (
         int(round(color_float[0] * 255)),
         int(round(color_float[1] * 255)),
@@ -192,6 +225,15 @@ def _overlay_image_with_mask(
     do_display_outlines_only: Optional[bool] = False,
     outline_width: Optional[int] = 3,
 ) -> PILImage:
+    """Overlay an image with a mask.
+
+    :param image: Image
+    :param mask: Mask
+    :param color_int: Color of the overlay in int format.
+    :param do_display_outlines_only: If true, then only the outlines of the mask are used.
+    :param outline_width: Width of the outlines.
+    :return: PIL image with overlayed mask.
+    """
     if do_display_outlines_only:
         mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
     mask = PILImage.fromarray(mask)
@@ -206,7 +248,15 @@ def plot_particle_size_distributions(
     labels: Optional[Iterable[str]] = None,
     measurand_name: Optional[str] = "Diameter",
     unit: Optional[str] = "px",
-):
+) -> None:
+    """Plot multiple particle size distributions.
+
+    :param particle_size_lists: List of particle size lists.
+    :param score_lists: List of score lists.
+    :param labels: Labels for the different particle size distributions in the plot.
+    :param measurand_name: Name of the measurand (used as x-label).
+    :param unit: Unit of the measurement (used in x-label).
+    """
     num_particle_size_distributions = len(particle_size_lists)
     colors = get_viridis_colors(num_particle_size_distributions)
 

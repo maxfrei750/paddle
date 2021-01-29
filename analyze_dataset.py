@@ -9,7 +9,7 @@ from postprocessing import (
     calculate_area_equivalent_diameters,
     calculate_maximum_feret_diameters,
     calculate_minimum_feret_diameters,
-    filter_border_particles,
+    filter_border_instances,
 )
 from utilities import set_random_seed
 from visualization import visualize_detection
@@ -45,7 +45,7 @@ def main():
         image_name = target["image_name"]
 
         prediction = analyze_image(model, image)
-        prediction = filter_border_particles(prediction)
+        prediction = filter_border_instances(prediction)
 
         # visualization = visualize_detection(
         #     image,

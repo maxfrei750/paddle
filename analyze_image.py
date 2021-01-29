@@ -4,7 +4,7 @@ from PIL import Image
 
 from data import MaskRCNNDataset
 from deployment import analyze_image, load_trained_model
-from postprocessing import filter_border_particles, filter_low_score_particles
+from postprocessing import filter_border_instances, filter_low_score_instances
 from utilities import set_random_seed
 from visualization import visualize_detection
 
@@ -75,8 +75,8 @@ def main():
         for image_id, image_slice in enumerate(image_slices):
 
             prediction = analyze_image(model, image_slice)
-            prediction = filter_low_score_particles(prediction, score_threshold)
-            prediction = filter_border_particles(prediction)
+            prediction = filter_low_score_instances(prediction, score_threshold)
+            prediction = filter_border_instances(prediction)
 
             visualization_image_path = (
                 result_folder_path / f"visualization_{image_name}_{image_id}.png"
@@ -85,10 +85,10 @@ def main():
             visualization = visualize_detection(
                 image_slice,
                 prediction,
-                score_threshold=score_threshold,
                 do_display_box=False,
                 do_display_label=False,
                 do_display_score=False,
+                score_threshold=score_threshold,
             )
 
             visualization.save(

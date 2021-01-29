@@ -10,7 +10,7 @@ AnyPath = Union[str, bytes, PathLike]
 
 # Data
 Mask = ndarray
-Annotation = Dict[str, Union[Tensor, str]]
+Annotation = Dict[str, Union[Tensor, str]]  # TODO: Check if other types must be in the union.
 Image = Tensor
 Batch = Tuple[Tuple[Image, ...], Tuple[Annotation, ...]]
 

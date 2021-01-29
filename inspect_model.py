@@ -8,7 +8,7 @@ from transforms import get_transform
 
 from data import MaskRCNNDataset
 from deployment import analyze_image, load_trained_model
-from postprocessing import calculate_area_equivalent_diameters, filter_border_particles
+from postprocessing import calculate_area_equivalent_diameters, filter_border_instances
 from utilities import (
     AnyPath,
     get_last_checkpoint_path,
@@ -74,7 +74,7 @@ def inspect_model(
     masks_gt = []
     for _, target in dataset_gt:
         masks_gt_sample = list(target["masks"].cpu().numpy().astype("bool"))
-        masks_gt_sample = filter_border_particles({"masks": masks_gt_sample})["masks"]
+        masks_gt_sample = filter_border_instances({"masks": masks_gt_sample})["masks"]
         masks_gt += masks_gt_sample
 
     masks_pred = []
@@ -104,7 +104,7 @@ def inspect_model(
 
         prediction = analyze_image(model, image)
 
-        prediction = filter_border_particles(prediction)
+        prediction = filter_border_instances(prediction)
 
         visualization_image_path = visualization_image_folder_path / f"{subsample_id}.png"
 

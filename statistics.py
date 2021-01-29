@@ -1,11 +1,18 @@
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 
-# TODO: Add docstrings
 
+def gstd(a: Any, weights: Optional[Any] = None) -> float:
+    """Calculate the (weighted) geometric standard deviation.
 
-def gstd(a: Any, weights: Any = None) -> float:
+    Based on:
+        https://www.researchgate.net/post/How-can-I-calculate-the-value-of-the-geometric-standard-deviation-taking-into-account-weight/53721a9ed5a3f2d33c8b4607/citation/download
+
+    :param a: List, Tuple or numpy array of numbers.
+    :param weights: Weights associated with the values in `a`.
+    :return: (weighted) geometric standard deviation
+    """
     # TODO: Replace Any with ArrayLike, as soon as it is included in numpy.
 
     log_a = np.log(a)
