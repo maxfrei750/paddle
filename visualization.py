@@ -60,7 +60,6 @@ def get_random_viridis_colors(num_colors: int) -> List[ColorFloat]:
     return colors
 
 
-# TODO: Replace annotation with individual arguments.
 def visualize_detection(
     image: Image,
     annotation: Annotation,
@@ -109,46 +108,27 @@ def visualize_detection(
     if not image.shape[2] == 3 and image.shape[0] == 3:
         image = np.moveaxis(image, 0, 2)
 
-    # TODO: Catch specific warning.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        image = img_as_ubyte(image)
+    image = img_as_ubyte(image)
+
     image = transforms.ToPILImage()(image)
 
-    # TODO: use dict.items()
-    for key in annotation:
-        value = annotation[key]
+    for key, value in annotation.items():
         if isinstance(value, torch.Tensor):
             value = value.cpu().numpy()
             annotation[key] = value
 
     for key in ["masks", "boxes"]:
-        if key in annotation.keys():
+        if key in annotation:
             num_instances = len(annotation[key])
             break
 
         raise ValueError("Detection must have either masks or boxes.")
 
-    # TODO: Use dict.get(...)
-    if "masks" in annotation:
-        masks = annotation["masks"]
-    else:
-        masks = [None] * num_instances
-
-    if "boxes" in annotation:
-        boxes = annotation["boxes"]
-    else:
-        boxes = [None] * num_instances
-
-    if "scores" in annotation:
-        scores = annotation["scores"]
-    else:
-        scores = [None] * num_instances
-
-    if "labels" in annotation:
-        labels = annotation["labels"]
-    else:
-        labels = [None] * num_instances
+    none_list = [None] * num_instances
+    masks = annotation.get("masks", none_list)
+    boxes = annotation.get("boxes", none_list)
+    scores = annotation.get("scores", none_list)
+    labels = annotation.get("labels", none_list)
 
     result = image.convert("RGB")
     colors_float = get_random_viridis_colors(num_instances)
