@@ -7,10 +7,10 @@ from typing import Tuple
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from pytorch_lightning import seed_everything
-from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from callbacks import ExampleDetectionMonitor
+from callbacks import ExampleDetectionMonitor, ModelCheckpoint
 from data import MaskRCNNDataModule
 from maskrcnntrainer import MaskRCNNTrainer
 from models import LightningMaskRCNN
@@ -48,7 +48,7 @@ def train(config: DictConfig) -> None:
         exit()
 
     callbacks = [
-        ModelCheckpoint(monitor="val/mAP", mode="max"),
+        ModelCheckpoint(monitor="val/mAP", mode="max", filename="{epoch}-{step}-{val/mAP:.4f}"),
         EarlyStopping(
             monitor="val/mAP", mode="max", patience=config.callbacks.early_stopping_patience
         ),
