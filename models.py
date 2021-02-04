@@ -11,12 +11,14 @@ from custom_types import (
     Annotation,
     Batch,
     Image,
-    InferenceOutput,
     Loss,
     OptimizerConfiguration,
     PartialLosses,
+    TestOutput,
+    ValidationOutput,
 )
 from metrics import AveragePrecision
+from utilities import dictionary_to_cpu
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -126,9 +128,9 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return loss
 
-    def _inference_step(self, batch: Batch, batch_idx: int) -> InferenceOutput:
-        """Take a batch of data and input its images into the model to retrieve the associated
-            predictions. Return predictions and and ground truths for later use.
+    def validation_step(self, batch: Batch, batch_idx: int) -> ValidationOutput:
+        """Take a batch from the validation data set and input its images into the model to
+            retrieve the associated predictions. Return predictions and and ground truths for later use.
 
         :param batch: Batch of images and ground truths.
         :param batch_idx: Index of the current batch.
@@ -139,17 +141,7 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return {"predictions": predictions, "targets": targets}
 
-    def validation_step(self, batch: Batch, batch_idx: int) -> InferenceOutput:
-        """Take a batch from the validation data set and input its images into the model to
-            retrieve the associated predictions. Return predictions and and ground truths for later use.
-
-        :param batch: Batch of images and ground truths.
-        :param batch_idx: Index of the current batch.
-        :return: Predictions and ground truths.
-        """
-        return self._inference_step(batch, batch_idx)
-
-    def validation_step_end(self, outputs: InferenceOutput) -> None:
+    def validation_step_end(self, outputs: ValidationOutput) -> None:
         """Calculate and log the validation_metrics.
 
         :param outputs: Outputs of the validation step.
@@ -161,15 +153,24 @@ class LightningMaskRCNN(pl.LightningModule):
             if metric_name == self.main_validation_metric_name:
                 self.log("hp_metric", metric)
 
-    def test_step(self, batch: Batch, batch_idx: int) -> InferenceOutput:
+    def test_step(self, batch: Batch, batch_idx: int) -> TestOutput:
         """Take a batch from the test data set and input its images into the model to
             retrieve the associated predictions. Return predictions and and ground truths for later use.
 
         :param batch: Batch of images and ground truths.
         :param batch_idx: Index of the current batch.
-        :return: Predictions and ground truths.
+        :return: Predictions, ground truths and input images.
         """
-        return self._inference_step(batch, batch_idx)
+        images, targets = batch
+        predictions = self(images)
+
+        # Transfer data to cpu, to avoid OOM errors.
+
+        images = tuple(image.cpu() for image in images)
+        targets = tuple(dictionary_to_cpu(target) for target in targets)
+        predictions = [dictionary_to_cpu(prediction) for prediction in predictions]
+
+        return {"predictions": predictions, "targets": targets, "images": images}
 
     def configure_optimizers(
         self,
