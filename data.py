@@ -263,9 +263,9 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
-        train_subset="training",
-        val_subset="validation",
-        test_subset="test",
+        train_subset: str = "training",
+        val_subset: str = "validation",
+        test_subset: Optional[str] = None,
     ) -> None:
 
         super().__init__()
@@ -309,30 +309,42 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         mappings = []
 
         if stage == "fit" or stage is None:
-            self.train_dataset = MaskRCNNDataset(
-                self.data_root,
-                subset=self.train_subset,
-                transform=self.train_transforms,
-            )
+            if self.train_subset is None:
+                if stage == "fit":
+                    raise ValueError("No train_subset specified.")
+            else:
+                self.train_dataset = MaskRCNNDataset(
+                    self.data_root,
+                    subset=self.train_subset,
+                    transform=self.train_transforms,
+                )
 
-            mappings.append(self.train_dataset.map_label_to_class_name)
+                mappings.append(self.train_dataset.map_label_to_class_name)
 
-            self.val_dataset = MaskRCNNDataset(
-                self.data_root,
-                subset=self.val_subset,
-                transform=self.val_transforms,
-            )
+            if self.val_subset is None:
+                if stage == "fit":
+                    raise ValueError("No val_subset specified.")
+            else:
+                self.val_dataset = MaskRCNNDataset(
+                    self.data_root,
+                    subset=self.val_subset,
+                    transform=self.val_transforms,
+                )
 
-            mappings.append(self.val_dataset.map_label_to_class_name)
+                mappings.append(self.val_dataset.map_label_to_class_name)
 
         if stage == "test" or stage is None:
-            self.test_dataset = MaskRCNNDataset(
-                self.data_root,
-                subset=self.test_subset,
-                transform=self.test_transforms,
-            )
+            if self.test_subset is None:
+                if stage == "test":
+                    raise ValueError("No test_subset specified.")
+            else:
+                self.test_dataset = MaskRCNNDataset(
+                    self.data_root,
+                    subset=self.test_subset,
+                    transform=self.test_transforms,
+                )
 
-            mappings.append(self.test_dataset.map_label_to_class_name)
+                mappings.append(self.test_dataset.map_label_to_class_name)
 
         assert all_elements_identical(
             mappings

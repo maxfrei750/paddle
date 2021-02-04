@@ -20,5 +20,5 @@ datamodule:
   batch_size: 8
   train_subset: training
   val_subset: validation
-  test_subset: test
+  test_subset: null
   cropping_rectangle: null
