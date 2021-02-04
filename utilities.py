@@ -3,7 +3,7 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Literal, Optional
 
 import numpy as np
 import torch
@@ -20,37 +20,53 @@ def get_time_stamp() -> str:
     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-def get_best_checkpoint_path(log_dir: AnyPath, filename_prefix: str) -> AnyPath:
+def get_best_checkpoint_path(
+    checkpoint_root: AnyPath,
+    metric_key: Optional[str] = "val_mAP",
+    mode: Literal["min", "max"] = "max",
+) -> AnyPath:
     """Retrieve model checkpoint with the highest accuracy.
 
-    :param log_dir: Path where model checkpoints are saved.
-    :param filename_prefix: Checkpoint prefix.
+
+    :param checkpoint_root: Path where model checkpoints are saved.
+    :param metric_key: Key to identify the relevant metric in the checkpoint filenames.
+    :param mode: Criterion to select the best metric.
     :return: Path of the checkpoint with the highest accuracy.
     """
-    log_dir = Path(log_dir)
-    log_file_paths = list(log_dir.glob(filename_prefix + "*.pt"))
-    val_accuracies = [
-        float(re.search(r"=([+-]?((\d+\.?\d*)|(\.\d+)))", str(log_file))[1])
-        for log_file in log_file_paths
+
+    expected_modes = ["min", "max"]
+    assert mode in expected_modes, f"Expected parameter `mode` to be in {expected_modes}."
+
+    checkpoint_root = Path(checkpoint_root)
+    log_file_paths = list(checkpoint_root.glob("*.ckpt"))
+    log_file_names = [Path(log_file_path.name).stem for log_file_path in log_file_paths]
+    metric_values = [
+        float(re.search(metric_key + r"=([+-]?((\d+\.?\d*)|(\.\d+)))", log_file_name)[1])
+        for log_file_name in log_file_names
     ]
-    best_index = int(np.argmax(val_accuracies))
-    best_model_path = log_file_paths[best_index]
-    return best_model_path
+
+    if mode == "max":
+        best_index = int(np.argmax(metric_values))
+    else:
+        best_index = int(np.argmin(metric_values))
+
+    best_checkpoint_path = log_file_paths[best_index]
+    return best_checkpoint_path
 
 
-def get_last_checkpoint_path(log_dir: AnyPath) -> AnyPath:
-    """Retrieve last model checkpoint.
+def get_latest_checkpoint_path(checkpoint_root: AnyPath) -> AnyPath:
+    """Retrieve latest model checkpoint.
 
-    :param log_dir: Path where model checkpoints are saved.
+    :param checkpoint_root: Path where model checkpoints are saved.
     :return: Path of the last model checkpoint.
     """
-    log_dir = Path(log_dir)
-    log_file_paths = sorted(list(log_dir.glob("checkpoint_*_*.pt")))
+    checkpoint_root = Path(checkpoint_root)
+    log_file_paths = sorted(list(checkpoint_root.glob("*.ckpt")))
     try:
-        last_checkpoint_path = log_file_paths[-1]
+        latest_checkpoint_path = log_file_paths[-1]
     except IndexError:
-        raise FileNotFoundError(f"Could not find checkpoint file in folder: {log_dir}")
-    return last_checkpoint_path
+        raise FileNotFoundError(f"Could not find checkpoint file in folder: {checkpoint_root}")
+    return latest_checkpoint_path
 
 
 def set_random_seed(seed: int):
