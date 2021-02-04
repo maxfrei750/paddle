@@ -17,9 +17,8 @@ class MaskRCNNTrainer(pl.Trainer):
         super().on_fit_start()
 
         class_mapping = self._check_class_mappings(
-            self.datamodule, self.train_dataloader, self.val_dataloaders
+            self.datamodule, self.train_dataloader, self.val_dataloaders, model=self.model
         )
-        self.model.map_label_to_class_name = class_mapping
 
         num_classes_data = len(class_mapping) if class_mapping is not None else None
         num_classes_model = getattr(self.model, "num_classes", None)

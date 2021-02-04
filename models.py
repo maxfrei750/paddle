@@ -38,6 +38,7 @@ class LightningMaskRCNN(pl.LightningModule):
         learning_rate: float = 0.005,
         drop_lr_on_plateau_patience: int = 10,
         model_kwargs: Optional[Dict] = None,
+        map_label_to_class_name: Optional[Dict[int, str]] = None,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -63,7 +64,7 @@ class LightningMaskRCNN(pl.LightningModule):
 
         self.main_validation_metric_name = "mAP"
 
-        self.map_label_to_class_name = None
+        self.map_label_to_class_name = map_label_to_class_name
 
     def build_model(self) -> torchvision.models.detection.MaskRCNN:
         """Builds the Mask R-CNN model. Based on
