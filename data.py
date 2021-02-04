@@ -294,6 +294,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.map_label_to_class_name = None
         self.num_classes = None
 
+        self.setup()
+
     def prepare_data(self) -> None:
         """Do nothing."""
         pass

@@ -39,7 +39,6 @@ def train(config: DictConfig) -> None:
     seed_everything(config.program.random_seed)
 
     data_module = MaskRCNNDataModule(**config.datamodule)
-    data_module.setup()
 
     model = LightningMaskRCNN(
         **config.model, map_label_to_class_name=data_module.map_label_to_class_name
