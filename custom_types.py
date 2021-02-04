@@ -17,7 +17,7 @@ Batch = Tuple[Tuple[Image, ...], Tuple[Annotation, ...]]
 # Model
 PartialLosses = Dict[str, Tensor]
 Loss = Tensor
-ValidationOutput = Dict[str, Union[List[Annotation], Tuple[Annotation, ...]]]
+InferenceOutput = Dict[str, Union[List[Annotation], Tuple[Annotation, ...]]]
 
 
 class OptimizerConfiguration(TypedDict):
