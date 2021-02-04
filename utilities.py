@@ -3,7 +3,7 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import numpy as np
 import torch
@@ -109,3 +109,21 @@ def all_elements_identical(x: List) -> bool:
     :return: True, if all elements of the list are identical or False, if they are not.
     """
     return all([element == x[0] for element in x])
+
+
+def dictionary_to_cpu(dictionary: Dict):
+    # TODO: Docstring
+    for key, value in dictionary.items():
+        if callable(getattr(value, "cpu", None)):
+            dictionary[key] = value.cpu()
+
+    return dictionary
+
+
+def dictionary_to_device(dictionary: Dict, device: torch.device):
+    # TODO: Docstring
+    for key, value in dictionary.items():
+        if callable(getattr(value, "to", None)):
+            dictionary[key] = value.to(device)
+
+    return dictionary

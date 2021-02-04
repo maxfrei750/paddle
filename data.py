@@ -12,7 +12,7 @@ from PIL import Image as PILImage
 from torchvision.transforms import functional as F
 
 from custom_types import Annotation, AnyPath, Batch, Image, Mask
-from utilities import all_elements_identical
+from utilities import all_elements_identical, dictionary_to_device
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
@@ -396,10 +396,10 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         """
         images, targets = batch
 
+        # TODO: Check if tuples can be replaced with lists.
+
         images = tuple(image.to(device) for image in images)
-        targets = tuple(
-            {k: v.to(device) for k, v in t.items() if isinstance(v, torch.Tensor)} for t in targets
-        )
+        targets = tuple(dictionary_to_device(target, device) for target in targets)
 
         return images, targets
 
