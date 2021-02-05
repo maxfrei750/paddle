@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -158,16 +158,10 @@ class LightningMaskRCNN(pl.LightningModule):
         :param batch_idx: Index of the current batch.
         :return: Predictions, ground truths and input images.
         """
-        images, targets = batch
+        images, _ = batch
         predictions = self(images)
 
-        # Transfer data to cpu, to avoid OOM errors.
-
-        images = tuple(image.cpu() for image in images)
-        targets = tuple(dictionary_to_cpu(target) for target in targets)
-        predictions = [dictionary_to_cpu(prediction) for prediction in predictions]
-
-        return {"predictions": predictions, "targets": targets, "images": images}
+        return {"predictions": predictions}
 
     def configure_optimizers(
         self,

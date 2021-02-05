@@ -26,8 +26,6 @@ class ValidationOutput(TypedDict):
 
 class TestOutput(TypedDict):
     predictions: List[Annotation]
-    targets: Tuple[Annotation, ...]
-    images: Tuple[Image, ...]
 
 
 class OptimizerConfiguration(TypedDict):
