@@ -39,6 +39,10 @@ def get_best_checkpoint_path(
 
     checkpoint_root = Path(checkpoint_root)
     log_file_paths = list(checkpoint_root.glob("*.ckpt"))
+
+    if not log_file_paths:
+        raise FileNotFoundError(f"Could not find checkpoint file in: {checkpoint_root}")
+
     log_file_names = [Path(log_file_path.name).stem for log_file_path in log_file_paths]
     metric_values = [
         float(re.search(metric_key + r"=([+-]?((\d+\.?\d*)|(\.\d+)))", log_file_name)[1])
@@ -62,11 +66,11 @@ def get_latest_checkpoint_path(checkpoint_root: AnyPath) -> AnyPath:
     """
     checkpoint_root = Path(checkpoint_root)
     log_file_paths = sorted(list(checkpoint_root.glob("*.ckpt")))
-    try:
-        latest_checkpoint_path = log_file_paths[-1]
-    except IndexError:
-        raise FileNotFoundError(f"Could not find checkpoint file in folder: {checkpoint_root}")
-    return latest_checkpoint_path
+
+    if not log_file_paths:
+        raise FileNotFoundError(f"Could not find checkpoint file in: {checkpoint_root}")
+
+    return log_file_paths[-1]
 
 
 def set_random_seed(seed: int):
