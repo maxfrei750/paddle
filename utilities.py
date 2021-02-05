@@ -106,15 +106,6 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
     return last_model_id
 
 
-def all_elements_identical(x: List) -> bool:
-    """Checks if all elements of a list are identical.
-
-    :param x: List
-    :return: True, if all elements of the list are identical or False, if they are not.
-    """
-    return all([element == x[0] for element in x])
-
-
 def dictionary_to_cpu(dictionary: Dict):
     # TODO: Docstring
     for key, value in dictionary.items():

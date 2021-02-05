@@ -6,13 +6,12 @@ from typing import Tuple
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning import seed_everything
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from callbacks import ExampleDetectionMonitor, ModelCheckpoint
 from data import MaskRCNNDataModule
-from maskrcnntrainer import MaskRCNNTrainer
 from models import LightningMaskRCNN
 from utilities import AnyPath
 
@@ -40,12 +39,10 @@ def train(config: DictConfig) -> None:
 
     data_module = MaskRCNNDataModule(**config.datamodule)
 
-    model = LightningMaskRCNN(
-        **config.model, map_label_to_class_name=data_module.map_label_to_class_name
-    )
+    model = LightningMaskRCNN(**config.model)
 
     if config.program.search_optimum_learning_rate:
-        lr_tuner = MaskRCNNTrainer(auto_lr_find=True, **config.trainer)
+        lr_tuner = Trainer(auto_lr_find=True, **config.trainer)
         lr_tuner.tune(model, datamodule=data_module)
         exit()
 
@@ -58,7 +55,7 @@ def train(config: DictConfig) -> None:
         ExampleDetectionMonitor(),
     ]
 
-    trainer = MaskRCNNTrainer(
+    trainer = Trainer(
         callbacks=callbacks,
         logger=TensorBoardLogger(save_dir=str(log_root), name="", version=version),
         **config.trainer,

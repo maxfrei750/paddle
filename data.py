@@ -12,7 +12,7 @@ from PIL import Image as PILImage
 from torchvision.transforms import functional as F
 
 from custom_types import Annotation, AnyPath, Batch, Image, Mask
-from utilities import all_elements_identical, dictionary_to_device
+from utilities import dictionary_to_device
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
@@ -82,12 +82,15 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         :return: Dictionaries, which map integer labels to class names.
         """
-        class_names = ["background"] + [f.name for f in self.subset_path.iterdir() if f.is_dir()]
+        class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
+
         if not class_names:
             raise FileNotFoundError(
-                f"Cannot create class name dictionary, because there is no class folder in {self.subset_path}."
+                f"Cannot create class name dictionary, because there are no class folders in {self.subset_path}."
             )
         else:
+            class_names = ["background"] + class_names
+
             map_label_to_class_name = {
                 label: class_name for (label, class_name) in enumerate(class_names)
             }
@@ -263,8 +266,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
         batch_size: int = 1,
         num_workers: Optional[int] = None,
-        train_subset: str = "training",
-        val_subset: str = "validation",
+        train_subset: Optional[str] = None,
+        val_subset: Optional[str] = None,
         test_subset: Optional[str] = None,
     ) -> None:
 
@@ -294,8 +297,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.map_label_to_class_name = None
         self.num_classes = None
 
-        self.setup()
-
     def prepare_data(self) -> None:
         """Do nothing."""
         pass
@@ -305,8 +306,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
         :param stage: Either "fit", when used for training and validation or "test", when used for testing of a model.
         """
-
-        mappings = []
 
         if stage == "fit" or stage is None:
             if self.train_subset is None:
@@ -319,8 +318,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     transform=self.train_transforms,
                 )
 
-                mappings.append(self.train_dataset.map_label_to_class_name)
-
             if self.val_subset is None:
                 if stage == "fit":
                     raise ValueError("No val_subset specified.")
@@ -330,8 +327,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     subset=self.val_subset,
                     transform=self.val_transforms,
                 )
-
-                mappings.append(self.val_dataset.map_label_to_class_name)
 
         if stage == "test" or stage is None:
             if self.test_subset is None:
@@ -343,16 +338,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     subset=self.test_subset,
                     transform=self.test_transforms,
                 )
-
-                mappings.append(self.test_dataset.map_label_to_class_name)
-
-        assert all_elements_identical(
-            mappings
-        ), "All datasets must have identical map_label_to_class_name properties."
-
-        self.map_label_to_class_name = mappings[0]
-
-        self.num_classes = len(self.map_label_to_class_name)
 
     def get_transforms(self, train: bool = False) -> albumentations.Compose:
         """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for training).
