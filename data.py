@@ -1,10 +1,11 @@
 import multiprocessing
 from itertools import compress
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, List, Literal, Optional, Tuple
 
 import albumentations
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torch.utils.data
@@ -26,18 +27,22 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 image_c.png
                 ...
                 classname1/
+                    scores_a....csv
                     mask_a....png
                     mask_a....png
                     mask_a....png
                     ...
+                    scores_b....csv
                     mask_b....png
                     mask_b....png
                     ...
                 classname2/
+                    scores_a....csv
                     mask_a....png
                     mask_a....png
                     mask_a....png
                     ...
+                    scores_b....csv
                     mask_b....png
                     mask_b....png
                     ...
@@ -57,7 +62,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         root = Path(root)
         self.root = root
-        assert root.is_dir(), "The specified root does not exist: " + root
+        assert root.is_dir(), "The specified root does not exist: " + str(root)
 
         self.subset_path = root / subset
         assert self.subset_path.is_dir(), "The specified subset folder does not exist: " + subset
@@ -70,34 +75,28 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.transform = transform
 
-        (
-            self.map_label_to_class_name,
-            self.map_class_name_to_label,
-        ) = self._create_class_name_label_maps()
+        self._gather_class_names()
 
-        self.num_classes = len(self.map_label_to_class_name)
+        self.map_label_to_class_name = {
+            label: class_name for (label, class_name) in enumerate(self.class_names)
+        }
+        self.map_class_name_to_label = {
+            class_name: label for (label, class_name) in enumerate(self.class_names)
+        }
 
-    def _create_class_name_label_maps(self) -> Tuple[Dict[int, str], Dict[str, int]]:
-        """Creates two dictionaries to map integer labels to class names and vice versa.
+        self.num_classes = len(self.class_names)
 
-        :return: Dictionaries, which map integer labels to class names.
-        """
+    def _gather_class_names(self) -> None:
+        """Gather class names based on class folders in subset folder."""
         class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
 
         if not class_names:
             raise FileNotFoundError(
                 f"Cannot create class name dictionary, because there are no class folders in {self.subset_path}."
             )
-        else:
-            class_names = ["background"] + class_names
 
-            map_label_to_class_name = {
-                label: class_name for (label, class_name) in enumerate(class_names)
-            }
-            map_class_name_to_label = {
-                class_name: label for (label, class_name) in enumerate(class_names)
-            }
-            return map_label_to_class_name, map_class_name_to_label
+        class_names = ["background"] + class_names
+        self.class_names = class_names
 
     def __getitem__(self, index: int) -> Tuple[Image, Annotation]:
         """Retrieve a sample from the dataset.
@@ -107,29 +106,48 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         """
 
         image_path = self.image_paths[index]
-
         image_name = image_path.stem[6:]
 
-        mask_paths = list(self.subset_path.glob(f"**/mask_{image_name}*.*"))
-
-        plain_text_labels = [path.parent.name for path in mask_paths]
-
-        labels = [
-            self.map_class_name_to_label[plain_text_label] for plain_text_label in plain_text_labels
-        ]
-
-        image = PILImage.open(image_path)
-        image = image.convert("RGB")
+        image = PILImage.open(image_path).convert("RGB")
         image = np.array(image)
 
-        num_instances = len(mask_paths)
-
+        scores = []
         masks = []
+        labels = []
 
-        for mask_path in mask_paths:
-            mask = PILImage.open(mask_path).convert("1")
-            mask = np.array(mask)
-            masks.append(mask)
+        for class_name in self.class_names:
+            class_folder_path = self.subset_path / class_name
+
+            mask_paths = list(class_folder_path.glob(f"mask_{image_name}*.*"))
+
+            if not mask_paths:
+                continue
+
+            num_masks = len(mask_paths)
+
+            labels += [self.map_class_name_to_label[class_name]] * num_masks
+
+            score_file_path = class_folder_path / f"scores_{image_name}.csv"
+
+            if score_file_path.exists():
+                unsorted_scores = pd.read_csv(score_file_path, index_col=0)
+                num_scores = len(unsorted_scores)
+                assert num_scores == num_masks, (
+                    f"Inconsistent number of masks ({num_masks}) and scores({num_scores}) for "
+                    f"{image_path} (class '{class_name}')."
+                )
+
+                mask_file_names = [mask_path.name for mask_path in mask_paths]
+                scores += list(unsorted_scores["score"][mask_file_names])
+            else:
+                scores += [1.0] * num_masks
+
+            for mask_path in mask_paths:
+                mask = PILImage.open(mask_path).convert("1")
+                mask = np.array(mask)
+                masks.append(mask)
+
+        num_instances = len(masks)
 
         if self.transform is not None:
             transformed_data = self.transform(image=image, masks=masks)
@@ -150,7 +168,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             areas = []
 
         labels = torch.as_tensor(labels)
-        scores = torch.ones((num_instances,), dtype=torch.float32)
+        scores = torch.as_tensor(scores)
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         masks = torch.tensor(np.array(masks, dtype=np.uint8))
         image_id = torch.tensor([index])
@@ -235,18 +253,22 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 image_c.png
                 ...
                 classname1/
+                    scores_a....csv
                     mask_a....png
                     mask_a....png
                     mask_a....png
                     ...
+                    scores_b....csv
                     mask_b....png
                     mask_b....png
                     ...
                 classname2/
+                    scores_a....csv
                     mask_a....png
                     mask_a....png
                     mask_a....png
                     ...
+                    scores_b....csv
                     mask_b....png
                     mask_b....png
                     ...
