@@ -8,15 +8,16 @@ from skimage.segmentation import clear_border
 from custom_types import Annotation, Mask
 
 
-def filter_border_instances(annotation: Annotation) -> Annotation:
+def filter_border_instances(annotation: Annotation, border_width: int = 2) -> Annotation:
     """Remove instances that touch the image border.
 
     :param annotation: Annotation with masks.
+    :param border_width: The width of the border examined.
     :return: Annotation, where border instances have been removed.
     """
     masks = annotation["masks"]
 
-    cleared_masks = [clear_border(mask, buffer_size=2) for mask in masks]
+    cleared_masks = [clear_border(mask, buffer_size=border_width) for mask in masks]
     do_keep = [np.any(mask) for mask in cleared_masks]
 
     annotation = filter_annotation(annotation, do_keep)
