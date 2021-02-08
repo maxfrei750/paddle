@@ -1,8 +1,8 @@
-from itertools import compress
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
+from numpy import ndarray
 from skimage.segmentation import clear_border
 
 from custom_types import Annotation, Mask
@@ -17,8 +17,16 @@ def filter_border_instances(annotation: Annotation, border_width: int = 2) -> An
     """
     masks = annotation["masks"]
 
-    cleared_masks = [clear_border(mask, buffer_size=border_width) for mask in masks]
-    do_keep = [np.any(mask) for mask in cleared_masks]
+    masks = np.asarray(masks)
+
+    cleared_masks = np.asarray(
+        [clear_border(mask, buffer_size=border_width) for mask in masks.astype(bool)]
+    )
+
+    do_keep = np.any(cleared_masks, axis=(1, 2))
+
+    # TODO: Apply fix for ragged masks.
+    # do_keep = ~np.any(np.logical_xor(cleared_masks, masks), axis=(1, 2))
 
     annotation = filter_annotation(annotation, do_keep)
 
@@ -33,38 +41,40 @@ def filter_low_score_instances(annotation: Annotation, score_threshold: float) -
     :return: Annotation, where instances with a score below `score_threshold` have been removed.
     """
     scores = annotation["scores"]
-    do_keep = [score >= score_threshold for score in scores]
+    scores = np.asarray(scores)
+
+    do_keep = scores >= score_threshold
 
     annotation = filter_annotation(annotation, do_keep)
 
     return annotation
 
 
-def filter_annotation(annotation: Annotation, do_keep: List[bool]) -> Annotation:
-    """Filter instances based on a boolean list.
+def filter_annotation(annotation: Annotation, do_keep: ndarray) -> Annotation:
+    """Filter instances based on a boolean numpy array.
 
     :param annotation: Annotation
-    :param do_keep:
-    :return:
+    :param do_keep: Boolean numpy array, which specifies, which instances are to be kept.
+    :return: Annotation, where instances with a corresponding false entry in do_keep have been
+        removed.
     """
     for key, value in annotation.items():
         if key not in ["image_name", "image_id"]:
-            # TODO: Fix type warning.
-            annotation[key] = list(compress(annotation[key], do_keep))
+            annotation[key] = np.asarray(annotation[key])[do_keep]
 
     return annotation
 
 
-def calculate_area_equivalent_diameters(masks: List[Mask]) -> List[float]:
-    """Calculate area equivalent diameters for a list of masks.
+def calculate_area_equivalent_diameters(masks: ndarray) -> ndarray:
+    """Calculate area equivalent diameters for a numpy array containing masks.
 
-    :param masks: List of HxW numpy arrays, each of which stores an instance mask.
-    :return: List of area equivalent diameters.
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of area equivalent diameters.
     """
-    masks = np.array(masks)
+    masks = np.array(masks).astype(bool)
     masks = masks.reshape(masks.shape[0], -1)
     areas = np.asarray(masks).sum(axis=1)
-    return list(np.sqrt(4 * areas / np.pi))
+    return np.sqrt(4 * areas / np.pi)
 
 
 def calculate_minimum_and_maximum_feret_diameter(mask: Mask) -> Tuple[float, float]:
@@ -99,19 +109,19 @@ def calculate_maximum_feret_diameter(mask: Mask) -> float:
     return calculate_minimum_and_maximum_feret_diameter(mask)[1]
 
 
-def calculate_minimum_feret_diameters(masks: List[Mask]) -> List[float]:
-    """Calculates the minimum Feret diameters of a list of masks.
+def calculate_minimum_feret_diameters(masks: ndarray) -> ndarray:
+    """Calculates the minimum Feret diameters of a numpy array containing masks.
 
-    :param masks: List of HxW numpy arrays, each of which stores an instance mask.
-    :return: List of minimum Feret diameter of the masks.
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of minimum Feret diameters of the masks.
     """
-    return [calculate_minimum_feret_diameter(mask) for mask in masks]
+    return np.asarray([calculate_minimum_feret_diameter(mask) for mask in masks])
 
 
-def calculate_maximum_feret_diameters(masks: List[Mask]) -> List[float]:
-    """Calculate the maximum Feret diameter of a mask.
+def calculate_maximum_feret_diameters(masks: ndarray) -> ndarray:
+    """Calculates the maximum Feret diameters of a numpy array containing masks.
 
-    :param masks: List of HxW numpy arrays, each of which stores an instance mask.
-    :return: List of maximum Feret diameters of the masks.
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of maximum Feret diameters of the masks.
     """
-    return [calculate_maximum_feret_diameter(mask) for mask in masks]
+    return np.asarray([calculate_maximum_feret_diameter(mask) for mask in masks])
