@@ -1,7 +1,7 @@
 import multiprocessing
 from itertools import compress
 from pathlib import Path
-from typing import Any, List, Literal, Optional, Tuple
+from typing import Any, List, Literal, Optional, Sequence, Tuple
 
 import albumentations
 import numpy as np
@@ -10,6 +10,8 @@ import pytorch_lightning as pl
 import torch
 import torch.utils.data
 from PIL import Image as PILImage
+from torch.utils.data import Dataset, Sampler
+from torch.utils.data.dataloader import T_co, _collate_fn_t, _worker_init_fn_t
 from torchvision.transforms import functional as F
 
 from custom_types import Annotation, AnyPath, Batch, Image, Mask
@@ -287,7 +289,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         data_root: AnyPath,
         cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
         batch_size: int = 1,
-        num_workers: Optional[int] = None,
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
         test_subset: Optional[str] = None,
@@ -298,11 +299,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.data_root = Path(data_root)
         self.cropping_rectangle = cropping_rectangle
         self.batch_size = batch_size
-
-        if num_workers is None:
-            self.num_workers = multiprocessing.cpu_count()
-        else:
-            self.num_workers = num_workers
 
         self.train_subset = train_subset
         self.val_subset = val_subset
@@ -383,29 +379,23 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
     def train_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for training."""
-        return torch.utils.data.DataLoader(
+        return MaskRCNNDataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=self.collate,
         )
 
     def val_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for validation."""
-        return torch.utils.data.DataLoader(
+        return MaskRCNNDataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=self.collate,
         )
 
     def test_dataloader(self) -> torch.utils.data.DataLoader:
         """Returns a dataloader for testing."""
-        return torch.utils.data.DataLoader(
+        return MaskRCNNDataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=self.collate,
         )
 
     def transfer_batch_to_device(self, batch: Batch, device: torch.device) -> Batch:
@@ -423,6 +413,53 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         targets = tuple(dictionary_to_device(target, device) for target in targets)
 
         return images, targets
+
+
+class MaskRCNNDataLoader(torch.utils.data.DataLoader):
+    """Pytorch DataLoader with sensible defaults for MaskRCNN datasets."""
+
+    def __init__(
+        self,
+        dataset: Dataset[T_co],
+        batch_size: Optional[int] = 1,
+        shuffle: bool = False,
+        sampler: Optional[Sampler[int]] = None,
+        batch_sampler: Optional[Sampler[Sequence[int]]] = None,
+        num_workers: Optional[int] = None,
+        collate_fn: _collate_fn_t = None,
+        pin_memory: bool = False,
+        drop_last: bool = False,
+        timeout: float = 0,
+        worker_init_fn: _worker_init_fn_t = None,
+        multiprocessing_context=None,
+        generator=None,
+        *,
+        prefetch_factor: int = 2,
+        persistent_workers: bool = False,
+    ):
+        if collate_fn is None:
+            collate_fn = MaskRCNNDataLoader.collate
+
+        if num_workers is None:
+            num_workers = multiprocessing.cpu_count()
+
+        super().__init__(
+            dataset,
+            batch_size,
+            shuffle,
+            sampler,
+            batch_sampler,
+            num_workers,
+            collate_fn,
+            pin_memory,
+            drop_last,
+            timeout,
+            worker_init_fn,
+            multiprocessing_context,
+            generator,
+            prefetch_factor=prefetch_factor,
+            persistent_workers=persistent_workers,
+        )
 
     @staticmethod
     def collate(uncollated_batch: List[Tuple[Image, Annotation]]) -> Batch:
