@@ -48,7 +48,7 @@ def filter_annotation(annotation: Annotation, do_keep: List[bool]) -> Annotation
     :return:
     """
     for key, value in annotation.items():
-        if key in ["scores", "masks", "boxes", "labels"]:
+        if key not in ["image_name", "image_id"]:
             # TODO: Fix type warning.
             annotation[key] = list(compress(annotation[key], do_keep))
 
