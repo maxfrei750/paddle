@@ -88,7 +88,6 @@ def main():
                 do_display_box=False,
                 do_display_label=False,
                 do_display_score=False,
-                score_threshold=score_threshold,
             )
 
             visualization.save(

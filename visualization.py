@@ -69,7 +69,6 @@ def visualize_detection(
     do_display_mask: Optional[bool] = True,
     do_display_outlines_only: Optional[bool] = True,
     map_label_to_class_name: Optional[Dict[int, str]] = None,
-    score_threshold: Optional[float] = 0,
     line_width: Optional[int] = 3,
     font_size: Optional[int] = 16,
 ) -> PILImage:
@@ -84,7 +83,6 @@ def visualize_detection(
     :param do_display_mask: If true and available, then masks are displayed.
     :param do_display_outlines_only: If true, only the outlines of masks are displayed.
     :param map_label_to_class_name: Dictionary, which maps instance labels to class names.
-    :param score_threshold: Only detections above this score are displayed.
     :param line_width: Line width for bounding boxes and mask outlines.
     :param font_size: Font Size for labels and scores.
     :return: A PIL image object of the original image with overlayed annotations.
@@ -136,10 +134,6 @@ def visualize_detection(
     for mask, box, color_float, score, label in zip(masks, boxes, colors_float, scores, labels):
 
         color_int = _color_float_to_int(color_float)
-
-        if score is not None:
-            if score < score_threshold:
-                continue
 
         if mask is not None and do_display_mask:
             mask = mask.squeeze()

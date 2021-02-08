@@ -62,7 +62,7 @@ class ExampleDetectionMonitor(callbacks.Callback):
             prediction = pl_module([image])[0]
 
             # Log prediction image.
-            detection_image = np.array(visualize_detection(image, prediction, score_threshold=0.5))
+            detection_image = np.array(visualize_detection(image, prediction))
 
             trainer.logger.experiment.add_image(
                 "validation/example_detection",
