@@ -23,10 +23,7 @@ def filter_border_instances(annotation: Annotation, border_width: int = 2) -> An
         [clear_border(mask, buffer_size=border_width) for mask in masks.astype(bool)]
     )
 
-    do_keep = np.any(cleared_masks, axis=(1, 2))
-
-    # TODO: Apply fix for ragged masks.
-    # do_keep = ~np.any(np.logical_xor(cleared_masks, masks), axis=(1, 2))
+    do_keep = ~np.any(np.logical_xor(cleared_masks, masks), axis=(1, 2))
 
     annotation = filter_annotation(annotation, do_keep)
 
