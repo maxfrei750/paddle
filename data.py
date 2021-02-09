@@ -111,7 +111,6 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         image_name = image_path.stem[6:]
 
         image = PILImage.open(image_path).convert("RGB")
-        image = np.array(image)
 
         scores = []
         masks = []
@@ -146,10 +145,17 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
             for mask_path in mask_paths:
                 mask = PILImage.open(mask_path).convert("1")
+
+                assert (
+                    image.size == mask.size
+                ), f"Size of mask {mask_path.parts[-2:]} differs from image size."
+
                 mask = np.array(mask)
                 masks.append(mask)
 
         num_instances = len(masks)
+
+        image = np.array(image)
 
         if self.transform is not None:
             transformed_data = self.transform(image=image, masks=masks)
