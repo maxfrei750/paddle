@@ -7,11 +7,12 @@ from torch.optim import Optimizer
 
 # General
 AnyPath = Union[str, bytes, PathLike]
+ArrayLike = Union[Tensor, ndarray]
 
 # Data
-Mask = ndarray
-Annotation = Dict[str, Union[Tensor, str]]  # TODO: Check if other types must be in the union.
-Image = Tensor
+Mask = ArrayLike
+Annotation = Dict[str, Union[ArrayLike, str]]
+Image = ArrayLike
 Batch = Tuple[Tuple[Image, ...], Tuple[Annotation, ...]]
 
 # Model
