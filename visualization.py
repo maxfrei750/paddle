@@ -250,7 +250,10 @@ def plot_particle_size_distributions(
         geometric_mean = gmean(particle_sizes, weights=scores)
         geometric_standard_deviation = gstd(particle_sizes, weights=scores)
 
-        label = f"{label}\n  $d_g={geometric_mean:.0f}$ {unit}\n  $\sigma_g={geometric_standard_deviation:.2f}$"
+        label = (
+            f"{label}\n  $d_g={geometric_mean:.0f}$ {unit}\n  $\sigma_g="
+            f"{geometric_standard_deviation:.2f}$"
+        )
 
         _, bins, _ = plt.hist(
             particle_sizes, bins=bins, color=color, weights=scores, label=label, **hist_kwargs
