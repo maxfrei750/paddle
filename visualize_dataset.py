@@ -1,17 +1,15 @@
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional
 
 import fire
-from tqdm import tqdm
 
-from custom_types import Annotation, AnyPath, Batch, Image
-from data import MaskRCNNDataset
-from visualization import visualize_detection
+from custom_types import AnyPath
+from postprocessing import Postprocessor, SaveVisualization
 
 
 def visualize_dataset(
-    data_root: AnyPath = "data",
-    subset: str = "test",
+    data_root: AnyPath,
+    subset: str,
     output_root: Optional[AnyPath] = None,
 ):
     """Visualize a dataset.
@@ -27,23 +25,19 @@ def visualize_dataset(
     else:
         Path(output_root).mkdir(exist_ok=True, parents=True)
 
-    data_set = MaskRCNNDataset(data_root, subset=subset)
-
-    for image, target in tqdm(data_set):
-        image_name = target["image_name"]
-
-        # TODO: Add visualize_detection parameters to visualize_dataset parameters.
-        result = visualize_detection(
-            image,
-            target,
+    post_processing_steps = [
+        SaveVisualization(
+            output_root=output_root,
             do_display_box=False,
-            do_display_label=False,
-            do_display_score=True,
-            line_width=3,
-        )
+            do_display_score=False,
+            do_display_label=True,
+            line_width=2,
+        ),
+    ]
 
-        visualization_file_path = output_root / f"visualization_{image_name}.png"
-        result.save(visualization_file_path)
+    Postprocessor(
+        data_root, subset, post_processing_steps, progress_bar_description="Visualization: "
+    ).run()
 
 
 if __name__ == "__main__":
