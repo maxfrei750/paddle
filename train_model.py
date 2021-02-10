@@ -17,7 +17,7 @@ from utilities import AnyPath
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
-def train(config: DictConfig) -> None:
+def train_model(config: DictConfig) -> None:
     """Trains a Mask R-CNN based on a given config.
 
     :param config: OmegaConf dictionary.
@@ -79,4 +79,4 @@ def setup_hydra() -> Tuple[AnyPath, str]:
 
 
 if __name__ == "__main__":
-    train()
+    train_model()
