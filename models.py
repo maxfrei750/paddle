@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -18,7 +18,6 @@ from custom_types import (
     ValidationOutput,
 )
 from metrics import AveragePrecision
-from utilities import dictionary_to_cpu
 
 
 class LightningMaskRCNN(pl.LightningModule):
