@@ -94,7 +94,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         if not class_names:
             raise FileNotFoundError(
-                f"Cannot create class name dictionary, because there are no class folders in {self.subset_path}."
+                f"Cannot create class name dictionary, because there are no class folders in "
+                f"{self.subset_path}."
             )
 
         class_names = ["background"] + class_names
@@ -104,7 +105,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         """Retrieve a sample from the dataset.
 
         :param index: Index of the sample to retrieve.
-        :return: Tuple containing an image as torch tensor and a dict holding the available ground truth data.
+        :return: Tuple containing an image as torch tensor and a dict holding the available ground
+            truth data.
         """
 
         image_path = self.image_paths[index]
@@ -287,7 +289,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
     :param cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping of
         images. Applied before all other transforms.
     :param batch_size: Number of samples per batch.
-    :param num_workers: Number of workers to load data. If None, defaults to the number of threads of the CPU.
     """
 
     def __init__(
@@ -328,7 +329,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
     def setup(self, stage: Optional[Literal["fit", "test"]] = None) -> None:
         """Set up the training, validation and test data sets.
 
-        :param stage: Either "fit", when used for training and validation or "test", when used for testing of a model.
+        :param stage: Either "fit", when used for training and validation or "test", when used for
+            testing of a model.
         """
 
         if stage == "fit" or stage is None:
@@ -364,7 +366,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 )
 
     def get_transforms(self, train: bool = False) -> albumentations.Compose:
-        """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for training).
+        """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for
+            training).
 
         :param train: Specify, whether to apply image augmentation or not.
         :return: Composed transforms.
@@ -471,7 +474,8 @@ class MaskRCNNDataLoader(torch.utils.data.DataLoader):
     def collate(uncollated_batch: List[Tuple[Image, Annotation]]) -> Batch:
         """Defines how to collate batches.
 
-        :param uncollated_batch: Uncollated batch of data. List containing tuples of images and targets.
-        :return: Collated batch. Tuple containing a tuple of images and a tuple of targets.
+        :param uncollated_batch: Uncollated batch of data. List containing tuples of images and
+            annotations.
+        :return: Collated batch. Tuple containing a tuple of images and a tuple of annotations.
         """
         return tuple(zip(*uncollated_batch))
