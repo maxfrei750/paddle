@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
@@ -47,11 +47,29 @@ def filter_low_score_instances(annotation: Annotation, score_threshold: float) -
     return annotation
 
 
-def filter_annotation(annotation: Annotation, do_keep: ndarray) -> Annotation:
+def filter_class_instances(annotation: Annotation, class_labels_to_keep: List[int]) -> Annotation:
+    """Remove all instances with labels that are not in `class_labels_to_keep`.
+
+    :param annotation: Annotation with scores.
+    :param class_labels_to_keep: List of class labels that are to be kept.
+    :return: Annotation, where instances with labels that are not in `class_labels_to_keep` have
+        been removed.
+    """
+    labels = annotation["labels"]
+    labels = list(labels)
+
+    do_keep = [label in class_labels_to_keep for label in labels]
+
+    annotation = filter_annotation(annotation, do_keep)
+
+    return annotation
+
+
+def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List]) -> Annotation:
     """Filter instances based on a boolean numpy array.
 
     :param annotation: Annotation
-    :param do_keep: Boolean numpy array, which specifies, which instances are to be kept.
+    :param do_keep: Boolean numpy array or list, which specifies, which instances are to be kept.
     :return: Annotation, where instances with a corresponding false entry in do_keep have been
         removed.
     """
