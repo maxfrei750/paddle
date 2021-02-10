@@ -15,6 +15,7 @@ class Postprocessor:
     :param data_root: Path of the data folder.
     :param subset: Name of the subset to use for the validation.
     :param post_processing_steps: List of post processing steps.
+    :param progress_bar_description: Description of the tqdm progress bar.
     """
 
     def __init__(
@@ -22,6 +23,7 @@ class Postprocessor:
         data_root: AnyPath,
         subset: str,
         post_processing_steps: List,
+        progress_bar_description: Optional[str] = "Postprocessing: ",
     ) -> None:
         self.data_root = data_root
         self.data_set = MaskRCNNDataset(data_root, subset)
@@ -30,12 +32,14 @@ class Postprocessor:
 
         self.post_processing_steps = [Numpify()] + post_processing_steps
 
+        self.progress_bar_description = progress_bar_description
+
     def run(self):
         """Iterate all samples of a dataset and apply postprocessing steps to each sample.
 
         :return:
         """
-        for images, targets in tqdm(self.data_iterator, desc="Postprocessing: "):
+        for images, targets in tqdm(self.data_iterator, desc=self.progress_bar_description):
             for image, target in zip(images, targets):
                 for post_processing_step in self.post_processing_steps:
                     image, target = post_processing_step(image, target)
