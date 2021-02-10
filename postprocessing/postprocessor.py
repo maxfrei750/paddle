@@ -6,7 +6,7 @@ from tqdm import tqdm
 from custom_types import AnyPath
 from data import MaskRCNNDataLoader, MaskRCNNDataset
 
-from .postprocessingsteps import PostProcessingStepBase
+from .postprocessingsteps import Numpify
 
 
 class Postprocessor:
@@ -21,14 +21,14 @@ class Postprocessor:
         self,
         data_root: AnyPath,
         subset: str,
-        post_processing_steps: List[PostProcessingStepBase],
+        post_processing_steps: List,
     ) -> None:
         self.data_root = data_root
         self.data_set = MaskRCNNDataset(data_root, subset)
         self.data_loader = MaskRCNNDataLoader(self.data_set, batch_size=1, shuffle=False)
         self.data_iterator = iter(self.data_loader)
 
-        self.post_processing_steps = post_processing_steps
+        self.post_processing_steps = [Numpify()] + post_processing_steps
 
     def run(self):
         """Iterate all samples of a dataset and apply postprocessing steps to each sample.
