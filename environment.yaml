@@ -1,4 +1,4 @@
-name: MaskRCNN
+name: paddle
 channels:
 - pytorch
 - defaults
