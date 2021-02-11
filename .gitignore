@@ -73,6 +73,10 @@ __pycache__
 # Jupyter
 .ipynb_checkpoints/
 
+# pip files
+build
+*.egg-info
+
 # Datasets
 datasets
 
