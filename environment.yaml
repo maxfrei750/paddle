@@ -1,29 +1,29 @@
 name: paddle
 channels:
 - pytorch
-- defaults
 - conda-forge
 dependencies:
-- python>=3.8
-- pytorch
-- torchvision
+- python
 - cudatoolkit=11.0
-- ignite
+- pytorch
 - pytorch-lightning
-- tensorboard
-- tensorboardx
-- matplotlib
-- pandas
-- seaborn
-- tqdm
-- scikit-image
-- cython
-- pycocotools
+- torchvision
 - albumentations
+- pillow # TODO: test pillow-simd, channel: zegami
+- skimage
+- cython
+- seaborn
+- matplotlib
+- pyyaml
+- tqdm
+- setuptools
+- omegaconf
+- pandas
+- scipy
+- numpy
 - fire
 - pip
 - pip:
     - diplib
     - opencv-python
-    - git+https://github.com/facebookresearch/hydra.git@993d6eec047a2d4e63a6f96fc62b519009902bec # TODO: Replace with hydra=1.1 as soon as it is released.
-#  - git+https://github.com/gautamchitnis/cocoapi.git@cocodataset-master#subdirectory=PythonAPI # for Windows
+    - hydra-core==1.1.0.dev3
