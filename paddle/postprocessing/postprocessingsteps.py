@@ -5,9 +5,8 @@ import pandas as pd
 import yaml
 from torch import Tensor
 
-from custom_types import Annotation, AnyPath, Image
-from visualization import visualize_detection
-
+from ..custom_types import Annotation, AnyPath, Image
+from ..visualization import visualize_detection
 from .functional import filter_border_instances, filter_class_instances, filter_low_score_instances
 
 

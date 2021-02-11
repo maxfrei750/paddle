@@ -7,9 +7,9 @@ import pandas as pd
 from pytorch_lightning import LightningModule, Trainer, callbacks
 from torchvision.transforms import ToPILImage
 
-from custom_types import AnyPath, Batch, TestOutput
-from utilities import dictionary_to_cpu
-from visualization import visualize_detection
+from .custom_types import AnyPath, Batch, TestOutput
+from .utilities import dictionary_to_cpu
+from .visualization import visualize_detection
 
 
 class ExampleDetectionMonitor(callbacks.Callback):

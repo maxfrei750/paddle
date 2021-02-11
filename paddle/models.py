@@ -7,7 +7,7 @@ import torchvision
 from torch.nn import ModuleDict
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from custom_types import (
+from .custom_types import (
     Annotation,
     Batch,
     Image,
@@ -17,7 +17,7 @@ from custom_types import (
     TestOutput,
     ValidationOutput,
 )
-from metrics import AveragePrecision
+from .metrics import AveragePrecision
 
 
 class LightningMaskRCNN(pl.LightningModule):

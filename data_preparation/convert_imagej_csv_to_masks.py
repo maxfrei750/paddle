@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from utilities import AnyPath
+from paddle.utilities import AnyPath
 
 
 def convert_imagej_csv_to_masks(

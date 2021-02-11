@@ -1,5 +1,4 @@
 import random
-from statistics import gmean, gstd
 from typing import Dict, Iterable, List, Optional
 
 import numpy as np
@@ -13,8 +12,9 @@ from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
 from torchvision import transforms
 
-from custom_types import Annotation, ColorFloat, ColorInt, Image
-from data import extract_bounding_box
+from .custom_types import Annotation, ColorFloat, ColorInt, Image
+from .data import extract_bounding_box
+from .statistics import gmean, gstd
 
 
 def get_viridis_colors(num_colors: int) -> List[ColorFloat]:

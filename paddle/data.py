@@ -14,8 +14,8 @@ from torch.utils.data import Dataset, Sampler
 from torch.utils.data.dataloader import T_co, _collate_fn_t, _worker_init_fn_t
 from torchvision.transforms import functional as F
 
-from custom_types import Annotation, AnyPath, Batch, Image, Mask
-from utilities import dictionary_to_device
+from .custom_types import Annotation, AnyPath, Batch, Image, Mask
+from .utilities import dictionary_to_device
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):

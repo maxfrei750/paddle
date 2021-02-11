@@ -1,1 +1,1 @@
-# paddle - PArticle Detection via Deep LEarning
+# paddle (PArticle Detection via Deep LEarning)

@@ -2,9 +2,9 @@ import random
 
 import fire
 
-from data import MaskRCNNDataset
-from utilities import AnyPath
-from visualization import visualize_detection
+from paddle.data import MaskRCNNDataset
+from paddle.utilities import AnyPath
+from paddle.visualization import visualize_detection
 
 
 def inspect_data(data_root: AnyPath, subset: str = "training"):

@@ -5,7 +5,7 @@ from pytorch_lightning.metrics import Metric
 from torch import tensor
 from torchvision.ops.boxes import box_iou
 
-from custom_types import Annotation
+from .custom_types import Annotation
 
 
 class AveragePrecision(Metric):

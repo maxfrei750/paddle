@@ -10,10 +10,10 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from callbacks import ExampleDetectionMonitor, ModelCheckpoint
-from data import MaskRCNNDataModule
-from models import LightningMaskRCNN
-from utilities import AnyPath
+from paddle.callbacks import ExampleDetectionMonitor, ModelCheckpoint
+from paddle.data import MaskRCNNDataModule
+from paddle.models import LightningMaskRCNN
+from paddle.utilities import AnyPath
 
 
 @hydra.main(config_path="configs", config_name="maskrcnn")

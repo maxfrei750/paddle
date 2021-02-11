@@ -3,16 +3,15 @@ from pathlib import Path
 import pandas as pd
 from transforms import get_transform
 
-from data import Dataset
-from deployment import analyze_image, load_trained_model
-from postprocessing import (
+from paddle.data import Dataset
+from paddle.deployment import analyze_image, load_trained_model
+from paddle.postprocessing import (
     calculate_area_equivalent_diameters,
     calculate_maximum_feret_diameters,
     calculate_minimum_feret_diameters,
     filter_border_instances,
 )
-from utilities import set_random_seed
-from visualization import visualize_detection
+from paddle.utilities import set_random_seed
 
 # TODO: Fix
 

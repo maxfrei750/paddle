@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import yaml
 
-from custom_types import AnyPath
+from .custom_types import AnyPath
 
 
 def get_time_stamp() -> str:

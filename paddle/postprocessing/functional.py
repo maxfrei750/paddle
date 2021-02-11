@@ -5,7 +5,7 @@ from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
 from numpy import ndarray
 from skimage.segmentation import clear_border
 
-from custom_types import Annotation, Mask
+from ..custom_types import Annotation, Mask
 
 
 def filter_border_instances(annotation: Annotation, border_width: int = 2) -> Annotation:

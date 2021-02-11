@@ -4,11 +4,11 @@ from typing import List, Optional
 import fire
 from pytorch_lightning import Trainer
 
-from callbacks import TestPredictionWriter
-from custom_types import AnyPath
-from data import MaskRCNNDataModule
-from models import LightningMaskRCNN
-from utilities import get_best_checkpoint_path, get_latest_log_folder_path
+from paddle.callbacks import TestPredictionWriter
+from paddle.custom_types import AnyPath
+from paddle.data import MaskRCNNDataModule
+from paddle.models import LightningMaskRCNN
+from paddle.utilities import get_best_checkpoint_path, get_latest_log_folder_path
 
 
 def inspect_model(

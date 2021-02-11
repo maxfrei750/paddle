@@ -3,8 +3,8 @@ from typing import Optional
 
 import fire
 
-from custom_types import AnyPath
-from postprocessing import Postprocessor, SaveVisualization
+from paddle.custom_types import AnyPath
+from paddle.postprocessing import Postprocessor, SaveVisualization
 
 
 def visualize_dataset(
