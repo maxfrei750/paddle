@@ -238,18 +238,18 @@ def extract_bounding_boxes(masks: List[Mask]) -> np.ndarray:
     return boxes
 
 
-def extract_bounding_box(mask: Mask) -> Tuple[int, int, int, int]:
+def extract_bounding_box(mask: Mask) -> np.ndarray:
     """Extract the bounding box of a mask.
 
     :param mask: HxW numpy array
-    :return: bounding box (Tuple[int, int, int, int]).
+    :return: bounding box
     """
     pos = np.where(mask)
     xmin = np.min(pos[1])
     xmax = np.max(pos[1]) + 1
     ymin = np.min(pos[0])
     ymax = np.max(pos[0]) + 1
-    return xmin, ymin, xmax, ymax
+    return np.array([xmin, ymin, xmax, ymax])
 
 
 class MaskRCNNDataModule(pl.LightningDataModule):
