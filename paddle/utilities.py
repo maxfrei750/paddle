@@ -3,7 +3,7 @@ import random
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal, Optional
 
 import numpy as np
 import torch
@@ -104,30 +104,3 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
     last_log_folder = max(log_folders, key=os.path.getctime)
     last_model_id = last_log_folder.name
     return last_model_id
-
-
-def dictionary_to_cpu(dictionary: Dict):
-    """Move dictionary values to the cpu, if they support it.
-
-    :param dictionary: Dictionary, whose values are to be moved to the cpu.
-    :return: Dictionary, with values moved to cpu (if they support it).
-    """
-    for key, value in dictionary.items():
-        if callable(getattr(value, "cpu", None)):
-            dictionary[key] = value.cpu()
-
-    return dictionary
-
-
-def dictionary_to_device(dictionary: Dict, device: torch.device):
-    """Move dictionary values to a torch device, if they support it.
-
-    :param dictionary: Dictionary, whose values are to be moved to the torch device.
-    :param device: torch device
-    :return: Dictionary, with values moved to torch device (if they support it).
-    """
-    for key, value in dictionary.items():
-        if callable(getattr(value, "to", None)):
-            dictionary[key] = value.to(device)
-
-    return dictionary

@@ -81,6 +81,6 @@ build
 datasets
 
 # Logs
-logs
-data
-development
+/logs
+/data
+/development

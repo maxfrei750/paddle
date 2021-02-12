@@ -13,7 +13,7 @@ from skimage import img_as_float, img_as_ubyte
 from torchvision import transforms
 
 from .custom_types import Annotation, ColorFloat, ColorInt, Image
-from .data import extract_bounding_box
+from .data.utilities import extract_bounding_box
 from .statistics import gmean, gstd
 
 

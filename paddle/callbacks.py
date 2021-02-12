@@ -8,7 +8,7 @@ from pytorch_lightning import LightningModule, Trainer, callbacks
 from torchvision.transforms import ToPILImage
 
 from .custom_types import AnyPath, Batch, TestOutput
-from .utilities import dictionary_to_cpu
+from .data.utilities import dictionary_to_cpu
 from .visualization import visualize_detection
 
 
@@ -22,8 +22,8 @@ class ExampleDetectionMonitor(callbacks.Callback):
         self.random_visualization_batch_idx = None
 
     def on_validation_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
-        """Randomly select a validation batch, from which the random input image for the example detection is gonna be
-            sampled from.
+        """Randomly select a validation batch, from which the random input image for the example
+            detection is gonna be sampled from.
 
         :param trainer: Lightning Trainer
         :param pl_module: Lightning Module
