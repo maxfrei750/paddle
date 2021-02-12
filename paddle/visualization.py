@@ -134,6 +134,11 @@ def visualize_detection(
 
         color_int = _color_float_to_int(color_float)
 
+        if (
+            do_display_label or do_display_score or do_display_box or do_display_mask
+        ) and box is None:
+            box = extract_bounding_box(mask)
+
         if mask is not None and do_display_mask:
             mask = mask.squeeze()
 
@@ -148,9 +153,6 @@ def visualize_detection(
                 do_display_outlines_only=do_display_outlines_only,
                 outline_width=line_width,
             )
-
-        if (do_display_label or do_display_score or do_display_box) and box is None:
-            box = extract_bounding_box(mask)
 
         if box is not None and do_display_box:
             ImageDraw.Draw(result).rectangle(box, outline=color_int, width=line_width)
@@ -208,11 +210,27 @@ def _overlay_image_with_mask(
     :return: PIL image with overlayed mask.
     """
     if do_display_outlines_only:
-        mask = np.logical_xor(mask, binary_erosion(mask, iterations=outline_width))
-    mask = PILImage.fromarray(mask)
-    mask_colored = ImageOps.colorize(mask.convert("L"), black="black", white=color_int)
+        mask = extract_outlines(mask, outline_width)
+
+    mask = PILImage.fromarray(mask).convert("L")
+    mask_colored = ImageOps.colorize(mask, black="black", white=color_int)
     image = PILImage.composite(mask_colored, image, mask)
     return image
+
+
+def extract_outlines(mask, outline_width):
+    """Extract the outlines of a binary mask.
+
+    :param mask: Mask
+    :param outline_width: Width of the outlines.
+    :return: outlines
+    """
+    xmin, ymin, xmax, ymax = extract_bounding_box(mask)
+    mask_cropped = mask[ymin:ymax, xmin:xmax]
+    outlines = np.logical_xor(mask_cropped, binary_erosion(mask_cropped, iterations=outline_width))
+    mask = np.zeros_like(mask)
+    mask[ymin:ymax, xmin:xmax] = outlines
+    return mask
 
 
 def plot_particle_size_distributions(
