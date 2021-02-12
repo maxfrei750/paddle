@@ -107,7 +107,11 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
 
 
 def dictionary_to_cpu(dictionary: Dict):
-    # TODO: Docstring
+    """Move dictionary values to the cpu, if they support it.
+
+    :param dictionary: Dictionary, whose values are to be moved to the cpu.
+    :return: Dictionary, with values moved to cpu (if they support it).
+    """
     for key, value in dictionary.items():
         if callable(getattr(value, "cpu", None)):
             dictionary[key] = value.cpu()
@@ -116,7 +120,12 @@ def dictionary_to_cpu(dictionary: Dict):
 
 
 def dictionary_to_device(dictionary: Dict, device: torch.device):
-    # TODO: Docstring
+    """Move dictionary values to a torch device, if they support it.
+
+    :param dictionary: Dictionary, whose values are to be moved to the torch device.
+    :param device: torch device
+    :return: Dictionary, with values moved to torch device (if they support it).
+    """
     for key, value in dictionary.items():
         if callable(getattr(value, "to", None)):
             dictionary[key] = value.to(device)

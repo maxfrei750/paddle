@@ -112,7 +112,8 @@ class AveragePrecision(Metric):
         :return: NxM tensor containing the pairwise IoU values.
         """
 
-        # TODO: Support detections without bounding boxes by calculating bounding boxes based on masks.
+        # TODO: Support detections without bounding boxes by calculating bounding boxes based on
+        #  masks.
 
         box_iou_matrix = self._calculate_box_iou_matrix(prediction, target)  # predictions x targets
         mask_iou_matrix = torch.zeros_like(box_iou_matrix)
