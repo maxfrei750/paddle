@@ -10,13 +10,12 @@ dependencies:
 - torchvision
 - albumentations
 - pillow # TODO: test pillow-simd, channel: zegami
-- skimage
+- scikit-image
 - cython
 - seaborn
 - matplotlib
 - pyyaml
 - tqdm
-- setuptools
 - omegaconf
 - pandas
 - scipy
