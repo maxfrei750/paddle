@@ -6,6 +6,8 @@ import fire
 from paddle.custom_types import AnyPath
 from paddle.postprocessing import Postprocessor, SaveVisualization
 
+# TODO: Add SaveVisualization keywords as arguments.
+
 
 def visualize_dataset(
     data_root: AnyPath,
