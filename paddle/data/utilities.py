@@ -29,6 +29,10 @@ def extract_bounding_box(mask: Mask) -> np.ndarray:
     :return: bounding box
     """
     pos = np.where(mask)
+
+    if not (pos[0].size or pos[1].size):
+        return np.array([0, 0, 0, 0])
+
     xmin = np.min(pos[1])
     xmax = np.max(pos[1]) + 1
     ymin = np.min(pos[0])
