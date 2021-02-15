@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict, Optional
 
 import pandas as pd
 from pytorch_lightning import LightningModule, Trainer, callbacks
@@ -9,12 +10,20 @@ from ..data.utilities import dictionary_to_cpu
 
 
 class TestPredictionWriter(callbacks.Callback):
-    def __init__(self, output_root: AnyPath) -> None:
-        """Saves test detections in form of a MaskRCNNDataset.
+    """Saves test detections in form of a MaskRCNNDataset.
 
-        :param output_root: Root folder for the output.
-        """
+    :param output_root: Root folder for the output.
+    :param map_label_to_class_name: Dictionary, which maps instance labels to class names.
+    """
+
+    def __init__(
+        self,
+        output_root: AnyPath,
+        map_label_to_class_name: Optional[Dict[int, str]] = None,
+    ) -> None:
+        """"""
         super().__init__()
+        self.map_label_to_class_name = map_label_to_class_name
         self.output_root = Path(output_root)
         self.output_root.mkdir(parents=True)
 
@@ -61,7 +70,14 @@ class TestPredictionWriter(callbacks.Callback):
 
             for label in unique_labels:
                 # Prepare output folder for current label.
-                label_folder_path = self.output_root / f"{label}"
+                label_name = (
+                    self.map_label_to_class_name[int(label)]
+                    if self.map_label_to_class_name is not None
+                    else str(label)
+                )
+
+                label_folder_path = self.output_root / label_name
+
                 label_folder_path.mkdir(parents=True, exist_ok=True)
 
                 # Select relevant masks and scores.
