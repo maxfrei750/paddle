@@ -18,7 +18,7 @@ from paddle.utilities import AnyPath
 # TODO: Test WandB
 
 
-@hydra.main(config_path="configs", config_name="maskrcnn")
+@hydra.main(config_name="MaskRCNN")
 def train_model(config: DictConfig) -> None:
     """Trains a Mask R-CNN based on a given config.
 

@@ -1,5 +1,5 @@
 defaults:
-  - maskrcnn
+  - MaskRCNN
 model:
   model_kwargs:  # see torchvision.models.detection.mask_rcnn.MaskRCNN
     box_detections_per_img: 300
