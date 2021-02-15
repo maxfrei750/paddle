@@ -192,7 +192,7 @@ class SaveVisualization(PostProcessingStepBase):
         self,
         output_root: AnyPath,
         file_name_prefix: str = "visualization",
-        do_display_box: Optional[bool] = False,
+        do_display_box: Optional[bool] = True,
         do_display_label: Optional[bool] = True,
         do_display_score: Optional[bool] = True,
         do_display_mask: Optional[bool] = True,
