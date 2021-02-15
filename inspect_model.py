@@ -9,7 +9,7 @@ from paddle.custom_types import AnyPath
 from paddle.data import MaskRCNNDataModule
 from paddle.models import LightningMaskRCNN
 from paddle.utilities import get_best_checkpoint_path, get_latest_log_folder_path
-from visualize_dataset import visualize_dataset
+from paddle.visualization import visualize_dataset
 
 
 def inspect_model(

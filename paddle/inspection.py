@@ -1,13 +1,11 @@
 from pathlib import Path
 from typing import Dict, Optional
 
-import fire
-
-from paddle.custom_types import AnyPath
-from paddle.postprocessing import Postprocessor, SaveVisualization
+from .custom_types import AnyPath
+from .postprocessing import Postprocessor, SaveVisualization
 
 
-def visualize_dataset(
+def inspect_dataset(
     data_root: AnyPath,
     subset: str,
     output_root: Optional[AnyPath] = None,
@@ -61,7 +59,3 @@ def visualize_dataset(
     Postprocessor(
         data_root, subset, post_processing_steps, progress_bar_description="Visualization: "
     ).run()
-
-
-if __name__ == "__main__":
-    fire.Fire(visualize_dataset)
