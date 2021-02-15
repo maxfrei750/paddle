@@ -15,6 +15,8 @@ from paddle.data import MaskRCNNDataModule
 from paddle.models import LightningMaskRCNN
 from paddle.utilities import AnyPath
 
+# TODO: Test WandB
+
 
 @hydra.main(config_path="configs", config_name="maskrcnn")
 def train_model(config: DictConfig) -> None:
