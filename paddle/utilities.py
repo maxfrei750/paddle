@@ -1,13 +1,16 @@
 import os
 import random
 import re
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Optional
 
 import numpy as np
+import requests
 import torch
 import yaml
+from tqdm import tqdm
 
 from .custom_types import AnyPath
 
@@ -104,3 +107,33 @@ def get_latest_log_folder_path(log_root: AnyPath) -> AnyPath:
     last_log_folder = max(log_folders, key=os.path.getctime)
     last_model_id = last_log_folder.name
     return last_model_id
+
+
+def download_file(url: str, output_file_path: AnyPath) -> None:
+    """Download a file from the internet, if it does not exist yet.
+
+    Based on:
+    https://stackoverflow.com/a/37573701/11652760
+    """
+    output_file_path = Path(output_file_path)
+
+    if output_file_path.is_file():
+        warnings.warn(f"File {output_file_path} already exists. Skipping download.")
+        return
+
+    request_stream = requests.get(url, stream=True)
+
+    # Total size in bytes.
+    total_size = int(request_stream.headers.get("content-length", 0))
+    block_size = 1024  # 1 Kibibyte
+
+    print(f"Downloading file from {url}...")
+
+    progress_bar = tqdm(total=total_size, unit="iB", unit_scale=True)
+    with open(output_file_path, "wb") as file:
+        for data in request_stream.iter_content(block_size):
+            progress_bar.update(len(data))
+            file.write(data)
+    progress_bar.close()
+    if total_size != 0 and progress_bar.n != total_size:
+        raise RuntimeError("Error while downloading checkpoint file.")
