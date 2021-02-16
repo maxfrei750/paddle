@@ -77,10 +77,8 @@ __pycache__
 build
 *.egg-info
 
-# Datasets
-datasets
-
-# Logs
+# Custom
 /logs
 /data
 /development
+/output
