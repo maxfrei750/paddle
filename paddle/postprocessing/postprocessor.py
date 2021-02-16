@@ -11,21 +11,18 @@ from .postprocessingsteps import Numpify
 class Postprocessor:
     """Postprocess a dataset, by applying a list of post processing steps.
 
-    :param data_root: Path of the data folder.
-    :param subset: Name of the subset to use for the validation.
+    :param data_set: Data set to postprocess.
     :param post_processing_steps: List of post processing steps.
     :param progress_bar_description: Description of the tqdm progress bar.
     """
 
     def __init__(
         self,
-        data_root: AnyPath,
-        subset: str,
+        data_set: MaskRCNNDataset,
         post_processing_steps: List,
         progress_bar_description: Optional[str] = "Postprocessing: ",
     ) -> None:
-        self.data_root = data_root
-        self.data_set = MaskRCNNDataset(data_root, subset)
+        self.data_set = data_set
         self.data_loader = MaskRCNNDataLoader(self.data_set, batch_size=1, shuffle=False)
         self.data_iterator = iter(self.data_loader)
 
