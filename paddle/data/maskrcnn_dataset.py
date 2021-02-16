@@ -59,7 +59,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
     def __init__(
         self,
         root: AnyPath,
-        subset: str,
+        subset: Optional[str] = None,
         cropping_rectangle: Optional[CroppingRectangle] = None,
         transform: Optional[Any] = None,
     ) -> None:
@@ -68,14 +68,19 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         self.root = root
         assert root.is_dir(), "The specified root does not exist: " + str(root)
 
-        self.subset_path = root / subset
-        assert self.subset_path.is_dir(), "The specified subset folder does not exist: " + subset
+        self.subset_path = root
+
+        if subset is not None:
+            self.subset_path /= subset
+            assert self.subset_path.is_dir(), (
+                "The specified subset folder does not exist: " + subset
+            )
 
         self.subset = subset
 
         self.image_paths = list(self.subset_path.glob("image_*.*"))
 
-        assert self.image_paths, "No images found based on 'image_*.*'."
+        assert self.image_paths, "No images found in {self.subset_path} based on 'image_*.*'."
 
         self.cropping_rectangle = cropping_rectangle
 
