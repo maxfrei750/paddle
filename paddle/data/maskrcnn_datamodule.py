@@ -1,17 +1,14 @@
 from pathlib import Path
-from typing import Literal, Optional, Tuple
+from typing import Literal, Optional
 
 import albumentations
 import pytorch_lightning as pl
 import torch.utils
 
-from paddle.custom_types import AnyPath, Batch
-
+from ..custom_types import AnyPath, Batch, CroppingRectangle
 from .maskrcnn_dataloader import MaskRCNNDataLoader
 from .maskrcnn_dataset import MaskRCNNDataset
 from .utilities import dictionary_to_device
-
-# TODO: Create python module: models, move MaskRCNNDataModule to separate file
 
 
 class MaskRCNNDataModule(pl.LightningDataModule):
@@ -56,7 +53,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_root: AnyPath,
-        cropping_rectangle: Optional[Tuple[int, int, int, int]] = None,
+        cropping_rectangle: Optional[CroppingRectangle] = None,
         batch_size: int = 1,
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
@@ -103,6 +100,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.train_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.train_subset,
+                    cropping_rectangle=self.cropping_rectangle,
                     transform=self.train_transforms,
                 )
 
@@ -113,6 +111,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.val_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.val_subset,
+                    cropping_rectangle=self.cropping_rectangle,
                     transform=self.val_transforms,
                 )
 
@@ -124,10 +123,12 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.test_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.test_subset,
+                    cropping_rectangle=self.cropping_rectangle,
                     transform=self.test_transforms,
                 )
 
-    def get_transforms(self, train: bool = False) -> albumentations.Compose:
+    @staticmethod
+    def get_transforms(train: bool = False) -> albumentations.Compose:
         """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for
             training).
 
@@ -135,9 +136,6 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         :return: Composed transforms.
         """
         transforms = []
-
-        if self.cropping_rectangle:
-            transforms.append(albumentations.Crop(*self.cropping_rectangle))
 
         if train:
             transforms += [

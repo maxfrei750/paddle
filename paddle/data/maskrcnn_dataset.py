@@ -2,6 +2,7 @@ from itertools import compress
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
+import albumentations
 import numpy as np
 import pandas as pd
 import torch
@@ -9,9 +10,11 @@ import torch.utils
 from PIL import Image as PILImage
 from torchvision.transforms import functional as F
 
-from paddle.custom_types import Annotation, AnyPath, Image, Mask
+from paddle.custom_types import Annotation, AnyPath, CroppingRectangle, Image, Mask
 
 from .utilities import extract_bounding_boxes
+
+# TODO: Allow subset=None
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
@@ -48,6 +51,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 ...
             ...
     :param subset: Name of the subset to use.
+    :param cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping of
+        images. Applied before all other transforms.
     :param transform: torchvision or albumentation transform.
     """
 
@@ -55,6 +60,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         self,
         root: AnyPath,
         subset: str,
+        cropping_rectangle: Optional[CroppingRectangle] = None,
         transform: Optional[Any] = None,
     ) -> None:
 
@@ -71,7 +77,14 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         assert self.image_paths, "No images found based on 'image_*.*'."
 
-        self.transform = transform
+        self.cropping_rectangle = cropping_rectangle
+
+        if cropping_rectangle is not None:
+            self.transform = albumentations.Compose(
+                [albumentations.Crop(*cropping_rectangle), transform]
+            )
+        else:
+            self.transform = transform
 
         self._gather_class_names()
 

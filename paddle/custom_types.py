@@ -14,6 +14,7 @@ Mask = ArrayLike
 Annotation = Dict[str, Union[ArrayLike, str]]
 Image = ArrayLike
 Batch = Tuple[Tuple[Image, ...], Tuple[Annotation, ...]]
+CroppingRectangle = Tuple[int, int, int, int]
 
 # Model
 PartialLosses = Dict[str, Tensor]
