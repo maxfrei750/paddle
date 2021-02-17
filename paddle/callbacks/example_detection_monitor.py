@@ -7,6 +7,8 @@ from pytorch_lightning import LightningModule, Trainer, callbacks
 from ..custom_types import Batch
 from ..visualization import visualize_detection
 
+# TODO: Add parameter: ExampleDetectionScoreThreshold
+
 
 class ExampleDetectionMonitor(callbacks.Callback):
     """Callback that creates example detections and logs them to tensorboard. The input images are
@@ -58,6 +60,7 @@ class ExampleDetectionMonitor(callbacks.Callback):
             prediction = pl_module([image])[0]
 
             # Log prediction image.
+            # TODO: Pass map_label_to_class_name, if possible
             detection_image = np.array(visualize_detection(image, prediction))
 
             trainer.logger.experiment.add_image(

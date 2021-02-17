@@ -6,6 +6,7 @@ from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
 # TODO: Disable stdout log file.
+# TODO: Refactor naming: remove all the redundant "Base" parts
 
 
 @dataclass
@@ -27,6 +28,8 @@ class ProgramConfigBase:
 @dataclass
 class CallbackConfigBase:
     early_stopping_patience: int = 20
+    # TODO: split into a section for each callback
+    # TODO: Add all parameters of the callbacks
 
 
 @dataclass

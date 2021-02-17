@@ -10,6 +10,8 @@ from .maskrcnn_dataloader import MaskRCNNDataLoader
 from .maskrcnn_dataset import MaskRCNNDataset
 from .utilities import dictionary_to_device
 
+# TODO: Add optional parameter (also to config): download_url
+
 
 class MaskRCNNDataModule(pl.LightningDataModule):
     """LightningDataModule to supply Mask R-CNN training, validation and test data.

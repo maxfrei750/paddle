@@ -43,6 +43,7 @@ def train_mask_rcnn(config: DictConfig) -> None:
 
     model = LightningMaskRCNN(**config.model)
 
+    # TODO: Move learning rate optimization to separate script.
     if config.program.search_optimum_learning_rate:
         lr_tuner = Trainer(auto_lr_find=True, **config.trainer)
         lr_tuner.tune(model, datamodule=data_module)
