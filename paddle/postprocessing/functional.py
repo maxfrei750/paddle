@@ -4,6 +4,7 @@ import numpy as np
 from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
 from numpy import ndarray
 from skimage.segmentation import clear_border
+from torch import Tensor
 
 from ..custom_types import Annotation, Mask
 
@@ -38,7 +39,9 @@ def filter_low_score_instances(annotation: Annotation, score_threshold: float) -
     :return: Annotation, where instances with a score below `score_threshold` have been removed.
     """
     scores = annotation["scores"]
-    scores = np.asarray(scores)
+
+    if not (isinstance(scores, ndarray) or isinstance(scores, Tensor)):
+        scores = np.asarray(scores)
 
     do_keep = scores >= score_threshold
 
@@ -65,7 +68,7 @@ def filter_class_instances(annotation: Annotation, class_labels_to_keep: List[in
     return annotation
 
 
-def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List]) -> Annotation:
+def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tensor]) -> Annotation:
     """Filter instances based on a boolean numpy array.
 
     :param annotation: Annotation
@@ -75,7 +78,7 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List]) -> 
     """
     for key, value in annotation.items():
         if key not in ["image_name", "image_id"]:
-            annotation[key] = np.asarray(annotation[key])[do_keep]
+            annotation[key] = annotation[key][do_keep]
 
     return annotation
 
