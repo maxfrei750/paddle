@@ -1,5 +1,5 @@
 __version__ = "0.1"
 
-from . import configs
+from .configs import config_store
 
-configs.register()
+config_store.populate()
