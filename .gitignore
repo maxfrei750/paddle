@@ -82,3 +82,6 @@ build
 /data
 /development
 /output
+/demos/data
+/demos/mpac.zip
+/demos/maskrcnn_resnet50_mpac.ckpt
