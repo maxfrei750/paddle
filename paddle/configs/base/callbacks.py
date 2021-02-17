@@ -10,12 +10,6 @@ class EarlyStoppingConfigBase:
 
 
 @dataclass
-class LearningRateMonitorConfigBase:
-    logging_interval: Optional[str] = None
-    log_momentum: bool = False
-
-
-@dataclass
 class ModelCheckpointConfigBase:
     monitor: Optional[str] = "val/mAP"
     mode: str = "max"
@@ -37,6 +31,5 @@ class ExampleDetectionMonitorBase:
 @dataclass
 class CallbackConfigBase:
     early_stopping: EarlyStoppingConfigBase = EarlyStoppingConfigBase()
-    learning_rate_monitor: LearningRateMonitorConfigBase = LearningRateMonitorConfigBase()
     model_checkpoint: ModelCheckpointConfigBase = ModelCheckpointConfigBase()
     example_detection_monitor: ExampleDetectionMonitorBase = ExampleDetectionMonitorBase()
