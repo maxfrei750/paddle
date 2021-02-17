@@ -14,8 +14,6 @@ from paddle.custom_types import Annotation, AnyPath, CroppingRectangle, Image, M
 
 from .utilities import extract_bounding_boxes
 
-# TODO: Allow subset=None
-
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
     """Data set for Mask R-CNN training, validation or test data.
