@@ -50,11 +50,9 @@ def train_mask_rcnn(config: DictConfig) -> None:
         exit()
 
     callbacks = [
-        ModelCheckpoint(monitor="val/mAP", mode="max", filename="{epoch}-{step}-{val/mAP:.4f}"),
-        EarlyStopping(
-            monitor="val/mAP", mode="max", patience=config.callbacks.early_stopping_patience
-        ),
-        LearningRateMonitor(),
+        ModelCheckpoint(**config.callbacks.model_checkpoint),
+        EarlyStopping(**config.callbacks.early_stopping),
+        LearningRateMonitor(**config.callbacks.learning_rate_monitor),
         ExampleDetectionMonitor(),
     ]
 
