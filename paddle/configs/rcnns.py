@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from paddle.configs.base import ConfigBase, ModelConfigBase
+from paddle.configs.base import ConfigBase, LightningModuleConfigBase
 
 
 @dataclass
-class ModelConfigRCNN(ModelConfigBase):
+class LightningModuleConfigRCNN(LightningModuleConfigBase):
     num_classes: int = 2  # Background and Particle
     model_kwargs: Optional[Dict[str, Any]] = None
     # see torchvision.models.detection.mask_rcnn.MaskRCNN
@@ -13,7 +13,7 @@ class ModelConfigRCNN(ModelConfigBase):
 
 @dataclass
 class RCNNConfig(ConfigBase):
-    model: ModelConfigRCNN = ModelConfigRCNN()
+    lightning_module: LightningModuleConfigRCNN = LightningModuleConfigRCNN()
 
 
 @dataclass

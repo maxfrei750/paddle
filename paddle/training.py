@@ -13,7 +13,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from .callbacks import ExampleDetectionMonitor, ModelCheckpoint
 from .custom_types import AnyPath
 from .data import MaskRCNNDataModule
-from .models import LightningMaskRCNN
+from .lightning_modules import LightningMaskRCNN
 
 # TODO: Test WandB
 
@@ -41,7 +41,7 @@ def train_mask_rcnn(config: DictConfig) -> None:
 
     data_module = MaskRCNNDataModule(**config.datamodule)
 
-    model = LightningMaskRCNN(**config.model)
+    model = LightningMaskRCNN(**config.lightning_module)
 
     # TODO: Move learning rate optimization to separate script.
     if config.program.search_optimum_learning_rate:

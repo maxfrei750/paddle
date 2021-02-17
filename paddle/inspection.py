@@ -4,7 +4,7 @@ from typing import List, Optional
 from .custom_types import AnyPath
 from .data import MaskRCNNDataset
 from .deployment import run_model_on_dataset
-from .models import LightningMaskRCNN
+from .lightning_modules import LightningMaskRCNN
 from .postprocessing import Postprocessor, SaveVisualization
 from .utilities import get_best_checkpoint_path, get_latest_log_folder_path
 

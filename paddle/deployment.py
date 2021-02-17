@@ -6,7 +6,7 @@ from pytorch_lightning import Trainer
 from .callbacks import TestPredictionWriter
 from .custom_types import AnyPath, CroppingRectangle
 from .data import MaskRCNNDataModule
-from .models import LightningMaskRCNN
+from .lightning_modules import LightningMaskRCNN
 
 
 def run_model_on_dataset(
