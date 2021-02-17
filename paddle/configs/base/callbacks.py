@@ -23,7 +23,20 @@ class ModelCheckpointConfigBase:
 
 
 @dataclass
+class ExampleDetectionMonitorBase:
+    score_threshold: float = 0
+    do_display_box: Optional[bool] = True
+    do_display_label: Optional[bool] = True
+    do_display_score: Optional[bool] = True
+    do_display_mask: Optional[bool] = True
+    do_display_outlines_only: Optional[bool] = True
+    line_width: Optional[int] = 1
+    font_size: Optional[int] = 16
+
+
+@dataclass
 class CallbackConfigBase:
     early_stopping: EarlyStoppingConfigBase = EarlyStoppingConfigBase()
     learning_rate_monitor: LearningRateMonitorConfigBase = LearningRateMonitorConfigBase()
     model_checkpoint: ModelCheckpointConfigBase = ModelCheckpointConfigBase()
+    example_detection_monitor: ExampleDetectionMonitorBase = ExampleDetectionMonitorBase()

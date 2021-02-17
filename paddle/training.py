@@ -53,7 +53,7 @@ def train_mask_rcnn(config: DictConfig) -> None:
         ModelCheckpoint(**config.callbacks.model_checkpoint),
         EarlyStopping(**config.callbacks.early_stopping),
         LearningRateMonitor(**config.callbacks.learning_rate_monitor),
-        ExampleDetectionMonitor(),
+        ExampleDetectionMonitor(**config.callbacks.example_detection_monitor),
     ]
 
     trainer = Trainer(

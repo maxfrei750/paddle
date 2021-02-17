@@ -10,3 +10,7 @@ datamodule:
     - 0
     - 1280
     - 896
+callbacks:
+  example_detection_monitor:
+    score_threshold: 0.5
+    do_display_label: False

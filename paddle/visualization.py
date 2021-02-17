@@ -167,7 +167,7 @@ def visualize_detection(
 
         if score is not None and do_display_score:
             if not do_display_label:
-                caption = "Score"
+                caption = "score"
 
             caption += ": {:.3f}".format(score)
 
