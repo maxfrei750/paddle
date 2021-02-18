@@ -2,6 +2,7 @@ import os
 import random
 import re
 import warnings
+import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -117,7 +118,7 @@ def download_file(url: str, output_file_path: AnyPath) -> None:
     """
     output_file_path = Path(output_file_path)
 
-    if output_file_path.is_file():
+    if output_file_path.exists():
         warnings.warn(f"File {output_file_path} already exists. Skipping download.")
         return
 
@@ -137,3 +138,21 @@ def download_file(url: str, output_file_path: AnyPath) -> None:
     progress_bar.close()
     if total_size != 0 and progress_bar.n != total_size:
         raise RuntimeError("Error while downloading checkpoint file.")
+
+
+def unzip(zip_path: AnyPath, output_root: AnyPath) -> None:
+    """Unzip a zip file.
+
+    :param zip_path: Path to the zip file.
+    :param output_root: Folder where contents of the zip file are extracted to.
+    """
+    zip_path = Path(zip_path)
+    output_root = Path(output_root)
+
+    if output_root.exists():
+        warnings.warn(f"{output_root} already exists. Skipping file extraction.")
+        return
+
+    output_root.mkdir(parents=True)
+    with zipfile.ZipFile(zip_path, "r") as f:
+        f.extractall(output_root)
