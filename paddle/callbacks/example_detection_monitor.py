@@ -6,7 +6,7 @@ from pytorch_lightning import LightningModule, Trainer, callbacks
 
 from ..custom_types import Batch
 from ..postprocessing import filter_low_score_instances
-from ..visualization import visualize_detection
+from ..visualization import visualize_annotation
 
 
 class ExampleDetectionMonitor(callbacks.Callback):
@@ -97,7 +97,7 @@ class ExampleDetectionMonitor(callbacks.Callback):
 
             # Log prediction image.
             detection_image = np.array(
-                visualize_detection(
+                visualize_annotation(
                     image,
                     prediction,
                     do_display_label=self.do_display_label,

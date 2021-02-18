@@ -59,7 +59,7 @@ def get_random_viridis_colors(num_colors: int) -> List[ColorFloat]:
     return colors
 
 
-def visualize_detection(
+def visualize_annotation(
     image: Image,
     annotation: Annotation,
     do_display_box: Optional[bool] = True,

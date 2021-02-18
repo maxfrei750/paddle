@@ -6,7 +6,7 @@ import yaml
 from torch import Tensor
 
 from ..custom_types import Annotation, AnyPath, Image
-from ..visualization import visualize_detection
+from ..visualization import visualize_annotation
 from .functional import filter_border_instances, filter_class_instances, filter_low_score_instances
 
 
@@ -223,7 +223,7 @@ class SaveVisualization(PostProcessingStepBase):
         """
         image_name = annotation["image_name"]
 
-        result = visualize_detection(
+        result = visualize_annotation(
             image,
             annotation,
             do_display_box=self.do_display_box,
