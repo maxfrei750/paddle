@@ -134,11 +134,11 @@ class FilterBorderInstances(PostProcessingStepBase):
 class FilterScore(PostProcessingStepBase):
     """Remove instances with a score below a certain threshold.
 
-    :param score_threshold: instances with a score below this threshold are removed
+    :param threshold: instances with a score below this threshold are removed
     """
 
-    def __init__(self, score_threshold: float) -> None:
-        self.score_threshold = score_threshold
+    def __init__(self, threshold: float) -> None:
+        self.threshold = threshold
 
     def __call__(self, image: Image, annotation: Annotation) -> Tuple[Image, Annotation]:
         """Remove instances below a certain score threshold from a single annotation.
@@ -149,7 +149,7 @@ class FilterScore(PostProcessingStepBase):
         :return: original input image and annotation without instances with a score below the score
             threshold
         """
-        annotation = filter_low_score_instances(annotation, self.score_threshold)
+        annotation = filter_low_score_instances(annotation, self.threshold)
         return image, annotation
 
 
