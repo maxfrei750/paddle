@@ -29,10 +29,8 @@ def gstd(a: Any, weights: Optional[Any] = None) -> float:
 def gmean(a, axis=0, dtype=None, weights=None):
     """
     Compute the geometric mean along the specified axis.
-
     Return the geometric average of the array elements.
     That is:  n-th root of (x1 * x2 * ... * xn)
-
     Parameters
     ----------
     a : array_like
@@ -47,29 +45,29 @@ def gmean(a, axis=0, dtype=None, weights=None):
         that of the default platform integer. In that case, the default
         platform integer is used.
     weights : array_like, optional
-        Weights of the elements of a.
-
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given `axis`) or of the same shape as `a`.
+        Default is None, which gives each value a weight of 1.0.
     Returns
     -------
     gmean : ndarray
         See `dtype` parameter above.
-
     See Also
     --------
     numpy.mean : Arithmetic average
     numpy.average : Weighted average
     hmean : Harmonic mean
-
     Notes
     -----
     The geometric average is computed over a single dimension of the input
     array, axis=0 by default, or all values in the array if axis=None.
     float64 intermediate and return values are used for integer inputs.
-
     Use masked arrays to ignore any non-finite values in the input or that
     arise in the calculations such as Not a Number and infinity because masked
     arrays automatically mask any non-finite values.
-
+    References
+    ----------
+    .. [1] "Weighted Geometric Mean", *Wikipedia*, https://en.wikipedia.org/wiki/Weighted_geometric_mean.
     Examples
     --------
     >>> from scipy.stats import gmean
@@ -77,7 +75,6 @@ def gmean(a, axis=0, dtype=None, weights=None):
     2.0
     >>> gmean([1, 2, 3, 4, 5, 6, 7])
     3.3800151591412964
-
     """
     if not isinstance(a, np.ndarray):
         # if not an ndarray object attempt to convert it
@@ -91,17 +88,7 @@ def gmean(a, axis=0, dtype=None, weights=None):
     else:
         log_a = np.log(a)
 
-    if weights:
-        if not isinstance(weights, np.ndarray):
-            # if not an ndarray object attempt to convert it
-            weights = np.array(weights, dtype=dtype)
-        elif dtype:
-            # Must change the default dtype allowing array type
-            if isinstance(a, np.ma.MaskedArray):
-                weights = np.ma.asarray(weights, dtype=dtype)
-            else:
-                weights = np.asarray(weights, dtype=dtype)
-
-        assert weights.shape == log_a.shape, "Shape of a and weights must be identical."
+    if weights is not None:
+        weights = np.asanyarray(weights, dtype=dtype)
 
     return np.exp(np.average(log_a, axis=axis, weights=weights))
