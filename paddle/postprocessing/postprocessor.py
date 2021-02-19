@@ -54,5 +54,9 @@ class Postprocessor:
         :param output_file_name: Name of the log file.
         """
         log_file_path = Path(output_root) / output_file_name
+
+        if log_file_path.exists():
+            raise FileExistsError(f"File already exists: {log_file_path}")
+
         with open(log_file_path, "w") as file:
             file.write(str(self))

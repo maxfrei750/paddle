@@ -52,6 +52,9 @@ class SaveMaskProperties(PostProcessingStepBase):
     def __init__(self, output_file_path: AnyPath, measurement_fcns: Dict[str, Callable]) -> None:
         self.output_file_path = Path(output_file_path)
 
+        if self.output_file_path.exists():
+            raise FileExistsError(f"File already exists: {output_file_path}")
+
         self._measurement_fcns = measurement_fcns
         self.measurement_names = list(measurement_fcns.keys())
 
@@ -237,6 +240,10 @@ class SaveVisualization(PostProcessingStepBase):
         )
 
         visualization_file_path = self.output_root / f"{self.file_name_prefix}_{image_name}.png"
+
+        if visualization_file_path.exists():
+            raise FileExistsError(f"File already exists: {visualization_file_path}")
+
         result.save(visualization_file_path)
 
         return image, annotation
