@@ -7,6 +7,8 @@ from torchvision.ops.boxes import box_iou
 
 from .custom_types import Annotation
 
+# TODO: Add multi-class support.
+
 
 class AveragePrecision(Metric):
     """Average Precision (AP) Metric
