@@ -85,3 +85,4 @@ build
 /demos/data
 /demos/mpac.zip
 /demos/maskrcnn_resnet50_mpac.ckpt
+/demos/04_analyze_dataset/output
