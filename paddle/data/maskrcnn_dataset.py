@@ -177,8 +177,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             image = transformed_data["image"]
             masks = transformed_data["masks"]
 
-            # Filter empty masks.
-            masks, labels = self._remove_empty_masks(masks, labels)
+            # Filter empty masks (and associated labels and scores).
+            masks, labels, scores = self._remove_empty_masks(masks, labels, scores)
 
             num_instances = len(masks)
 
@@ -218,17 +218,22 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         return len(self.image_paths)
 
     @staticmethod
-    def _remove_empty_masks(masks: List[Mask], labels: List[int]) -> Tuple[List[Mask], List[int]]:
-        """Remove empty masks from list of masks.
+    def _remove_empty_masks(
+        masks: List[Mask], labels: List[int], scores: List[float]
+    ) -> Tuple[List[Mask], List[int], List[float]]:
+        """Remove empty masks from list of masks. Also remove associated scores and labels.
 
         :param masks: List of masks (HxW numpy arrays).
+        :param labels: List of labels.
+        :param scores: List of scores.
         :return: List of non-empty masks (HxW numpy arrays with at least one non-zero element) and
-         list of associated labels.
+         list of associated labels and scores.
         """
 
         is_not_empty = [np.any(mask) for mask in masks]
 
         masks = list(compress(masks, is_not_empty))
         labels = list(compress(labels, is_not_empty))
+        scores = list(compress(scores, is_not_empty))
 
-        return masks, labels
+        return masks, labels, scores
