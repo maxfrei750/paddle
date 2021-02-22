@@ -28,8 +28,8 @@ def inspect_dataset(
 
     :param data_root: Path of the data folder.
     :param subset: Name of the subset to use for the validation.
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
     :param output_root: Path, where visualizations are saved to. If None, then the visualizations
         are saved into the data subset folder, i.e. data_root/subset.
     :param file_name_prefix: Prefix for visualization output files.
@@ -69,13 +69,14 @@ def inspect_dataset(
     Postprocessor(data_set, post_processing_steps, progress_bar_description="Visualization: ").run()
 
 
-# TODO: Pass a dataset.
+# TODO: Pass a dataset?
 def inspect_model(
     log_root: AnyPath,
     data_root: AnyPath,
     subset: str,
     model_id: Optional[str] = None,
     initial_cropping_rectangle: Optional[List[int]] = None,
+    num_slices_per_axis: Optional[int] = 1,
 ):
     """Inspect a model by applying it to a validation dataset and store the results in the model
         folder.
@@ -85,8 +86,11 @@ def inspect_model(
     :param log_root: Path of the log folder.
     :param data_root: Path of the data folder.
     :param subset: Name of the subset to use for the inspection.
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
+    :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
+        will result in n² pieces. Slicing is performed after the initial cropping and before the
+        user transform.
     """
 
     if model_id is None:
@@ -100,7 +104,14 @@ def inspect_model(
 
     model = LightningMaskRCNN.load_from_checkpoint(checkpoint_path)
 
-    run_model_on_dataset(model, result_root, data_root, subset, initial_cropping_rectangle)
+    run_model_on_dataset(
+        model,
+        result_root,
+        data_root,
+        subset,
+        initial_cropping_rectangle=initial_cropping_rectangle,
+        num_slices_per_axis=num_slices_per_axis,
+    )
 
     inspect_dataset(
         result_root,

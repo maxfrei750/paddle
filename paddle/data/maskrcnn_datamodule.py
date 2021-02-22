@@ -48,8 +48,11 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 ...
             test/
                 ...
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images. Applied before all other transforms.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
+    :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
+        will result in n² pieces. Slicing is performed after the initial cropping and before the
+        user transform.
     :param random_cropping_size: If not None, [height, width] of a rectangle, that is randomly
         cropped from input images, during training and testing.
     :param batch_size: Number of samples per batch.
@@ -60,6 +63,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         data_root: AnyPath,
         initial_cropping_rectangle: Optional[CroppingRectangle] = None,
         random_cropping_size: Optional[Tuple[int, int]] = None,
+        num_slices_per_axis: Optional[int] = 1,
         batch_size: int = 1,
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
@@ -71,6 +75,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.data_root = Path(data_root)
         self.initial_cropping_rectangle = initial_cropping_rectangle
         self.random_cropping_size = random_cropping_size
+        self.num_slices_per_axis = num_slices_per_axis
         self.batch_size = batch_size
 
         self.train_subset = train_subset
@@ -108,7 +113,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     self.data_root,
                     subset=self.train_subset,
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
-                    transform=self.train_transforms,
+                    num_slices_per_axis=self.num_slices_per_axis,
+                    user_transform=self.train_transforms,
                 )
 
             if self.val_subset is None:
@@ -119,7 +125,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     self.data_root,
                     subset=self.val_subset,
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
-                    transform=self.val_transforms,
+                    num_slices_per_axis=self.num_slices_per_axis,
+                    user_transform=self.val_transforms,
                 )
 
         if stage == "test" or stage is None:
@@ -131,7 +138,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     self.data_root,
                     subset=self.test_subset,
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
-                    transform=self.test_transforms,
+                    num_slices_per_axis=self.num_slices_per_axis,
+                    user_transform=self.test_transforms,
                 )
 
     def get_transforms(self, train: bool = False) -> albumentations.Compose:

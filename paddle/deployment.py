@@ -25,6 +25,7 @@ def run_model_on_dataset(
     data_root: AnyPath,
     subset: str,
     initial_cropping_rectangle: Optional[CroppingRectangle] = None,
+    num_slices_per_axis: Optional[int] = 1,
 ) -> None:
     """Loads a model, runs a dataset through it and stores the results.
 
@@ -32,14 +33,20 @@ def run_model_on_dataset(
     :param output_root: Path where detections are saved.
     :param data_root: Path of the data folder.
     :param subset: Name of the subset to use.
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images. Applied before all other transforms.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
+    :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
+        will result in n² pieces. Slicing is performed after the initial cropping and before the
+        user transform.
     """
 
     output_root = Path(output_root)
 
     data_module = MaskRCNNDataModule(
-        data_root, initial_cropping_rectangle=initial_cropping_rectangle, test_subset=subset
+        data_root,
+        initial_cropping_rectangle=initial_cropping_rectangle,
+        test_subset=subset,
+        num_slices_per_axis=num_slices_per_axis,
     )
     data_module.setup()
     map_label_to_class_name = data_module.test_dataset.map_label_to_class_name
@@ -63,6 +70,7 @@ def default_analysis(
     data_root: AnyPath,
     subset: str,
     initial_cropping_rectangle: Optional[CroppingRectangle] = None,
+    num_slices_per_axis: Optional[int] = 1,
 ) -> None:
     """Performs a default analysis of a dataset using a given model. The analysis includes the
         filtering of border instances, a visualization and the measurement of the area equivalent
@@ -72,8 +80,11 @@ def default_analysis(
     :param output_root: Path where detections are saved.
     :param data_root: Path of the data folder.
     :param subset: Name of the subset to use.
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images. Applied before all other transforms.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
+    :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
+        will result in n² pieces. Slicing is performed after the initial cropping and before the
+        user transform.
     """
     output_root = Path(output_root)
     output_path = output_root / subset
@@ -82,12 +93,18 @@ def default_analysis(
 
     model = LightningMaskRCNN.load_from_checkpoint(model_checkpoint_path)
 
-    run_model_on_dataset(model, output_root, data_root, subset, initial_cropping_rectangle)
+    run_model_on_dataset(
+        model,
+        output_root,
+        data_root,
+        subset,
+        initial_cropping_rectangle=initial_cropping_rectangle,
+        num_slices_per_axis=num_slices_per_axis,
+    )
 
     result_data_set = MaskRCNNDataset(
         output_root,
         subset=subset,
-        initial_cropping_rectangle=initial_cropping_rectangle,
     )
 
     measurement_csv_path = output_path / "measurements.csv"

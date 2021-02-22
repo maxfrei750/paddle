@@ -76,8 +76,12 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tens
     :return: Annotation, where instances with a corresponding false entry in do_keep have been
         removed.
     """
+
+    # TODO: Find a more robust/future-proof solution to determine which entries need to be filtered.
+    # IDEA: Try to get number of boxes/masks/labels.
+
     for key, value in annotation.items():
-        if key not in ["image_name", "image_id"]:
+        if key not in ["image_name", "image_id", "slice_index_x", "slice_index_y"]:
             annotation[key] = annotation[key][do_keep]
 
     return annotation

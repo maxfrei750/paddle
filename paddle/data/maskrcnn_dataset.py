@@ -1,3 +1,4 @@
+import warnings
 from itertools import compress
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
@@ -13,6 +14,8 @@ from torchvision.transforms import functional as F
 from paddle.custom_types import Annotation, AnyPath, CroppingRectangle, Image, Mask
 
 from .utilities import extract_bounding_boxes
+
+# TODO: Avoid assert and use more specific errors.
 
 
 class MaskRCNNDataset(torch.utils.data.Dataset):
@@ -49,9 +52,12 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 ...
             ...
     :param subset: Name of the subset to use.
-    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
-        of images. Applied before all other transforms.
-    :param transform: torchvision or albumentation transform.
+    :param initial_cropping_rectangle: If not None, [x_min, y_min, x_max, y_max] rectangle used for
+        the cropping of images.
+    :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
+        will result in n² pieces. Slicing is performed after the initial cropping and before the
+        user transform.
+    :param user_transform: torchvision or albumentation transform.
     """
 
     def __init__(
@@ -59,7 +65,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         root: AnyPath,
         subset: Optional[str] = None,
         initial_cropping_rectangle: Optional[CroppingRectangle] = None,
-        transform: Optional[Any] = None,
+        num_slices_per_axis: Optional[int] = 1,
+        user_transform: Optional[Any] = None,
     ) -> None:
 
         root = Path(root)
@@ -80,14 +87,20 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         assert self.image_paths, "No images found in {self.subset_path} based on 'image_*.*'."
 
+        self.num_images = len(self.image_paths)
+
         self.initial_cropping_rectangle = initial_cropping_rectangle
 
-        if initial_cropping_rectangle is not None:
-            self.transform = albumentations.Compose(
-                [albumentations.Crop(*initial_cropping_rectangle), transform]
-            )
-        else:
-            self.transform = transform
+        if num_slices_per_axis < 1:
+            raise ValueError("`num_slices_per_axis` must be >= 1.")
+
+        if not float(num_slices_per_axis).is_integer():
+            raise ValueError("`num_slices_per_axis` must be an integer.")
+
+        self.num_slices_per_axis = num_slices_per_axis
+        self.num_slices_per_image = num_slices_per_axis ** 2
+
+        self.user_transform = user_transform
 
         self._gather_class_names()
 
@@ -104,6 +117,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         """Gather class names based on class folders in subset folder."""
         class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
 
+        # TODO: Use a generic class name, if there are no ground truths.
         if not class_names:
             raise FileNotFoundError(
                 f"Cannot create class name dictionary, because there are no class folders in "
@@ -121,10 +135,52 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             truth data.
         """
 
-        image_path = self.image_paths[index]
+        transforms = []
+
+        if self.initial_cropping_rectangle is not None:
+            transforms.append(albumentations.Crop(*self.initial_cropping_rectangle))
+
+        image_index = index // self.num_slices_per_image
+        slice_index = index % self.num_slices_per_image
+
+        image_path = self.image_paths[image_index]
         image_name = image_path.stem[6:]
 
         image = PILImage.open(image_path).convert("RGB")
+
+        slice_index_x = slice_index // self.num_slices_per_axis
+        slice_index_y = slice_index % self.num_slices_per_axis
+
+        if self.num_slices_per_image > 1:
+
+            image_name += f"_slice{slice_index}"
+
+            if self.initial_cropping_rectangle is None:
+                image_size = image.size
+            else:
+                r = self.initial_cropping_rectangle
+                image_size = (r[2] - r[0], r[3] - r[1])
+
+            num_surplus_pixels_x, num_surplus_pixels_y = [
+                num_pixels % self.num_slices_per_axis for num_pixels in image_size
+            ]
+
+            if num_surplus_pixels_x or num_surplus_pixels_y:
+                warnings.warn(
+                    f"Cannot slice image evenly. Discarding pixels "
+                    f"(x: {num_surplus_pixels_x}; y: {num_surplus_pixels_y})."
+                )
+
+            slice_size = [num_pixels // self.num_slices_per_axis for num_pixels in image_size]
+
+            x_min = slice_index_x * slice_size[0]
+            x_max = x_min + slice_size[0]
+            y_min = slice_index_y * slice_size[1]
+            y_max = y_min + slice_size[1]
+
+            slice_rectangle = [x_min, y_min, x_max, y_max]
+
+            transforms.append(albumentations.Crop(*slice_rectangle))
 
         scores = []
         masks = []
@@ -171,8 +227,12 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         image = np.array(image)
 
-        if self.transform is not None:
-            transformed_data = self.transform(image=image, masks=masks)
+        if self.user_transform is not None:
+            transforms.append(self.user_transform)
+
+        if transforms:
+            transform = albumentations.Compose(transforms)
+            transformed_data = transform(image=image, masks=masks)
 
             image = transformed_data["image"]
             masks = transformed_data["masks"]
@@ -197,6 +257,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         areas = torch.as_tensor(areas)
         # Assume that there are no crowd instances.
         iscrowd = torch.zeros((num_instances,), dtype=torch.uint8)
+        slice_index_x = torch.as_tensor(slice_index_x)
+        slice_index_y = torch.as_tensor(slice_index_y)
 
         target = {
             "boxes": boxes,
@@ -207,6 +269,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             "area": areas,
             "iscrowd": iscrowd,
             "image_name": image_name,
+            "slice_index_x": slice_index_x,
+            "slice_index_y": slice_index_y,
         }
 
         image = F.to_tensor(image)
@@ -215,7 +279,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
     def __len__(self) -> int:
         """Retrieve the number of samples in the data set."""
-        return len(self.image_paths)
+        return self.num_images * self.num_slices_per_image
 
     @staticmethod
     def _remove_empty_masks(
