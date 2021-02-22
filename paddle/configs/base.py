@@ -82,7 +82,6 @@ class BaseConfig:
         batch_size: int = 8
         train_subset: str = "training"
         val_subset: str = "validation"
-        test_subset: Optional[str] = None
         initial_cropping_rectangle: Optional[List[int]] = None
 
     data_module: DataModuleConfig = DataModuleConfig()
