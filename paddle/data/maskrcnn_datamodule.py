@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Tuple
 
 import albumentations
 import pytorch_lightning as pl
@@ -11,6 +11,7 @@ from .maskrcnn_dataset import MaskRCNNDataset
 from .utilities import dictionary_to_device
 
 # TODO: Add optional parameter (also to config): download_url
+# TODO: Add additional input augmentation.
 
 
 class MaskRCNNDataModule(pl.LightningDataModule):
@@ -49,6 +50,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 ...
     :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
         of images. Applied before all other transforms.
+    :param random_cropping_size: If not None, [height, width] of a rectangle, that is randomly
+        cropped from input images, during training and testing.
     :param batch_size: Number of samples per batch.
     """
 
@@ -56,6 +59,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self,
         data_root: AnyPath,
         initial_cropping_rectangle: Optional[CroppingRectangle] = None,
+        random_cropping_size: Optional[Tuple[int, int]] = None,
         batch_size: int = 1,
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
@@ -66,6 +70,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
         self.data_root = Path(data_root)
         self.initial_cropping_rectangle = initial_cropping_rectangle
+        self.random_cropping_size = random_cropping_size
         self.batch_size = batch_size
 
         self.train_subset = train_subset
@@ -129,21 +134,24 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     transform=self.test_transforms,
                 )
 
-    @staticmethod
-    def get_transforms(train: bool = False) -> albumentations.Compose:
+    def get_transforms(self, train: bool = False) -> albumentations.Compose:
         """Compose transforms for image preprocessing (e.g. cropping) and augmentation (only for
             training).
 
         :param train: Specify, whether to apply image augmentation or not.
         :return: Composed transforms.
         """
+
         transforms = []
+
+        if self.random_cropping_size is not None:
+            transforms += [albumentations.RandomCrop(*self.random_cropping_size)]
 
         if train:
             transforms += [
                 albumentations.HorizontalFlip(p=0.5),
                 albumentations.VerticalFlip(p=0.5),
-                albumentations.RandomRotate90(always_apply=True),
+                albumentations.RandomRotate90(p=1.0),
             ]
 
         return albumentations.Compose(transforms)

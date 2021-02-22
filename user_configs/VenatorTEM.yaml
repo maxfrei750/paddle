@@ -10,6 +10,9 @@ data_module:
     - 0
     - 2048
     - 2048
+  random_cropping_size:
+    - 1024
+    - 1024
 callbacks:
   example_detection_monitor:
     score_threshold: 0.5
