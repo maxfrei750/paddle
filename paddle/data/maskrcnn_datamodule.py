@@ -47,15 +47,15 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 ...
             test/
                 ...
-    :param cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping of
-        images. Applied before all other transforms.
+    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
+        of images. Applied before all other transforms.
     :param batch_size: Number of samples per batch.
     """
 
     def __init__(
         self,
         data_root: AnyPath,
-        cropping_rectangle: Optional[CroppingRectangle] = None,
+        initial_cropping_rectangle: Optional[CroppingRectangle] = None,
         batch_size: int = 1,
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
@@ -65,7 +65,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         super().__init__()
 
         self.data_root = Path(data_root)
-        self.cropping_rectangle = cropping_rectangle
+        self.initial_cropping_rectangle = initial_cropping_rectangle
         self.batch_size = batch_size
 
         self.train_subset = train_subset
@@ -102,7 +102,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.train_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.train_subset,
-                    cropping_rectangle=self.cropping_rectangle,
+                    initial_cropping_rectangle=self.initial_cropping_rectangle,
                     transform=self.train_transforms,
                 )
 
@@ -113,7 +113,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.val_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.val_subset,
-                    cropping_rectangle=self.cropping_rectangle,
+                    initial_cropping_rectangle=self.initial_cropping_rectangle,
                     transform=self.val_transforms,
                 )
 
@@ -125,7 +125,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                 self.test_dataset = MaskRCNNDataset(
                     self.data_root,
                     subset=self.test_subset,
-                    cropping_rectangle=self.cropping_rectangle,
+                    initial_cropping_rectangle=self.initial_cropping_rectangle,
                     transform=self.test_transforms,
                 )
 

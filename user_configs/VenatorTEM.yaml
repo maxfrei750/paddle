@@ -5,7 +5,7 @@ lightning_module:
     box_detections_per_img: 300
 data_module:
   data_root: data/Venator/tem
-  cropping_rectangle:
+  initial_cropping_rectangle:
     - 0
     - 0
     - 2048

@@ -4,6 +4,8 @@ from typing import Any, List, Optional
 from hydra.conf import HydraConf, RunDir
 from omegaconf import MISSING
 
+# TODO: Add docstrings.
+
 
 @dataclass
 class BaseConfig:
@@ -81,6 +83,6 @@ class BaseConfig:
         train_subset: str = "training"
         val_subset: str = "validation"
         test_subset: Optional[str] = None
-        cropping_rectangle: Optional[List[int]] = None
+        initial_cropping_rectangle: Optional[List[int]] = None
 
     data_module: DataModuleConfig = DataModuleConfig()

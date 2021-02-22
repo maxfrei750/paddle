@@ -49,8 +49,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 ...
             ...
     :param subset: Name of the subset to use.
-    :param cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping of
-        images. Applied before all other transforms.
+    :param initial_cropping_rectangle: If not None, [x0, y0, x1, y1] rectangle used for the cropping
+        of images. Applied before all other transforms.
     :param transform: torchvision or albumentation transform.
     """
 
@@ -58,7 +58,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         self,
         root: AnyPath,
         subset: Optional[str] = None,
-        cropping_rectangle: Optional[CroppingRectangle] = None,
+        initial_cropping_rectangle: Optional[CroppingRectangle] = None,
         transform: Optional[Any] = None,
     ) -> None:
 
@@ -80,11 +80,11 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         assert self.image_paths, "No images found in {self.subset_path} based on 'image_*.*'."
 
-        self.cropping_rectangle = cropping_rectangle
+        self.initial_cropping_rectangle = initial_cropping_rectangle
 
-        if cropping_rectangle is not None:
+        if initial_cropping_rectangle is not None:
             self.transform = albumentations.Compose(
-                [albumentations.Crop(*cropping_rectangle), transform]
+                [albumentations.Crop(*initial_cropping_rectangle), transform]
             )
         else:
             self.transform = transform
@@ -230,6 +230,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
          list of associated labels and scores.
         """
 
+        # TODO: Parallelize empty mask removal.
         is_not_empty = [np.any(mask) for mask in masks]
 
         masks = list(compress(masks, is_not_empty))
