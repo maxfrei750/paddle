@@ -7,6 +7,7 @@ from torchvision.transforms import ToPILImage
 
 from ..custom_types import AnyPath, Batch, TestOutput
 from ..data.utilities import dictionary_to_cpu
+from ..postprocessing import filter_empty_instances
 
 
 class TestPredictionWriter(callbacks.Callback):
@@ -60,6 +61,9 @@ class TestPredictionWriter(callbacks.Callback):
             image_name = target["image_name"]
             image_file_path = self.output_root / f"image_{image_name}.png"
             ToPILImage()(image).save(image_file_path)
+
+            # Filter empty detections.
+            prediction = filter_empty_instances(prediction)
 
             # Separate detections based on label.
             labels = prediction["labels"]
