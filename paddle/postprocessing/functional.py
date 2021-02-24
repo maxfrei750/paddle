@@ -31,6 +31,23 @@ def filter_border_instances(annotation: Annotation, border_width: int = 2) -> An
     return annotation
 
 
+def filter_empty_instances(annotation: Annotation) -> Annotation:
+    """Remove instances with empty masks.
+
+    :param annotation: Annotation with masks.
+    :return: Annotation, where instances with empty masks have been removed.
+    """
+    masks = annotation["masks"]
+
+    masks = np.asarray(masks)
+
+    do_keep = np.any(masks.squeeze(), axis=(1, 2))
+
+    annotation = filter_annotation(annotation, do_keep)
+
+    return annotation
+
+
 def filter_low_score_instances(annotation: Annotation, score_threshold: float) -> Annotation:
     """Remove all instances with a score below `score_threshold`.
 
