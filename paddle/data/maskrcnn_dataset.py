@@ -117,12 +117,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         """Gather class names based on class folders in subset folder."""
         class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
 
-        # TODO: Use a generic class name, if there are no ground truths.
-        if not class_names:
-            raise FileNotFoundError(
-                f"Cannot create class name dictionary, because there are no class folders in "
-                f"{self.subset_path}."
-            )
+        if not class_names:  # use a generic class name, if no class folders exist
+            class_names = ["particle"]
 
         class_names = ["background"] + class_names
         self.class_names = class_names
