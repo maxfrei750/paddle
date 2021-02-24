@@ -77,6 +77,9 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tens
         removed.
     """
 
+    if np.all(do_keep):
+        return annotation
+
     # TODO: Find a more robust/future-proof solution to determine which entries need to be filtered.
     # IDEA: Try to get number of boxes/masks/labels.
 
