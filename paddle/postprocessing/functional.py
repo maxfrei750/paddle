@@ -113,10 +113,20 @@ def calculate_area_equivalent_diameters(masks: ndarray) -> ndarray:
     :param masks: NxHxW numpy array, which stores N instance masks.
     :return: Numpy array of area equivalent diameters.
     """
+    areas = calculate_areas(masks)
+    return np.sqrt(4 * areas / np.pi)
+
+
+def calculate_areas(masks: ndarray) -> ndarray:
+    """Calculate areas for a numpy array containing masks.
+
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of areas.
+    """
     masks = np.array(masks).astype(bool)
     masks = masks.reshape(masks.shape[0], -1)
     areas = np.asarray(masks).sum(axis=1)
-    return np.sqrt(4 * areas / np.pi)
+    return areas
 
 
 def calculate_minimum_and_maximum_feret_diameter(mask: Mask) -> Tuple[float, float]:
