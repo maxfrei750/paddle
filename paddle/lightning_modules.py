@@ -56,9 +56,24 @@ class LightningMaskRCNN(pl.LightningModule):
 
         self.validation_metrics = ModuleDict(
             {
-                # "AP50": AveragePrecision(iou_thresholds=(0.5,), iou_type="mask"),
-                # "AP75": AveragePrecision(iou_thresholds=(0.75,), iou_type="mask"),
-                "mAP": AveragePrecision(iou_thresholds=np.arange(0.5, 1, 0.05), iou_type="mask"),
+                # "AP50": AveragePrecision(
+                #     num_foreground_classes=num_classes - 1,
+                #     iou_thresholds=[0.5],
+                #     iou_type="mask",
+                #     ap_calculation_type="COCO",
+                # ),
+                # "AP75": AveragePrecision(
+                #     num_foreground_classes=num_classes - 1,
+                #     iou_thresholds=[0.75],
+                #     iou_type="mask",
+                #     ap_calculation_type="COCO",
+                # ),
+                "mAP": AveragePrecision(
+                    num_foreground_classes=num_classes - 1,
+                    iou_thresholds=np.arange(0.5, 1, 0.05),
+                    iou_type="mask",
+                    ap_calculation_type="COCO",
+                ),
             }
         )
 

@@ -1,48 +1,113 @@
-from typing import Iterable, List, Literal, Tuple
+from collections import Counter
+from typing import List, Literal, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning.metrics import Metric
-from torch import tensor
-from torchvision.ops.boxes import box_iou
+from torch import Tensor, tensor
+from torchvision.ops import box_iou
 
-from .custom_types import Annotation
+from .custom_types import Annotation, ArrayLike
 
-# TODO: Add multi-class support.
+
+def mask_iou(
+    masks_prediction: ArrayLike,
+    masks_target: ArrayLike,
+    boxes_prediction: ArrayLike,
+    boxes_target: ArrayLike,
+) -> Tensor:
+    """Calculates IoU matrix, based on instance masks.
+
+    :param masks_prediction: NxHxW Tensor which holds predicted masks.
+    :param masks_target: NxHxW Tensor which holds target masks.
+    :param boxes_prediction: Nx4 Tensor which holds predicted boxes.
+    :param boxes_target: Nx4 Tensor which holds target boxes.
+    :return: NxM tensor containing the pairwise IoU values.
+    """
+
+    # TODO: Support detections without bounding boxes by calculating bounding boxes based on
+    #  masks.
+
+    box_iou_matrix = box_iou(boxes_prediction, boxes_target)  # predictions x targets
+    mask_iou_matrix = torch.zeros_like(box_iou_matrix)
+
+    masks_prediction = torch.round(masks_prediction.squeeze(dim=0)).bool()
+    masks_target = masks_target.bool()
+
+    for p, (mask_prediction, box_prediction) in enumerate(zip(masks_prediction, boxes_prediction)):
+
+        for t, (mask_target, box_target) in enumerate(zip(masks_target, boxes_target)):
+            # Only calculate mask iou, if boxes overlap.
+            if box_iou_matrix[p, t]:
+                x_corners = torch.cat([box_target[0::2], box_prediction[0::2]])
+                y_corners = torch.cat([box_target[1::2], box_prediction[1::2]])
+
+                x_min = torch.floor(x_corners.min()).int()
+                y_min = torch.floor(y_corners.min()).int()
+                x_max = torch.ceil(x_corners.max()).int()
+                y_max = torch.ceil(y_corners.max()).int()
+
+                mask_overlap_target = mask_target[y_min:y_max, x_min:x_max]
+                mask_overlap_prediction = mask_prediction[y_min:y_max, x_min:x_max]
+
+                area_intersection = torch.logical_and(
+                    mask_overlap_target, mask_overlap_prediction
+                ).sum()
+                area_union = torch.logical_or(mask_overlap_target, mask_overlap_prediction).sum()
+
+                mask_iou = area_intersection / area_union
+
+                mask_iou_matrix[p, t] = mask_iou
+
+    return mask_iou_matrix
 
 
 class AveragePrecision(Metric):
     """Average Precision (AP) Metric
 
-    AP calculation based on:
-        https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
-    :param iou_thresholds: Detections with an IoU below the specified IoU thresholds are discarded. If
-        ``iou_thresholds`` has more than one element, then the mean average precision (mAP) at these different
-        thresholds is calculated.
     :param iou_type: Defines, which attribute of the detected objects is used to calculate the IoU.
-        "box"  - bounding box, default
+        "box"  - bounding box
         "mask" - mask
-    :param box_format: Bounding box format
-        "pascal_voc" - [xmin, ymin, xmax, ymax]
-        "coco"       - [xmin, ymin, w, h]
-    :param dist_sync_on_step: Synchronize metric state across processes at each ``forward()`` before returning the
-        value at the step.
+    :param iou_thresholds: threshold for IoU score for determining true positive and
+        false positive predictions.
+    :param ap_calculation_type: method to calculate the average precision of the precision-recall
+        curve
+        - `'step'`: calculate the step function integral, the same way as
+        :func:`~pytorch_lightning.metrics.functional.average_precision.average_precision`
+        - `'VOC2007'`: calculate the 11-point sampling of interpolation of the precision recall
+        curve
+        - `'VOC2010'`: calculate the step function integral of the interpolated precision recall
+        curve
+        - `'COCO'`: calculate the 101-point sampling of the interpolated precision recall curve
+    :param dist_sync_on_step: Synchronize metric state across processes at each `forward()` before
+        returning the value at the step.
     """
 
     def __init__(
         self,
-        iou_thresholds: Iterable,
+        num_foreground_classes: int,
+        iou_thresholds: Union[ArrayLike, List],
         iou_type: Literal["box", "mask"],
-        box_format: Literal["coco", "pascal_voc"] = "pascal_voc",
+        ap_calculation_type: Literal["step", "VOC2007", "VOC2010", "COCO"],
         dist_sync_on_step: bool = False,
     ) -> None:
         super().__init__(dist_sync_on_step=dist_sync_on_step)
 
         self.iou_thresholds = iou_thresholds
         self.iou_type = iou_type
-        self.box_format = box_format
+        self.ap_calculation_type = ap_calculation_type
+        self.num_foreground_classes = num_foreground_classes
+        self.num_iou_thresholds = len(iou_thresholds)
 
-        self.add_state("average_precision_sum", default=tensor(0.0), dist_reduce_fx="sum")
-        self.add_state("num_samples", default=tensor(0.0), dist_reduce_fx="sum")
+        self.class_labels = list(range(1, self.num_foreground_classes + 1))
+
+        # Mimic a dictionary.
+        # TODO: Find a less hacky solution.
+        for class_label in self.class_labels:
+            self.add_state(f"false_positives_class{class_label}", default=[], dist_reduce_fx="cat")
+            self.add_state(f"true_positives_class{class_label}", default=[], dist_reduce_fx="cat")
+            self.add_state(
+                f"num_targets_class{class_label}", default=tensor(0), dist_reduce_fx="sum"
+            )
 
     # noinspection PyMethodOverriding
     def update(self, predictions: List[Annotation], targets: Tuple[Annotation, ...]) -> None:
@@ -51,244 +116,208 @@ class AveragePrecision(Metric):
         :param predictions: List of dictionaries with prediction data, such as boxes and masks.
         :param targets: Tuple of dictionaries with target data, such as boxes and masks.
         """
-        for prediction, target in zip(predictions, targets):
-            self.num_samples += 1
-            self.average_precision_sum += self._calculate_average_precision(prediction, target)
 
-    def compute(self) -> float:
-        """Computes metric based on the gathered data."""
-        return self.average_precision_sum / self.num_samples
+        device = targets[0]["boxes"].device
 
-    def _calculate_average_precision(self, prediction: Annotation, target: Annotation):
-        """Calculate average precision of a set of detections (e.g. from a single image).
+        # Create a unique index for every image.
+        unique_image_indices = [hash(target["boxes"]) for target in targets]
 
-        Based on:
-            https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
+        num_instances_per_image_prediction = [
+            len(prediction["boxes"]) for prediction in predictions
+        ]
 
-        :param prediction: Dictionary with prediction data. Must include boxes or masks.
-        :param target: Dictionary with target data. Must include boxes or masks.
-        """
+        num_instances_per_image_target = [len(target["boxes"]) for target in targets]
 
-        prediction = self._sort_by_score(prediction)
-        iou_matrix = self._calculate_iou_matrix(prediction, target)
+        image_indices_prediction = torch.cat(
+            [
+                torch.ones(n, dtype=torch.int64, device=device) * index
+                for n, index in zip(num_instances_per_image_prediction, unique_image_indices)
+            ]
+        )
 
-        average_precisions = []
+        image_indices_target = torch.cat(
+            [
+                torch.ones(n, dtype=torch.int64, device=device) * index
+                for n, index in zip(num_instances_per_image_target, unique_image_indices)
+            ]
+        )
 
-        for iou_threshold in self.iou_thresholds:
-            filtered_iou_matrix = self._apply_threshold(iou_matrix, iou_threshold)
-            mappings = self._get_mappings(filtered_iou_matrix)
+        boxes_prediction = torch.cat([prediction["boxes"] for prediction in predictions])
+        boxes_target = torch.cat([target["boxes"] for target in targets])
 
-            # Mean Average Precision calculation
-            true_positives = mappings.sum()
-            false_positives = mappings.sum(0).eq(0).sum()
-            false_negatives = mappings.sum(1).eq(0).sum()
-            average_precision = true_positives / (
-                true_positives + false_positives + false_negatives
+        labels_prediction = torch.cat([prediction["labels"] for prediction in predictions])
+        labels_target = torch.cat([target["labels"] for target in targets])
+
+        scores_prediction = torch.cat([prediction["scores"] for prediction in predictions])
+
+        if self.iou_type == "mask":
+            masks_prediction = torch.cat([prediction["masks"] for prediction in predictions])
+            masks_target = torch.cat([target["masks"] for target in targets])
+        else:
+            masks_prediction = None
+            masks_target = None
+
+        (
+            true_positives_per_class,
+            false_positives_per_class,
+            num_targets_per_class,
+        ) = self._evaluate_batch(
+            image_indices_prediction,
+            scores_prediction,
+            labels_prediction,
+            boxes_prediction,
+            image_indices_target,
+            labels_target,
+            boxes_target,
+            masks_prediction,
+            masks_target,
+        )
+
+        for key in true_positives_per_class.keys():
+            getattr(self, f"true_positives_class{key}").append(true_positives_per_class[key])
+            getattr(self, f"false_positives_class{key}").append(false_positives_per_class[key])
+            setattr(
+                self,
+                f"num_targets_class{key}",
+                getattr(self, f"num_targets_class{key}") + num_targets_per_class[key],
             )
 
-            average_precisions.append(average_precision)
+    def compute(self) -> Tensor:
+        """Computes metric based on the gathered data."""
 
-        return sum(average_precisions) / len(average_precisions)
+        average_precisions = torch.zeros(self.num_foreground_classes, len(self.iou_thresholds))
 
-    def _calculate_iou_matrix(self, prediction: Annotation, target: Annotation) -> torch.Tensor:
-        """Calculates a matrix containing the pairwise IoU values for every box in ``prediction`` and ``target``.
+        for class_index, c in enumerate(self.class_labels):
 
-        :param prediction: Dictionary with prediction data. Must include boxes or masks.
-        :param target: Dictionary with target data. Must include boxes or masks.
-        :return: NxM tensor containing the pairwise IoU values.
+            tps = torch.cat(getattr(self, f"true_positives_class{c}"))
+            fps = torch.cat(getattr(self, f"false_positives_class{c}"))
+            num_targets = getattr(self, f"num_targets_class{c}").cpu()
+
+            for iou_idx, _ in enumerate(self.iou_thresholds):
+                tps_cum = torch.cumsum(tps[:, iou_idx], dim=0)
+                fps_cum = torch.cumsum(fps[:, iou_idx], dim=0)
+
+                precision = tps_cum / (tps_cum + fps_cum)
+                recall = tps_cum / num_targets if num_targets else tps_cum
+                precision = torch.cat([reversed(precision), torch.tensor([1.0])])
+                recall = torch.cat([reversed(recall), torch.tensor([0.0])])
+                if self.ap_calculation_type == "step":
+                    average_precision = -torch.sum((recall[1:] - recall[:-1]) * precision[:-1])
+                elif self.ap_calculation_type == "VOC2007":
+                    average_precision = 0
+                    recall_thresholds = torch.linspace(0, 1, 11)
+                    for threshold in recall_thresholds:
+                        points = precision[:-1][recall[:-1] >= threshold]
+                        average_precision += torch.max(points) / 11 if len(points) else 0
+                elif self.ap_calculation_type == "VOC2010":
+                    for i in range(len(precision)):
+                        precision[i] = torch.max(precision[: i + 1])
+                    average_precision = -torch.sum((recall[1:] - recall[:-1]) * precision[:-1])
+                elif self.ap_calculation_type == "COCO":
+                    average_precision = 0
+                    recall_thresholds = torch.linspace(0, 1, 101)
+                    for threshold in recall_thresholds:
+                        points = precision[:-1][recall[:-1] >= threshold]
+                        average_precision += torch.max(points) / 101 if len(points) else 0
+                else:
+                    raise NotImplementedError(f"'{self.ap_calculation_type}' is not supported.")
+                average_precisions[class_index, iou_idx] = average_precision
+        return torch.mean(average_precisions)
+
+    def _evaluate_batch(
+        self,
+        pred_image_indices: Tensor,
+        prediction_scores: Tensor,
+        prediction_labels: Tensor,
+        prediction_boxes: Tensor,
+        target_image_indices: Tensor,
+        target_labels: Tensor,
+        target_bboxes: Tensor,
+        prediction_masks: Optional[Tensor] = None,
+        target_masks: Optional[Tensor] = None,
+    ):
         """
-        if self.iou_type == "box":
-            return self._calculate_box_iou_matrix(prediction, target)
-        elif self.iou_type == "mask":
-            return self._calculate_mask_iou_matrix(prediction, target)
-        else:
-            raise ValueError(f"Unknown iou_type: {self.iou_type}")
+            pred_image_indices: an (N,)-shaped Tensor of image indices of the predictions
+            prediction_scores: an (N,)-shaped Tensor of probabilities of the predictions
+            prediction_labels: an (N,)-shaped Tensor of predicted labels
+            prediction_boxes: an (N, 4)-shaped Tensor of predicted bounding boxes
+            target_image_indices: an (M,)-shaped Tensor of image indices of the groudn truths
+            target_labels: an (M,)-shaped Tensor of ground truth labels
+            target_bboxes: an (M, 4)-shaped Tensor of ground truth bounding boxes
+        References:
+            - host.robots.ox.ac.uk/pascal/VOC/
+            - https://ccc.inaoep.mx/~villasen/bib/AN%20OVERVIEW%20OF%20EVALUATION%20METHODS%20IN%20TREC%20AD%20HOC%20IR%20AND%20TREC%20QA.pdf#page=15
+            - https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py
 
-    def _calculate_mask_iou_matrix(
-        self, prediction: Annotation, target: Annotation
-    ) -> torch.Tensor:
-        """Calculates IoU matrix, based on instance masks.
-
-        :param prediction: Dictionary with prediction data. Must include boxes and masks.
-        :param target: Dictionary with target data. Must include boxes and masks.
-        :return: NxM tensor containing the pairwise IoU values.
-        """
-
-        # TODO: Support detections without bounding boxes by calculating bounding boxes based on
-        #  masks.
-
-        box_iou_matrix = self._calculate_box_iou_matrix(prediction, target)  # predictions x targets
-        mask_iou_matrix = torch.zeros_like(box_iou_matrix)
-
-        prediction_boxes = prediction["boxes"].clone()
-        target_boxes = target["boxes"].clone()
-
-        prediction_masks = torch.round(prediction["masks"].clone().squeeze()).bool()
-        target_masks = target["masks"].clone().bool()
-
-        if self.box_format == "coco":
-            target_boxes = self._coco_to_pascal_voc(target_boxes)
-            prediction_boxes = self._coco_to_pascal_voc(prediction_boxes)
-
-        for p, (prediction_mask, prediction_box) in enumerate(
-            zip(prediction_masks, prediction_boxes)
-        ):
-
-            for t, (target_mask, target_box) in enumerate(zip(target_masks, target_boxes)):
-
-                # Only calculate mask iou, if boxes overlap.
-                if box_iou_matrix[p, t]:
-                    x_corners = torch.cat([target_box[0::2], prediction_box[0::2]])
-                    y_corners = torch.cat([target_box[1::2], prediction_box[1::2]])
-
-                    x_min = torch.floor(x_corners.min()).int()
-                    y_min = torch.floor(y_corners.min()).int()
-                    x_max = torch.ceil(x_corners.max()).int()
-                    y_max = torch.ceil(y_corners.max()).int()
-
-                    target_mask_overlap = target_mask[y_min:y_max, x_min:x_max]
-                    prediction_mask_overlap = prediction_mask[y_min:y_max, x_min:x_max]
-
-                    area_intersection = torch.logical_and(
-                        target_mask_overlap, prediction_mask_overlap
-                    ).sum()
-                    area_union = torch.logical_or(
-                        target_mask_overlap, prediction_mask_overlap
-                    ).sum()
-
-                    mask_iou = area_intersection / area_union
-
-                    mask_iou_matrix[p, t] = mask_iou
-
-        return mask_iou_matrix
-
-    def _calculate_box_iou_matrix(self, prediction: Annotation, target: Annotation) -> torch.Tensor:
-        """Calculates IoU matrix, based on instance bounding boxes.
-
-        Based on:
-            https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
-
-        :param prediction: Dictionary with prediction data. Must include boxes and masks.
-        :param target: Dictionary with target data. Must include boxes and masks.
-        :return: NxM tensor containing the pairwise IoU values.
-        """
-        target_boxes = target["boxes"]
-        prediction_boxes = prediction["boxes"]
-
-        if self.box_format == "coco":
-            target_boxes = self._coco_to_pascal_voc(target_boxes)
-            prediction_boxes = self._coco_to_pascal_voc(prediction_boxes)
-
-        target_boxes = self._align_coordinates(target_boxes)
-        prediction_boxes = self._align_coordinates(prediction_boxes)
-
-        return box_iou(prediction_boxes, target_boxes)
-
-    @staticmethod
-    def _apply_threshold(iou_matrix: torch.Tensor, iou_threshold: float):
-        """Set elements below ``iou_thresholds`` to zero.
-
-        :param iou_matrix: NxM tensor containing pairwise IoU values
-        :param iou_threshold: elements of ``iou_matrix`` below this value are set to zero
-        :return: IoU matrix, with elements below the IoU threshold set to zero.
-        """
-        device = iou_matrix.device
-        iou_threshold = tensor(iou_threshold, device=device)
-        iou_matrix = iou_matrix.where(iou_matrix > iou_threshold, tensor(0.0, device=device))
-        return iou_matrix
-
-    @staticmethod
-    def _sort_by_score(prediction: Annotation) -> Annotation:
-        """Sort prediction masks and bounding boxes by score (descending).
-
-        :param prediction: Dictionary with prediction data. Must include scores.
-        :return: Annotation with boxes and/or masks sorted based on their score.
-        """
-        order = prediction["scores"].argsort(descending=True)
-
-        for key in ["boxes", "masks"]:
-            if key in prediction:
-                prediction[key] = prediction[key].clone()[order]
-
-        return prediction
-
-    @staticmethod
-    def _coco_to_pascal_voc(boxes: torch.Tensor) -> torch.Tensor:
-        """Convert bounding boxes from Pascal VOC  to COCO format.
-            Pascal VOC format - [xmin, ymin, xmax, ymax]
-            COCO format       - [xmin, ymin, w, h]
-
-        Based on:
-            https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
-
-        :param boxes: Nx4 tensor in COCO format
-        :return: Nx4 tensor in Pascal VOC format
-        """
-        boxes = boxes.clone()
-        boxes[:, 2] = boxes[:, 0] + boxes[:, 2]
-        boxes[:, 3] = boxes[:, 1] + boxes[:, 3]
-        return boxes
-
-    @staticmethod
-    def _align_coordinates(boxes: torch.Tensor) -> torch.Tensor:
-        """Align coordinates (x1,y1) < (x2,y2) to work with the torchvision ``box_iou`` operation.
-
-        Based on:
-            https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
-
-        :param boxes: Nx4 tensor in Pascal VOC format ([xmin, ymin, xmax, ymax])
-        :return: Nx4 tensor storing aligned boxes.
+        Based on: https://github.com/PyTorchLightning/pytorch-lightning/pull/4564
         """
 
-        x1y1 = torch.min(
-            boxes[
-                :,
-                :2,
-            ],
-            boxes[:, 2:],
-        )
-        x2y2 = torch.max(
-            boxes[
-                :,
-                :2,
-            ],
-            boxes[:, 2:],
-        )
-        boxes = torch.cat([x1y1, x2y2], dim=1)
-        return boxes
+        true_positives_per_class = {}
+        false_positives_per_class = {}
+        num_targets_per_class = {}
 
-    @staticmethod
-    def _get_mappings(iou_matrix: torch.Tensor) -> torch.Tensor:
-        """
-        Based on:
-            https://www.kaggle.com/kshitijpatil09/pytorch-mean-absolute-precision-calculation?scriptVersionId=40848029
+        class_labels = torch.cat([prediction_labels, target_labels]).unique()
 
-        :param iou_matrix: NxM tensor containing pairwise IoU values
-        :return: Mapping of prediction instances and target instances.
-        """
-        mappings = torch.zeros_like(iou_matrix)
-        _, pr_count = iou_matrix.shape
-
-        # first mapping (max iou for first pred_box)
-        if not iou_matrix[:, 0].eq(0.0).all():
-            # if not a zero column
-            mappings[iou_matrix[:, 0].argsort()[-1], 0] = 1
-
-        for pr_idx in range(1, pr_count):
-            # Sum of all the previous mapping columns will let
-            # us know which target_boxes-boxes are already assigned
-            not_assigned = torch.logical_not(mappings[:, :pr_idx].sum(1)).long()
-
-            # Considering unassigned target_boxes-boxes for further evaluation
-            targets = not_assigned * iou_matrix[:, pr_idx]
-
-            # If no target_boxes-box satisfy the previous conditions
-            # for the current pred-box, ignore it (False Positive)
-            if targets.eq(0).all():
+        for class_idx, class_label in enumerate(class_labels):
+            # Descending indices w.r.t. class probability for class c
+            descending_score_indices = torch.argsort(prediction_scores, descending=True)[
+                prediction_labels == class_label
+            ]
+            # No predictions for this class so average precision is 0
+            if len(descending_score_indices) == 0:
                 continue
+            targets_per_images = Counter(
+                [index.item() for index in target_image_indices[target_labels == class_label]]
+            )
+            targets_assigned = {
+                image_index: torch.zeros(count, self.num_iou_thresholds, dtype=torch.bool)
+                for image_index, count in targets_per_images.items()
+            }
+            tps = torch.zeros(len(descending_score_indices), self.num_iou_thresholds)
+            fps = torch.zeros(len(descending_score_indices), self.num_iou_thresholds)
+            for i, prediction_index in enumerate(descending_score_indices):
+                image_index = pred_image_indices[prediction_index].item()
+                # Get the ground truth bboxes of class c and the same image index as the prediction
+                gt_boxes = target_bboxes[
+                    (target_image_indices == image_index) & (target_labels == class_label)
+                ]
 
-            # max-iou from current column after all the filtering
-            # will be the pivot element for mapping
-            pivot = targets.argsort()[-1]
-            mappings[pivot, pr_idx] = 1
-        return mappings
+                if self.iou_type == "box":
+                    ious = box_iou(
+                        torch.unsqueeze(prediction_boxes[prediction_index], dim=0), gt_boxes
+                    )
+                elif self.iou_type == "mask":
+                    gt_masks = target_masks[
+                        (target_image_indices == image_index) & (target_labels == class_label)
+                    ]
+                    ious = mask_iou(
+                        torch.unsqueeze(prediction_masks[prediction_index], dim=0),
+                        gt_masks,
+                        torch.unsqueeze(prediction_boxes[prediction_index], dim=0),
+                        gt_boxes,
+                    )
+                else:
+                    raise ValueError(f"Unknown iou_type: {self.iou_type}")
+
+                best_iou, best_target_index = (
+                    ious.squeeze(0).max(0) if len(gt_boxes) > 0 else (0, -1)
+                )
+                # Prediction is a true positive is the IoU score is greater than the threshold and
+                # the corresponding ground truth has only one prediction assigned to it
+                for iou_index, iou_threshold in enumerate(self.iou_thresholds):
+                    if (
+                        best_iou > iou_threshold
+                        and not targets_assigned[image_index][best_target_index][iou_index]
+                    ):
+                        targets_assigned[image_index][best_target_index][iou_index] = True
+                        tps[i, iou_index] = 1
+                    else:
+                        fps[i, iou_index] = 1
+
+            num_targets = len(target_labels[target_labels == class_label])
+
+            true_positives_per_class[int(class_label)] = tps
+            false_positives_per_class[int(class_label)] = fps
+            num_targets_per_class[int(class_label)] = num_targets
+
+        return true_positives_per_class, false_positives_per_class, num_targets_per_class
