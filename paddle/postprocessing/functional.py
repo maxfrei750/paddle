@@ -1,6 +1,7 @@
 from typing import List, Tuple, Union
 
 import numpy as np
+import torch
 from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
 from numpy import ndarray
 from skimage.segmentation import clear_border
@@ -94,8 +95,12 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tens
         removed.
     """
 
-    if np.all(do_keep):
-        return annotation
+    if isinstance(do_keep, Tensor):
+        if torch.all(do_keep):
+            return annotation
+    else:
+        if np.all(do_keep):
+            return annotation
 
     # TODO: Find a more robust/future-proof solution to determine which entries need to be filtered.
     # IDEA: Try to get number of boxes/masks/labels.
