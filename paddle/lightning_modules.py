@@ -132,10 +132,10 @@ class LightningMaskRCNN(pl.LightningModule):
         # TODO: Implement loss weights.
         loss = sum(partial_loss for partial_loss in partial_losses.values())
 
-        self.log("train/loss", loss, on_epoch=True)
+        self.log("train/loss", loss, on_epoch=True, on_step=False)
 
         for key, value in partial_losses.items():
-            self.log("train/" + key, value, on_epoch=True)
+            self.log("train/" + key, value, on_epoch=True, on_step=False)
 
         return loss
 
