@@ -90,3 +90,4 @@ build
 /demos/maskrcnn_resnet50_mpac.ckpt
 /demos/04_analyze_dataset/output
 /user_scripts
+/user_configs
