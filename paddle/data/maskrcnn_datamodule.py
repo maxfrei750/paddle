@@ -11,7 +11,6 @@ from .maskrcnn_dataset import MaskRCNNDataset
 from .utilities import dictionary_to_device
 
 # TODO: Add optional parameter (also to config): download_url
-# TODO: Add additional input augmentation.
 
 
 class MaskRCNNDataModule(pl.LightningDataModule):
@@ -157,9 +156,17 @@ class MaskRCNNDataModule(pl.LightningDataModule):
 
         if train:
             transforms += [
+                # albumentations.RandomBrightnessContrast(p=1.0),
                 albumentations.HorizontalFlip(p=0.5),
                 albumentations.VerticalFlip(p=0.5),
-                albumentations.RandomRotate90(p=1.0),
+                # albumentations.Rotate(
+                #     limit=(-180, 180),
+                #     p=1.0,
+                #     border_mode=cv2.BORDER_CONSTANT,
+                #     value=0,
+                #     mask_value=0,
+                # ),
+                # albumentations.RandomRotate90(p=1.0),
             ]
 
         return albumentations.Compose(transforms)
