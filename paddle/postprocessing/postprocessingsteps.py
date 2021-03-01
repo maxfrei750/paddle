@@ -9,8 +9,6 @@ from ..custom_types import Annotation, AnyPath, Image
 from ..visualization import visualize_annotation
 from .functional import filter_border_instances, filter_class_instances, filter_low_score_instances
 
-# TODO: StitchImages
-
 
 class PostProcessingStepBase:
     """Base class for postprocessing steps."""

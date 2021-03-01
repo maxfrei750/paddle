@@ -9,7 +9,6 @@ from .postprocessing import Postprocessor, SaveVisualization
 from .utilities import get_best_checkpoint_path, get_latest_log_folder_path
 
 
-# TODO: Pass a dataset.
 def inspect_dataset(
     data_root: AnyPath,
     subset: str,
@@ -69,7 +68,6 @@ def inspect_dataset(
     Postprocessor(data_set, post_processing_steps, progress_bar_description="Visualization: ").run()
 
 
-# TODO: Pass a dataset?
 def inspect_model(
     log_root: AnyPath,
     data_root: AnyPath,
