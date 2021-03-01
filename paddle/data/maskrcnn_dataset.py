@@ -210,7 +210,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 scores += [1.0] * num_masks
 
             for mask_path in mask_paths:
-                mask = PILImage.open(mask_path).convert("1")
+                mask = PILImage.open(mask_path).convert("L")
 
                 assert (
                     image.size == mask.size
@@ -237,6 +237,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             masks, labels, scores = self._remove_empty_masks(masks, labels, scores)
 
             num_instances = len(masks)
+
+        masks = [mask.astype(bool) for mask in masks]
 
         boxes = extract_bounding_boxes(masks)
 
