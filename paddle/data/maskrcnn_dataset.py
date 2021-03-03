@@ -185,7 +185,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         for class_name in self.class_names:
             class_folder_path = self.subset_path / class_name
 
-            mask_paths = list(class_folder_path.glob(f"mask_{image_name}*.*"))
+            mask_paths = list(class_folder_path.glob(f"mask_{image_name}_*.*"))
 
             if not mask_paths:
                 continue
