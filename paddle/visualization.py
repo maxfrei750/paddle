@@ -253,10 +253,10 @@ def plot_particle_size_distributions(
 
     hist_kwargs = {"density": True, "histtype": "step"}
 
-    if not labels:
+    if labels is None:
         labels = [f"PSD {i}" for i in range(1, num_particle_size_distributions + 1)]
 
-    if not score_lists:
+    if score_lists is None:
         score_lists = [None] * num_particle_size_distributions
 
     bins = None
