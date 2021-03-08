@@ -26,7 +26,7 @@ class TestPredictionWriter(callbacks.Callback):
         super().__init__()
         self.map_label_to_class_name = map_label_to_class_name
         self.output_root = Path(output_root)
-        self.output_root.mkdir(parents=True)
+        self.output_root.mkdir(parents=True, exist_ok=True)
 
     def on_test_batch_end(
         self,
@@ -98,6 +98,8 @@ class TestPredictionWriter(callbacks.Callback):
                 for mask_file_name, mask in zip(mask_file_names, label_masks):
                     mask_file_path = label_folder_path / mask_file_name
                     mask = (mask >= 0.5).double()
+                    if mask_file_path.exists():
+                        raise FileExistsError(f"File already exists: {mask_file_path}")
                     ToPILImage()(mask).save(mask_file_path)
 
                 # Save scores.
