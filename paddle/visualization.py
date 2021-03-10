@@ -10,9 +10,11 @@ from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
+from sklearn.metrics import ConfusionMatrixDisplay
+from torch import Tensor
 from torchvision import transforms
 
-from .custom_types import Annotation, ColorFloat, ColorInt, Image
+from .custom_types import Annotation, ArrayLike, ColorFloat, ColorInt, Image
 from .data.utilities import extract_bounding_box
 from .statistics import gmean, gstd
 
@@ -282,3 +284,34 @@ def plot_particle_size_distributions(
     plt.xlabel(f"{measurand_name}/{unit}")
 
     plt.ylabel("Probability Density")
+
+
+def plot_confusion_matrix(
+    confusion_matrix_data: ArrayLike, class_names: Optional[List[str]] = None
+):
+    """Plot a confusion matrix.
+
+    :param confusion_matrix_data: Data to plot.
+    :param class_names: Optional class names to be used as labels.
+    :return: figure handle
+    """
+
+    if isinstance(confusion_matrix_data, Tensor):
+        confusion_matrix_data = confusion_matrix_data.cpu().numpy()
+
+    confusion_matrix_data = np.asarray(confusion_matrix_data)
+
+    display = ConfusionMatrixDisplay(
+        confusion_matrix=confusion_matrix_data, display_labels=class_names
+    )
+
+    display.plot(cmap="Blues")
+
+    for im in display.ax_.get_images():
+        upper_limit = 1 if confusion_matrix_data.max() <= 1 else None
+        im.set_clim(0, upper_limit)
+
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+
+    return plt.gcf()
