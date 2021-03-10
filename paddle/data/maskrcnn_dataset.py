@@ -217,9 +217,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
                 ), f"Size of mask {mask_path.parts[-2:]} differs from image size."
 
                 mask = np.array(mask)
-                masks.append(mask)
 
-        num_instances = len(masks)
+                masks.append(mask)
 
         image = np.array(image)
 
@@ -233,10 +232,10 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
             image = transformed_data["image"]
             masks = transformed_data["masks"]
 
-            # Filter empty masks (and associated labels and scores).
-            masks, labels, scores = self._remove_empty_masks(masks, labels, scores)
+        # Filter masks smaller than 100 pixels (and associated labels and scores).
+        masks, labels, scores = self._remove_small_masks(masks, labels, scores, size_threshold=25)
 
-            num_instances = len(masks)
+        num_instances = len(masks)
 
         masks = [mask.astype(bool) for mask in masks]
 
@@ -280,23 +279,24 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         return self.num_images * self.num_slices_per_image
 
     @staticmethod
-    def _remove_empty_masks(
-        masks: List[Mask], labels: List[int], scores: List[float]
+    def _remove_small_masks(
+        masks: List[Mask], labels: List[int], scores: List[float], size_threshold: int
     ) -> Tuple[List[Mask], List[int], List[float]]:
         """Remove empty masks from list of masks. Also remove associated scores and labels.
 
         :param masks: List of masks (HxW numpy arrays).
         :param labels: List of labels.
         :param scores: List of scores.
-        :return: List of non-empty masks (HxW numpy arrays with at least one non-zero element) and
-         list of associated labels and scores.
+        :param size_threshold: threshold for the size filtering
+        :return: List of masks (HxW numpy arrays) with at least `size_threshold` non-zero pixels and
+            list of associated labels and scores.
         """
 
-        # TODO: Parallelize empty mask removal.
-        is_not_empty = [np.any(mask) for mask in masks]
+        # TODO: Parallelize mask removal.
+        is_large_enough = [np.sum(mask) >= size_threshold for mask in masks]
 
-        masks = list(compress(masks, is_not_empty))
-        labels = list(compress(labels, is_not_empty))
-        scores = list(compress(scores, is_not_empty))
+        masks = list(compress(masks, is_large_enough))
+        labels = list(compress(labels, is_large_enough))
+        scores = list(compress(scores, is_large_enough))
 
         return masks, labels, scores
