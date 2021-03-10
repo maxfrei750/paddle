@@ -71,7 +71,7 @@ class ExampleDetectionMonitor(callbacks.Callback):
 
         :param trainer: Lightning Trainer
         :param pl_module: Lightning Module
-        :param outputs: Gathered outputs from all validation batches.
+        :param outputs: Gathered output from all validation batches.
         :param batch: Current batch.
         :param batch_idx: Current batch id.
         :param dataloader_idx: Dataloader id.
