@@ -3,8 +3,7 @@ from typing import List, Literal, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning.metrics import Metric
-from torch import Tensor
-from torch._C._VariableFunctions import tensor
+from torch import Tensor, tensor
 from torchvision.ops import box_iou
 
 from ..custom_types import Annotation, ArrayLike
