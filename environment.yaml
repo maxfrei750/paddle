@@ -22,6 +22,7 @@ dependencies:
 - numpy
 - fire
 - jupyterlab
+- scikit-learn
 - pip
 - pip:
     - diplib
