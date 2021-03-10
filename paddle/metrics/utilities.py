@@ -50,8 +50,8 @@ def mask_iou(
                 ).sum()
                 area_union = torch.logical_or(mask_overlap_target, mask_overlap_prediction).sum()
 
-                mask_iou = area_intersection / area_union
+                iou = area_intersection / area_union
 
-                mask_iou_matrix[p, t] = mask_iou
+                mask_iou_matrix[p, t] = iou
 
     return mask_iou_matrix
