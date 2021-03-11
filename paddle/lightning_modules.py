@@ -17,7 +17,7 @@ from .custom_types import (
     TestOutput,
     ValidationOutput,
 )
-from .metrics import AveragePrecision
+from .metrics import AveragePrecision, ConfusionMatrix
 
 
 class LightningMaskRCNN(pl.LightningModule):
@@ -73,6 +73,12 @@ class LightningMaskRCNN(pl.LightningModule):
                     iou_thresholds=np.arange(0.5, 1, 0.05),
                     iou_type="mask",
                     ap_calculation_type="COCO",
+                ),
+                "confusion_matrix": ConfusionMatrix(
+                    num_classes,
+                    iou_type="mask",
+                    iou_threshold=0.5,
+                    score_threshold=0.5,
                 ),
             }
         )
@@ -159,7 +165,21 @@ class LightningMaskRCNN(pl.LightningModule):
         """
         for metric_name, metric in self.validation_metrics.items():
             metric(output["predictions"], output["targets"])
-            self.log(f"validation/{metric_name}", metric)
+
+            tag = f"validation/{metric_name}"
+
+            if isinstance(metric, ConfusionMatrix):
+                # TODO: Replace when https://github.com/PyTorchLightning/pytorch-lightning/pull/6227
+                #  has been merged.
+                self.logger.experiment.add_figure(
+                    tag=tag,
+                    figure=metric.plot(self.trainer.val_dataloaders[0].dataset.class_names),
+                    global_step=self.global_step,
+                    close=True,
+                )
+
+            else:
+                self.log(tag, metric)
 
             if metric_name == self.main_validation_metric_name:
                 self.log("hp_metric", metric)
