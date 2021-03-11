@@ -4,10 +4,9 @@ from typing import List, Literal, Optional, Tuple, Union
 import torch
 from pytorch_lightning.metrics import Metric
 from torch import Tensor, tensor
-from torchvision.ops import box_iou
 
 from ..custom_types import Annotation, ArrayLike
-from .utilities import mask_iou
+from .utilities import calculate_iou_matrix
 
 
 class AveragePrecision(Metric):
@@ -231,22 +230,24 @@ class AveragePrecision(Metric):
                     (target_image_indices == image_index) & (target_labels == class_label)
                 ]
 
-                if self.iou_type == "box":
-                    ious = box_iou(
-                        torch.unsqueeze(prediction_boxes[prediction_index], dim=0), gt_boxes
-                    )
-                elif self.iou_type == "mask":
+                pred_box = torch.unsqueeze(prediction_boxes[prediction_index], dim=0)
+
+                if self.iou_type == "mask":
                     gt_masks = target_masks[
                         (target_image_indices == image_index) & (target_labels == class_label)
                     ]
-                    ious = mask_iou(
-                        torch.unsqueeze(prediction_masks[prediction_index], dim=0),
-                        gt_masks,
-                        torch.unsqueeze(prediction_boxes[prediction_index], dim=0),
-                        gt_boxes,
-                    )
+                    pred_mask = prediction_masks[prediction_index]
                 else:
-                    raise ValueError(f"Unknown iou_type: {self.iou_type}")
+                    gt_masks = None
+                    pred_mask = None
+
+                ious = calculate_iou_matrix(
+                    pred_box,
+                    gt_boxes,
+                    self.iou_type,
+                    pred_mask,
+                    gt_masks,
+                )
 
                 best_iou, best_target_index = (
                     ious.squeeze(0).max(0) if len(gt_boxes) > 0 else (0, -1)
