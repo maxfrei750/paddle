@@ -15,7 +15,7 @@ class ConfusionMatrix(ConfusionMatrixBase):
     """Confusion matrix metric for object detection.
 
     :param num_classes: Number of classes in the dataset (including the background class).
-    :param iou_type: Type of Intersetion over Union (IOU) used to determine if a prediction matches
+    :param iou_type: Type of Intersection over Union (IOU) used to determine if a prediction matches
         a target. Either "box" or "mask".
     :param iou_threshold: IOU threshold, above which a prediction is considered a match for a
         target.
