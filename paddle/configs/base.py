@@ -30,7 +30,7 @@ class BaseConfig:
     class CallbackConfig:
         @dataclass
         class EarlyStoppingConfig:
-            monitor: str = "val/mAP"
+            monitor: str = "validation/mAP"
             patience: int = 20
             mode: str = "max"
 
@@ -38,9 +38,9 @@ class BaseConfig:
 
         @dataclass
         class ModelCheckpointConfig:
-            monitor: Optional[str] = "val/mAP"
+            monitor: Optional[str] = "validation/mAP"
             mode: str = "max"
-            filename: Optional[str] = "{epoch}-{step}-{val/mAP:.4f}"
+            filename: Optional[str] = "{epoch}-{step}-{validation/mAP:.4f}"
 
         model_checkpoint: ModelCheckpointConfig = ModelCheckpointConfig()
 

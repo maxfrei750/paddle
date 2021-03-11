@@ -132,10 +132,10 @@ class LightningMaskRCNN(pl.LightningModule):
         # TODO: Implement loss weights.
         loss = sum(partial_loss for partial_loss in partial_losses.values())
 
-        self.log("train/loss", loss, on_epoch=True, on_step=False)
+        self.log("training/loss", loss, on_epoch=True, on_step=False)
 
         for key, value in partial_losses.items():
-            self.log("train/" + key, value, on_epoch=True, on_step=False)
+            self.log("training/" + key, value, on_epoch=True, on_step=False)
 
         return loss
 
@@ -152,21 +152,22 @@ class LightningMaskRCNN(pl.LightningModule):
 
         return {"predictions": predictions, "targets": targets}
 
-    def validation_step_end(self, outputs: ValidationOutput) -> None:
+    def validation_step_end(self, output: ValidationOutput) -> None:
         """Calculate and log the validation_metrics.
 
-        :param outputs: Outputs of the validation step.
+        :param output: Outputs of the validation step.
         """
         for metric_name, metric in self.validation_metrics.items():
-            metric(outputs["predictions"], outputs["targets"])
-            self.log(f"val/{metric_name}", metric)
+            metric(output["predictions"], output["targets"])
+            self.log(f"validation/{metric_name}", metric)
 
             if metric_name == self.main_validation_metric_name:
                 self.log("hp_metric", metric)
 
     def test_step(self, batch: Batch, batch_idx: int) -> TestOutput:
         """Take a batch from the test data set and input its images into the model to
-            retrieve the associated predictions. Return predictions and and ground truths for later use.
+            retrieve the associated predictions. Return predictions and and ground truths for later
+            use.
 
         :param batch: Batch of images and ground truths.
         :param batch_idx: Index of the current batch.
@@ -194,5 +195,5 @@ class LightningMaskRCNN(pl.LightningModule):
             "lr_scheduler": ReduceLROnPlateau(
                 optimizer, mode="max", patience=self.drop_lr_on_plateau_patience
             ),
-            "monitor": "val/mAP",
+            "monitor": "validation/mAP",
         }
