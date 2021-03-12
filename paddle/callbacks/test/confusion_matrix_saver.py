@@ -4,11 +4,11 @@ from typing import List, Literal, Optional
 import matplotlib.pyplot as plt
 from pytorch_lightning import LightningModule, Trainer, callbacks
 
-from ..custom_types import AnyPath, Batch, TestOutput
-from ..metrics import ConfusionMatrix
+from ...custom_types import AnyPath, Batch, TestOutput
+from ...metrics import ConfusionMatrix
 
 
-class TestConfusionMatrixSaver(callbacks.Callback):
+class ConfusionMatrixSaver(callbacks.Callback):
     """Saves a confusion matrix.
 
     :param output_root: Root folder for the output.

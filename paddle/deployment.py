@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from pytorch_lightning import Trainer
 
-from .callbacks import TestPredictionWriter
+from .callbacks.test import PredictionWriter
 from .custom_types import AnyPath, CroppingRectangle
 from .data import MaskRCNNDataModule, MaskRCNNDataset
 from .lightning_modules import LightningMaskRCNN

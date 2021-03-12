@@ -10,7 +10,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from .callbacks import ExampleDetectionMonitor, ModelCheckpoint
+from .callbacks.training import ExampleDetectionMonitor, ModelCheckpoint
 from .custom_types import AnyPath
 from .data import MaskRCNNDataModule
 from .lightning_modules import LightningMaskRCNN

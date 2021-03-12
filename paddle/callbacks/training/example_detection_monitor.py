@@ -4,9 +4,9 @@ from typing import Any, Optional
 import numpy as np
 from pytorch_lightning import LightningModule, Trainer, callbacks
 
-from ..custom_types import Batch
-from ..postprocessing import filter_low_score_instances
-from ..visualization import visualize_annotation
+from ...custom_types import Batch
+from ...postprocessing import filter_low_score_instances
+from ...visualization import visualize_annotation
 
 
 class ExampleDetectionMonitor(callbacks.Callback):

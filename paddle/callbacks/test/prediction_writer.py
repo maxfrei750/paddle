@@ -5,12 +5,12 @@ import pandas as pd
 from pytorch_lightning import LightningModule, Trainer, callbacks
 from torchvision.transforms import ToPILImage
 
-from ..custom_types import AnyPath, Batch, TestOutput
-from ..data.utilities import dictionary_to_cpu
-from ..postprocessing import filter_empty_instances
+from ...custom_types import AnyPath, Batch, TestOutput
+from ...data.utilities import dictionary_to_cpu
+from ...postprocessing import filter_empty_instances
 
 
-class TestPredictionWriter(callbacks.Callback):
+class PredictionWriter(callbacks.Callback):
     """Saves test detections in form of a MaskRCNNDataset.
 
     :param output_root: Root folder for the output.
