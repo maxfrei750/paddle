@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Literal, Optional
 
 import matplotlib.pyplot as plt
+import pandas as pd
 from pytorch_lightning import LightningModule, Trainer, callbacks
 
 from ...custom_types import AnyPath, Batch, TestOutput
@@ -78,7 +79,14 @@ class ConfusionMatrixSaver(callbacks.Callback):
         :param trainer: Lightning Trainer
         :param pl_module: Lightning Module
         """
-        output_path = self.output_root / self.file_name
+        output_path_plot = self.output_root / self.file_name
+        output_path_csv = self.output_root / (Path(self.file_name).stem + ".csv")
+
+        confusion_matrix = self.confusion_matrix.compute().cpu().numpy()
+        pd.DataFrame(
+            data=confusion_matrix, index=self.class_names, columns=self.class_names
+        ).to_csv(output_path_csv)
+
         figure = self.confusion_matrix.plot(self.class_names)
-        figure.savefig(output_path)
+        figure.savefig(output_path_plot)
         plt.close(figure)
