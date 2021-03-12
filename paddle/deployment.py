@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from pytorch_lightning import Trainer
 
-from .callbacks.test import PredictionWriter
+from .callbacks.test import ConfusionMatrixSaver, PredictionWriter
 from .custom_types import AnyPath, CroppingRectangle
 from .data import MaskRCNNDataModule, MaskRCNNDataset
 from .lightning_modules import LightningMaskRCNN
@@ -40,7 +40,7 @@ def run_model_on_dataset(
         user transform.
     """
 
-    output_root = Path(output_root)
+    output_root = Path(output_root) / subset
 
     data_module = MaskRCNNDataModule(
         data_root,
@@ -49,16 +49,22 @@ def run_model_on_dataset(
         num_slices_per_axis=num_slices_per_axis,
     )
     data_module.setup()
-    map_label_to_class_name = data_module.test_dataset.map_label_to_class_name
 
     trainer = Trainer(
         logger=False,
         checkpoint_callback=False,
         gpus=-1,
         callbacks=[
-            TestPredictionWriter(
-                output_root / subset, map_label_to_class_name=map_label_to_class_name
-            )
+            PredictionWriter(
+                output_root,
+                map_label_to_class_name=data_module.test_dataset.map_label_to_class_name,
+            ),
+            ConfusionMatrixSaver(
+                output_root,
+                class_names=data_module.test_dataset.class_names,
+                iou_type="mask",
+                iou_threshold=0.5,
+            ),
         ],
     )
     trainer.test(model=model, datamodule=data_module, verbose=False)
