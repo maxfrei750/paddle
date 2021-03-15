@@ -130,7 +130,18 @@ def visualize_annotation(
     labels = annotation.get("labels", none_list)
 
     result = image.convert("RGB")
-    colors_float = get_random_viridis_colors(num_instances)
+
+    unique_labels = list(set(labels))
+    num_classes = len(unique_labels)
+
+    if num_classes == 1:
+        colors_float = get_random_viridis_colors(num_instances)
+    else:
+        class_colors_float = get_viridis_colors(num_classes)
+        map_label_to_color_float = {
+            label: color_float for label, color_float in zip(unique_labels, class_colors_float)
+        }
+        colors_float = [map_label_to_color_float[label] for label in labels]
 
     for mask, box, color_float, score, label in zip(masks, boxes, colors_float, scores, labels):
 
