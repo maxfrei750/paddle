@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Literal, Optional
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from pytorch_lightning import LightningModule, Trainer, callbacks
 
@@ -69,9 +70,10 @@ class ConfusionMatrixSaver(callbacks.Callback):
         """
         _, targets = batch
 
-        predictions = outputs["predictions"]
+        if targets[0]["boxes"].numel():  # check if there is a ground truth
+            predictions = outputs["predictions"]
 
-        self.confusion_matrix.update(predictions, targets)
+            self.confusion_matrix.update(predictions, targets)
 
     def on_test_end(self, trainer, pl_module):
         """Save the confusion matrix at the end of the test.
@@ -83,10 +85,12 @@ class ConfusionMatrixSaver(callbacks.Callback):
         output_path_csv = self.output_root / (Path(self.file_name).stem + ".csv")
 
         confusion_matrix = self.confusion_matrix.compute().cpu().numpy()
-        pd.DataFrame(
-            data=confusion_matrix, index=self.class_names, columns=self.class_names
-        ).to_csv(output_path_csv)
 
-        figure = self.confusion_matrix.plot(self.class_names)
-        figure.savefig(output_path_plot)
-        plt.close(figure)
+        if np.sum(confusion_matrix) > 0:  # check if the confusion matrix was populated
+            pd.DataFrame(
+                data=confusion_matrix, index=self.class_names, columns=self.class_names
+            ).to_csv(output_path_csv)
+
+            figure = self.confusion_matrix.plot(self.class_names)
+            figure.savefig(output_path_plot)
+            plt.close(figure)
