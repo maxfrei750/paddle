@@ -63,6 +63,7 @@ class BaseConfig:
     class TrainerConfig:
         fast_dev_run: bool = False
         max_epochs: int = 300
+        log_gpu_memory: bool = False
         gpus: Any = -1
         # TODO: Use Union[List[int], int, str] as soon as
         #  https://github.com/omry/omegaconf/issues/144 is resolved.
