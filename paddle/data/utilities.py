@@ -28,7 +28,7 @@ def extract_bounding_box(mask: Mask) -> np.ndarray:
     :param mask: HxW numpy array
     :return: bounding box
     """
-    pos = np.where(mask)
+    pos = np.where(mask)  # TODO: Check if np.nonzero can be used instead
 
     if not (pos[0].size or pos[1].size):
         return np.array([0, 0, 0, 0])
