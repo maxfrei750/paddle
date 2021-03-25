@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -65,3 +65,13 @@ def dictionary_to_device(dictionary: Dict, device: torch.device):
             dictionary[key] = value.to(device)
 
     return dictionary
+
+
+def image_size_hwc(image_hwc: np.ndarray) -> Tuple[int, int]:
+    """Determine the height and width of an image in HWC format.
+
+    :param image_hwc: image as numpy array in hwc format
+    :return: height and width of an image
+    """
+
+    return image_hwc.shape[0], image_hwc.shape[1]
