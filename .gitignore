@@ -89,5 +89,6 @@ build
 /demos/mpac.zip
 /demos/maskrcnn_resnet50_mpac.ckpt
 /demos/04_analyze_dataset/output
+/demos/02_train_model/logs
 /user_scripts
 /user_configs

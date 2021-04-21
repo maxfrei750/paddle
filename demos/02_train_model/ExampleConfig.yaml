@@ -1,0 +1,40 @@
+hydra:
+  run:
+    dir: logs/${hydra:job.config_name}/${now:%Y-%m-%d_%H-%M-%S}
+program:
+  random_seed: 42
+  search_optimum_learning_rate: false
+callbacks:
+  early_stopping:
+    monitor: validation/mAP
+    patience: 20
+    mode: max
+  model_checkpoint:
+    monitor: validation/mAP
+    mode: max
+    filename: '{epoch}-{step}-{val/mAP:.4f}'
+  example_detection_monitor:
+    score_threshold: 0.5
+    do_display_box: true
+    do_display_label: false
+    do_display_score: true
+    do_display_mask: true
+    do_display_outlines_only: true
+    line_width: 1
+    font_size: 16
+trainer:
+  fast_dev_run: false
+  max_epochs: 3
+  gpus: -1
+lightning_module:
+  learning_rate: 0.005
+  drop_lr_on_plateau_patience: 10
+  num_classes: 2
+  model_kwargs:
+    box_detections_per_img: 200
+data_module:
+  data_root: ../data
+  batch_size: 8
+  train_subset: training
+  val_subset: validation
+  initial_cropping_rectangle: null

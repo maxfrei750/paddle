@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/development" />
       <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/output" />
-      <excludeFolder url="file://$MODULE_DIR$/demos/04_analyze_dataset/output" />
+      <excludeFolder url="file://$MODULE_DIR$/demos/03_analyze_dataset/output" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (paddle)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
