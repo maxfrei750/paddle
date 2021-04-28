@@ -26,7 +26,7 @@ def get_time_stamp() -> str:
 
 def get_best_checkpoint_path(
     checkpoint_root: AnyPath,
-    metric_key: Optional[str] = "val_mAP",
+    metric_key: Optional[str] = "validation_mAP",
     mode: Literal["min", "max"] = "max",
 ) -> AnyPath:
     """Retrieve model checkpoint with the highest accuracy.
