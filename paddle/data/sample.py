@@ -194,7 +194,7 @@ class Sample:
         self.image = np.array(PILImage.open(self.image_path).convert("RGB"))
 
     def _configure_user_transform(self):
-        """Configure the transform supplied by the user. """
+        """Configure the transform supplied by the user."""
         if self.parent.user_transform is not None:
             self.transforms.append(self.parent.user_transform)
 

@@ -22,7 +22,6 @@ class PredictionWriter(callbacks.Callback):
         output_root: AnyPath,
         map_label_to_class_name: Optional[Dict[int, str]] = None,
     ) -> None:
-        """"""
         super().__init__()
         self.map_label_to_class_name = map_label_to_class_name
         self.output_root = Path(output_root)

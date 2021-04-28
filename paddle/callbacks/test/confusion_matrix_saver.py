@@ -38,7 +38,6 @@ class ConfusionMatrixSaver(callbacks.Callback):
         normalize: Optional[str] = None,
         file_name: str = "confusion_matrix.pdf",
     ) -> None:
-        """"""
         super().__init__()
 
         self.class_names = class_names
