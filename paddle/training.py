@@ -10,6 +10,12 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 
+try:
+    import wandb
+except ImportError:
+    wandb = None
+
+
 from .callbacks.training import ExampleDetectionMonitor, ModelCheckpoint
 from .custom_types import AnyPath
 from .data import MaskRCNNDataModule
@@ -37,6 +43,8 @@ def train_mask_rcnn(config: DictConfig) -> None:
         f"Training with the following config:\n{OmegaConf.to_yaml(config)}"
     )
 
+    setup_wandb(config, version)
+
     seed_everything(config.program.random_seed)
 
     data_module = MaskRCNNDataModule(**config.data_module)
@@ -62,6 +70,18 @@ def train_mask_rcnn(config: DictConfig) -> None:
     )
 
     trainer.fit(model, datamodule=data_module)
+
+
+def setup_wandb(config, version):
+    if config.logging.use_wandb:
+        if wandb is None:
+            raise ImportError(
+                "There was an error during the import of wandb. Please check if it is installed."
+            )
+
+        wandb.init(
+            sync_tensorboard=True, config=OmegaConf.to_container(config, resolve=True), name=version
+        )
 
 
 def setup_hydra() -> Tuple[AnyPath, str]:

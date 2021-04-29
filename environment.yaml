@@ -23,6 +23,7 @@ dependencies:
 - fire
 - jupyterlab
 - scikit-learn
+- wandb
 - pip
 - pip:
     - diplib

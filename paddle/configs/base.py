@@ -27,6 +27,12 @@ class BaseConfig:
     program: ProgramConfig = ProgramConfig()
 
     @dataclass
+    class LoggingConfig:
+        use_wandb: bool = False
+
+    logging: LoggingConfig = LoggingConfig()
+
+    @dataclass
     class CallbackConfig:
         @dataclass
         class EarlyStoppingConfig:

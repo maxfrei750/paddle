@@ -92,3 +92,4 @@ build
 /demos/02_train_model/logs
 /user_scripts
 /user_configs
+/wandb
