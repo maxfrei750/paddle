@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Literal, Optional, Tuple
+from typing import Any, Literal, Optional, Tuple, Union
 
 import albumentations
 import pytorch_lightning as pl
 import torch.utils
+from omegaconf import DictConfig
 
 from ..custom_types import AnyPath, Batch, CroppingRectangle
 from .maskrcnn_dataloader import MaskRCNNDataLoader
@@ -67,6 +68,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         train_subset: Optional[str] = None,
         val_subset: Optional[str] = None,
         test_subset: Optional[str] = None,
+        user_albumentation_train: Optional[Union[dict, DictConfig, Any]] = None,
     ) -> None:
 
         super().__init__()
@@ -84,6 +86,14 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.train_dataset = None
         self.val_dataset = None
         self.test_dataset = None
+
+        if isinstance(user_albumentation_train, dict) or isinstance(
+            user_albumentation_train, DictConfig
+        ):
+            # Try to parse user_albumentation_train into an albumentation.
+            self.user_albumentation_train = albumentations.from_dict(user_albumentation_train)
+        else:
+            self.user_albumentation_train = user_albumentation_train
 
         self.train_transforms = self.get_transforms(train=True)
         self.val_transforms = self.get_transforms(train=False)
@@ -155,19 +165,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
             transforms += [albumentations.RandomCrop(*self.random_cropping_size)]
 
         if train:
-            transforms += [
-                # albumentations.RandomBrightnessContrast(p=1.0),
-                albumentations.HorizontalFlip(p=0.5),
-                albumentations.VerticalFlip(p=0.5),
-                # albumentations.Rotate(
-                #     limit=(-180, 180),
-                #     p=1.0,
-                #     border_mode=cv2.BORDER_CONSTANT,
-                #     value=0,
-                #     mask_value=0,
-                # ),
-                # albumentations.RandomRotate90(p=1.0),
-            ]
+            transforms += [self.user_albumentation_train]
 
         return albumentations.Compose(transforms)
 

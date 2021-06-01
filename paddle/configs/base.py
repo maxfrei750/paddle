@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from hydra.conf import HydraConf, RunDir
 from omegaconf import MISSING
@@ -91,5 +91,12 @@ class BaseConfig:
         val_subset: str = "validation"
         initial_cropping_rectangle: Optional[List[int]] = None  # [x_min, y_min, x_max, y_max]
         random_cropping_size: Optional[List[int]] = None  # [width, height]
+
+        @dataclass
+        class UserAlbumentation:
+            __version__: Optional[str] = None
+            transform: Optional[Dict[str, Any]] = None
+
+        user_albumentation_train: UserAlbumentation = UserAlbumentation()
 
     data_module: DataModuleConfig = DataModuleConfig()

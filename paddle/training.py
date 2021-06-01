@@ -21,8 +21,6 @@ from .custom_types import AnyPath
 from .data import MaskRCNNDataModule
 from .lightning_modules import LightningMaskRCNN
 
-# TODO: Test WandB
-
 
 @hydra.main(config_name="MaskRCNN")
 def train_mask_rcnn(config: DictConfig) -> None:

@@ -22,6 +22,8 @@ callbacks:
     do_display_outlines_only: true
     line_width: 1
     font_size: 16
+logging:
+  use_wandb: false
 trainer:
   fast_dev_run: false
   max_epochs: 3
@@ -38,3 +40,17 @@ data_module:
   train_subset: training
   val_subset: validation
   initial_cropping_rectangle: null
+  user_albumentation_train:
+    transform:
+      __class_fullname__: albumentations.core.composition.Compose
+      additional_targets: { }
+      bbox_params: null
+      keypoint_params: null
+      p: 1.0
+      transforms:
+        - __class_fullname__: albumentations.augmentations.transforms.HorizontalFlip
+          always_apply: false
+          p: 0.5
+        - __class_fullname__: albumentations.augmentations.transforms.VerticalFlip
+          always_apply: false
+          p: 0.5
