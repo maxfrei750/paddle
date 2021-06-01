@@ -61,6 +61,9 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         self.mask_prefix = "mask_"
         self.image_prefix = "image_"
         self.scores_prefix = "scores_"
+        self.spline_prefix = "spline_"
+
+        self.num_key_points_interpolation = 200
 
         root = Path(root)
         self.root = root

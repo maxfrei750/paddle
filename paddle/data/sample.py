@@ -9,7 +9,10 @@ import torch
 from PIL import Image as PILImage
 from torchvision.transforms import functional as F
 
+from .. import spline
 from .utilities import extract_bounding_box, image_size_hwc
+
+# TODO: Handle mixtures of instances wth and without splines.
 
 
 class Sample:
@@ -31,14 +34,23 @@ class Sample:
         self.labels = []
         self.boxes = []
         self.areas = []
+        self.key_points = []
+        self.spline_widths = []
+        self.spline_lengths = []
 
         self._read_image()
         self._gather_raw_target_data()
         self._configure_transforms()
         self._apply_transforms()
 
+        # Create masks from spline, if spline available and mask not present
+
         self._extract_bounding_boxes_from_masks()
         self._calculate_bounding_box_areas()
+
+        # TODO: Visibility and spline lengths
+        # key_points["visibility"] = 1  # Assume that all key points are visible
+        # self._calculate_spline_lengths()
 
     def _configure_transforms(self):
         """Configure initial cropping, slicing and user transforms."""
@@ -51,17 +63,22 @@ class Sample:
 
         if self.transforms:
             transform = albumentations.Compose(self.transforms)
-            transformed_data = transform(image=self.image, masks=self.masks)
+            transformed_data = transform(
+                image=self.image, masks=self.masks, keypoints=self.key_points
+            )
 
             self.image = transformed_data["image"]
             self.masks = transformed_data["masks"]
+            self.key_points = transformed_data["keypoints"]
 
         self._filter_empty_masks()
+        self._remove_invisible_keypoints()
 
     def _gather_raw_target_data(self):
         """Gather target data (masks, labels and scores (if present)."""
         for class_name in self.parent.class_names:
             self._gather_masks_for_class(class_name)
+            self._gather_splines_for_class(class_name)
             self._create_labels_for_class(class_name)
             self._gather_scores_for_class(class_name)
 
@@ -72,11 +89,8 @@ class Sample:
         """
 
         mask_paths_class = self._gather_mask_paths_for_class(class_name)
+        num_masks_class = len(mask_paths_class)
 
-        if not mask_paths_class:
-            return
-
-        num_instances_class = len(mask_paths_class)
         score_file_path = (
             self.parent.subset_path
             / class_name
@@ -84,16 +98,16 @@ class Sample:
         )
         if score_file_path.exists():
             unsorted_scores = pd.read_csv(score_file_path, index_col=0)
-            num_scores = len(unsorted_scores)
-            assert num_scores == num_instances_class, (
-                f"Inconsistent number of masks ({num_instances_class}) and scores({num_scores}) "
+            num_scores_class = len(unsorted_scores)
+            assert num_scores_class == num_masks_class, (
+                f"Inconsistent number of masks ({num_masks_class}) and scores({num_scores_class}) "
                 f"for {self.image_path} (class '{class_name}')."
             )
 
             mask_file_names = [mask_path.name for mask_path in mask_paths_class]
             self.scores += list(unsorted_scores["score"][mask_file_names])
         else:
-            self.scores += [1.0] * num_instances_class
+            self.scores += [1.0] * num_masks_class
 
     def _create_labels_for_class(self, class_name):
         """Create labels for the instances of a class.
@@ -107,6 +121,44 @@ class Sample:
 
         num_instances_class = len(mask_paths_class)
         self.labels += [self.parent.map_class_name_to_label[class_name]] * num_instances_class
+
+    def _gather_splines_for_class(self, class_name):
+        """Gather splines for a single class.
+
+        :param class_name: name of the class
+        """
+        spline_paths_class = self._gather_spline_paths_for_class(class_name)
+        mask_paths_class = self._gather_mask_paths_for_class(class_name)
+
+        if not spline_paths_class:
+            return
+
+        num_masks_class = len(mask_paths_class)
+        num_splines_class = len(spline_paths_class)
+
+        assert num_masks_class == num_splines_class or num_masks_class == 0, (
+            f"Inconsistent number of masks ({num_masks_class}) and splines({num_splines_class}) for"
+            f" {self.image_path} (class '{class_name}')."
+        )
+
+        for spline_path in spline_paths_class:
+            spline_data = pd.read_csv(spline_path)
+
+            key_points = spline_data[["x", "y"]].to_numpy(dtype=float)
+            key_points = spline.interpolation(key_points, self.parent.num_key_points_interpolation)
+            self.key_points.append(key_points)
+
+            spline_width = spline_data["width"].mean()
+            self.spline_widths.append(spline_width)
+
+            # Create mask from spline, if necessary.
+            if num_masks_class == 0:
+                image_size = image_size_hwc(self.image)
+                self.masks.append(
+                    spline.to_mask(
+                        image_size, key_points, spline_width, num_interpolation_steps=None
+                    )
+                )
 
     def _gather_masks_for_class(self, class_name):
         """Gather masks for a single class.
@@ -138,6 +190,17 @@ class Sample:
             class_folder_path.glob(f"{self.parent.mask_prefix}{self.image_name}_*.*")
         )
         return mask_paths_class
+
+    def _gather_spline_paths_for_class(self, class_name: str):
+        """Gather paths of spline files for a single class.
+
+        :param class_name: name of the class
+        """
+        class_folder_path = self.parent.subset_path / class_name
+        spline_paths_class = list(
+            class_folder_path.glob(f"{self.parent.spline_prefix}{self.image_name}_*.csv")
+        )
+        return spline_paths_class
 
     def _configure_initial_cropping(self):
         """Configure the transform for the initial image cropping."""
@@ -207,6 +270,8 @@ class Sample:
         self.masks = list(compress(self.masks, is_not_empty))
         self.labels = list(compress(self.labels, is_not_empty))
         self.scores = list(compress(self.scores, is_not_empty))
+        self.spline_widths = list(compress(self.spline_widths, is_not_empty))
+        self.key_points = list(compress(self.key_points, is_not_empty))
 
     def _extract_bounding_boxes_from_masks(self):
         """Extract bounding boxes from masks."""
@@ -251,6 +316,10 @@ class Sample:
             "image_id": torch.as_tensor([self.index]),
             "area": torch.as_tensor(self.areas),
             "iscrowd": torch.as_tensor(self.iscrowd),
+            "keypoints": torch.as_tensor(self.key_points),
+            "spline_widths": torch.as_tensor(self.spline_widths),
+            # TODO: add spline lengths
+            # "spline_lengths": torch.as_tensor(self.spline_lengths),
             "image_name": self.image_name,
             "slice_index_x": torch.as_tensor(self.slice_index_x),
             "slice_index_y": torch.as_tensor(self.slice_index_y),
@@ -260,3 +329,6 @@ class Sample:
     def image_as_tensor(self):
         """Convert the image to a torch tensor."""
         return F.to_tensor(self.image)
+
+    def _remove_invisible_keypoints(self):
+        raise NotImplementedError
