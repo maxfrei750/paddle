@@ -72,6 +72,10 @@ def train_mask_rcnn(config: DictConfig) -> None:
 
 def setup_wandb(config, version):
     if config.logging.use_wandb:
+        if config.trainer.fast_dev_run:
+            warnings.warn("Not using wandb, since config.trainer.fast_dev_run=True.")
+            return
+
         if wandb is None:
             raise ImportError(
                 "There was an error during the import of wandb. Please check if it is installed."
