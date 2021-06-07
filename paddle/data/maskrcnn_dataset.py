@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, List
 
 import torch.utils
 
@@ -57,7 +57,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         initial_cropping_rectangle: Optional[CroppingRectangle] = None,
         num_slices_per_axis: Optional[int] = 1,
         user_transform: Optional[Any] = None,
-        class_selector=None,
+        class_selector: Optional[List] = None,
     ) -> None:
 
         self.mask_prefix = "mask_"
