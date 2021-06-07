@@ -17,6 +17,10 @@ def gstd(a: Any, weights: Optional[Any] = None) -> float:
 
     log_a = np.log(a)
 
+    if weights is not None:
+        if len(weights) == 0:
+            weights = None
+
     average = np.average(log_a, weights=weights)
     variance = np.average((log_a - average) ** 2, weights=weights)
 
@@ -89,6 +93,9 @@ def gmean(a, axis=0, dtype=None, weights=None):
         log_a = np.log(a)
 
     if weights is not None:
-        weights = np.asanyarray(weights, dtype=dtype)
+        if len(weights) == 0:
+            weights = None
+        else:
+            weights = np.asanyarray(weights, dtype=dtype)
 
     return np.exp(np.average(log_a, axis=axis, weights=weights))
