@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import albumentations
 import pytorch_lightning as pl
@@ -56,6 +56,9 @@ class MaskRCNNDataModule(pl.LightningDataModule):
     :param random_cropping_size: If not None, [height, width] of a rectangle, that is randomly
         cropped from input images, during training and testing.
     :param batch_size: Number of samples per batch.
+    :param user_albumentation_train: Optional albumentation (as object or dictionary) that is used
+        for the augmentation of the training data.
+    :param class_selector: Optional list of class names to be included.
     """
 
     def __init__(
@@ -69,6 +72,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         val_subset: Optional[str] = None,
         test_subset: Optional[str] = None,
         user_albumentation_train: Optional[Union[dict, DictConfig, Any]] = None,
+        class_selector: Optional[List[str]] = None,
     ) -> None:
 
         super().__init__()
@@ -102,6 +106,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.map_label_to_class_name = None
         self.num_classes = None
 
+        self.class_selector = class_selector
+
     def prepare_data(self) -> None:
         """Do nothing."""
         pass
@@ -124,6 +130,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
                     num_slices_per_axis=self.num_slices_per_axis,
                     user_transform=self.train_transforms,
+                    class_selector=self.class_selector,
                 )
 
             if self.val_subset is None:
@@ -136,6 +143,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
                     num_slices_per_axis=self.num_slices_per_axis,
                     user_transform=self.val_transforms,
+                    class_selector=self.class_selector,
                 )
 
         if stage == "test" or stage is None:
@@ -149,6 +157,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     initial_cropping_rectangle=self.initial_cropping_rectangle,
                     num_slices_per_axis=self.num_slices_per_axis,
                     user_transform=self.test_transforms,
+                    class_selector=self.class_selector,
                 )
 
     def get_transforms(self, train: bool = False) -> albumentations.Compose:

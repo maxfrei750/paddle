@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -26,6 +26,7 @@ def run_model_on_dataset(
     subset: str,
     initial_cropping_rectangle: Optional[CroppingRectangle] = None,
     num_slices_per_axis: Optional[int] = 1,
+    class_selector: Optional[List] = None,
 ) -> None:
     """Loads a model, runs a dataset through it and stores the results.
 
@@ -38,6 +39,7 @@ def run_model_on_dataset(
     :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
         will result in n² pieces. Slicing is performed after the initial cropping and before the
         user transform.
+    :param class_selector: Optional list of class names to be included.
     """
 
     output_root = Path(output_root) / subset
@@ -47,6 +49,7 @@ def run_model_on_dataset(
         initial_cropping_rectangle=initial_cropping_rectangle,
         test_subset=subset,
         num_slices_per_axis=num_slices_per_axis,
+        class_selector=class_selector,
     )
     data_module.setup()
 
@@ -77,6 +80,7 @@ def default_analysis(
     subset: str,
     initial_cropping_rectangle: Optional[CroppingRectangle] = None,
     num_slices_per_axis: Optional[int] = 1,
+    class_selector: Optional[List] = None,
 ) -> None:
     """Performs a default analysis of a dataset using a given model. The analysis includes the
         filtering of border instances, a visualization and the measurement of the area equivalent
@@ -91,6 +95,7 @@ def default_analysis(
     :param num_slices_per_axis: Integer number of slices per image axis. `num_slices_per_axis`=n
         will result in n² pieces. Slicing is performed after the initial cropping and before the
         user transform.
+    :param class_selector: Optional list of class names to be included.
     """
     output_root = Path(output_root)
     output_path = output_root / subset
@@ -106,11 +111,13 @@ def default_analysis(
         subset,
         initial_cropping_rectangle=initial_cropping_rectangle,
         num_slices_per_axis=num_slices_per_axis,
+        class_selector=class_selector,
     )
 
     result_data_set = MaskRCNNDataset(
         output_root,
         subset=subset,
+        class_selector=class_selector,
     )
 
     measurement_csv_path = output_path / "measurements.csv"

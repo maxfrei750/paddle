@@ -47,6 +47,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         will result in n² pieces. Slicing is performed after the initial cropping and before the
         user transform.
     :param user_transform: torchvision or albumentation transform.
+    :param class_selector: Optional list of class names to be included.
     """
 
     def __init__(
@@ -56,6 +57,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         initial_cropping_rectangle: Optional[CroppingRectangle] = None,
         num_slices_per_axis: Optional[int] = 1,
         user_transform: Optional[Any] = None,
+        class_selector=None,
     ) -> None:
 
         self.mask_prefix = "mask_"
@@ -98,6 +100,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.user_transform = user_transform
 
+        self.class_selector = class_selector
+
         self._gather_class_names()
 
         self.map_label_to_class_name = {
@@ -112,6 +116,11 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
     def _gather_class_names(self) -> None:
         """Gather class names based on class folders in subset folder."""
         class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
+
+        if self.class_selector is not None:
+            class_names = [
+                class_name for class_name in class_names if class_name in self.class_selector
+            ]
 
         if not class_names:  # use a generic class name, if no class folders exist
             class_names = ["particle"]

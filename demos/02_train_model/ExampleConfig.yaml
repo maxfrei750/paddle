@@ -40,6 +40,7 @@ data_module:
   train_subset: training
   val_subset: validation
   initial_cropping_rectangle: null
+  class_selector: null
   user_albumentation_train:
     transform:
       __class_fullname__: albumentations.core.composition.Compose

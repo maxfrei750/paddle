@@ -91,6 +91,7 @@ class BaseConfig:
         val_subset: str = "validation"
         initial_cropping_rectangle: Optional[List[int]] = None  # [x_min, y_min, x_max, y_max]
         random_cropping_size: Optional[List[int]] = None  # [width, height]
+        class_selector: Optional[List[str]] = None
 
         @dataclass
         class UserAlbumentation:
