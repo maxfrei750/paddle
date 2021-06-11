@@ -15,6 +15,10 @@ exclude = '''
     | dist
   )/
   | external         # also separately exclude a folder named external in the root of the project
+  | output
+  | logs
+  | wandb
+  | demos
 )
 '''
 
@@ -25,4 +29,4 @@ exclude = '''
 line_length=100
 atomic=true
 skip_glob="*/__init__.py"
-skip=["output"]
+skip=["external", "output", "logs", "wandb", "demos"]
