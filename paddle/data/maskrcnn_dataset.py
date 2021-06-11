@@ -48,6 +48,8 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         user transform.
     :param user_transform: torchvision or albumentation transform.
     :param class_selector: Optional list of class names to be included.
+    :param num_samples_limit: Optional. Number of samples to use. If None, then all samples will be
+        used.
     """
 
     def __init__(
@@ -58,6 +60,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
         num_slices_per_axis: Optional[int] = 1,
         user_transform: Optional[Any] = None,
         class_selector: Optional[List] = None,
+        num_samples_limit: Optional[int] = None,
     ) -> None:
 
         self.mask_prefix = "mask_"
@@ -78,12 +81,27 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
         self.subset = subset
 
-        self.image_paths = list(self.subset_path.glob(f"{self.image_prefix}*.*"))
+        self.image_paths = sorted(list(self.subset_path.glob(f"{self.image_prefix}*.*")))
 
         if not self.image_paths:
             raise FileNotFoundError(
                 f"No images found in {self.subset_path} based on '{self.image_prefix}*.*'."
             )
+
+        self.num_sample_limit = num_samples_limit
+        if num_samples_limit is not None:
+            if num_samples_limit < 1:
+                raise ValueError("`num_samples_limit` must be >= 1.")
+
+            num_samples = len(self.image_paths)
+
+            if num_samples_limit > num_samples:
+                raise ValueError(
+                    f"Not enough samples ({num_samples}) available to satisfy "
+                    f"`num_samples_limit` ({num_samples_limit})."
+                )
+
+            self.image_paths = self.image_paths[:num_samples_limit]
 
         self.num_images = len(self.image_paths)
 

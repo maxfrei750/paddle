@@ -59,6 +59,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
     :param user_albumentation_train: Optional albumentation (as object or dictionary) that is used
         for the augmentation of the training data.
     :param class_selector: Optional list of class names to be included.
+    :param num_samples_limit_train: Optional. Number of samples to use for training. If None, then
+        all samples will be used.
     """
 
     def __init__(
@@ -73,6 +75,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         test_subset: Optional[str] = None,
         user_albumentation_train: Optional[Union[dict, DictConfig, Any]] = None,
         class_selector: Optional[List[str]] = None,
+        num_samples_limit_train: Optional[int] = None,
     ) -> None:
 
         super().__init__()
@@ -86,6 +89,8 @@ class MaskRCNNDataModule(pl.LightningDataModule):
         self.train_subset = train_subset
         self.val_subset = val_subset
         self.test_subset = test_subset
+
+        self.num_samples_limit_train = num_samples_limit_train
 
         self.train_dataset = None
         self.val_dataset = None
@@ -131,6 +136,7 @@ class MaskRCNNDataModule(pl.LightningDataModule):
                     num_slices_per_axis=self.num_slices_per_axis,
                     user_transform=self.train_transforms,
                     class_selector=self.class_selector,
+                    num_samples_limit=self.num_samples_limit_train,
                 )
 
             if self.val_subset is None:

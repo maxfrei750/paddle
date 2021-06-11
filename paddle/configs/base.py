@@ -97,6 +97,7 @@ class BaseConfig:
         initial_cropping_rectangle: Optional[List[int]] = None  # [x_min, y_min, x_max, y_max]
         random_cropping_size: Optional[List[int]] = None  # [width, height]
         class_selector: Optional[List[str]] = None
+        num_samples_limit_train: Optional[int] = None
 
         @dataclass
         class UserAlbumentation:
