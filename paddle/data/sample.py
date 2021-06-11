@@ -65,9 +65,6 @@ class Sample:
             self._create_labels_for_class(class_name)
             self._gather_scores_for_class(class_name)
 
-        if self.num_instances == 0:
-            raise FileNotFoundError(f"Sample '{self.image_name}' features no instances.")
-
     def _gather_scores_for_class(self, class_name: str):
         """Gather scores for a single class, if present.
 
