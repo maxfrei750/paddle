@@ -28,7 +28,12 @@ class BaseConfig:
 
     @dataclass
     class LoggingConfig:
-        use_wandb: bool = False
+        @dataclass
+        class WandBConfig:
+            use: bool = False
+            project_name: str = "paddle"
+
+        wandb: WandBConfig = WandBConfig()
 
     logging: LoggingConfig = LoggingConfig()
 

@@ -71,7 +71,7 @@ def train_mask_rcnn(config: DictConfig) -> None:
 
 
 def setup_wandb(config, version):
-    if config.logging.use_wandb:
+    if config.logging.wandb.use:
         if config.trainer.fast_dev_run:
             warnings.warn("Not using wandb, since config.trainer.fast_dev_run=True.")
             return
@@ -82,7 +82,10 @@ def setup_wandb(config, version):
             )
 
         wandb.init(
-            sync_tensorboard=True, config=OmegaConf.to_container(config, resolve=True), name=version
+            sync_tensorboard=True,
+            config=OmegaConf.to_container(config, resolve=True),
+            name=version,
+            project=config.logging.wandb.project_name,
         )
 
 
