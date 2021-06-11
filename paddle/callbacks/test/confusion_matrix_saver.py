@@ -8,6 +8,7 @@ from pytorch_lightning import LightningModule, Trainer, callbacks
 
 from ...custom_types import AnyPath, Batch, TestOutput
 from ...metrics import ConfusionMatrix
+from ...visualization import save_figure
 
 
 class ConfusionMatrixSaver(callbacks.Callback):
@@ -36,7 +37,7 @@ class ConfusionMatrixSaver(callbacks.Callback):
         iou_threshold: float,
         score_threshold: float = 0.5,
         normalize: Optional[str] = None,
-        file_name: str = "confusion_matrix.pdf",
+        file_name: str = "confusion_matrix",
     ) -> None:
         super().__init__()
 
@@ -80,8 +81,7 @@ class ConfusionMatrixSaver(callbacks.Callback):
         :param trainer: Lightning Trainer
         :param pl_module: Lightning Module
         """
-        output_path_plot = self.output_root / self.file_name
-        output_path_csv = self.output_root / (Path(self.file_name).stem + ".csv")
+        output_path_csv = self.output_root / (Path(self.file_name + ".csv"))
 
         confusion_matrix = self.confusion_matrix.compute().cpu().numpy()
 
@@ -91,5 +91,5 @@ class ConfusionMatrixSaver(callbacks.Callback):
             ).to_csv(output_path_csv)
 
             figure = self.confusion_matrix.plot(self.class_names)
-            figure.savefig(output_path_plot)
+            save_figure(self.output_root, self.file_name, figure)
             plt.close(figure)

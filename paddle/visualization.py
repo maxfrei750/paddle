@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 import numpy as np
@@ -6,6 +7,7 @@ import torch
 from matplotlib import cm
 from matplotlib import pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.figure import Figure
 from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont, ImageOps
 from scipy.ndimage.morphology import binary_erosion
@@ -14,7 +16,7 @@ from sklearn.metrics import ConfusionMatrixDisplay
 from torch import Tensor
 from torchvision import transforms
 
-from .custom_types import Annotation, ArrayLike, ColorFloat, ColorInt, Image
+from .custom_types import Annotation, AnyPath, ArrayLike, ColorFloat, ColorInt, Image
 from .data.utilities import extract_bounding_box
 from .statistics import gmean, gstd
 
@@ -329,3 +331,22 @@ def plot_confusion_matrix(
     plt.ylabel("True Label")
 
     return plt.gcf()
+
+
+def save_figure(
+    output_root: AnyPath, file_name: str, figure: Optional[Figure] = None, dpi: Optional[int] = 1200
+) -> None:
+    """Saves a figure as pdf and high-resolution png.
+
+    :param output_root: Root directory, where output figures are saved to.
+    :param file_name: File name (without extension).
+    :param figure: Optional, figure handle.
+    :param dpi: Optional resolution of png.
+    """
+    output_root = Path(output_root)
+
+    if figure is None:
+        figure = plt.gcf()
+
+    figure.savefig(output_root / (file_name + ".png"), dpi=dpi)
+    figure.savefig(output_root / (file_name + ".pdf"))
