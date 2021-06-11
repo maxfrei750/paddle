@@ -64,4 +64,4 @@ def convert_sopat_csv_to_masks(
 
 
 if __name__ == "__main__":
-    fire.Fire()
+    fire.Fire(convert_sopat_csv_to_masks)
