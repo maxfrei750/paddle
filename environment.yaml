@@ -5,27 +5,27 @@ channels:
 dependencies:
 - python=3.8
 - cudatoolkit=11.0
-- pytorch
-- pytorch-lightning
-- torchvision
-- albumentations
-- pillow # TODO: test pillow-simd, channel: zegami
-- scikit-image
-- cython
-- seaborn
-- matplotlib
-- pyyaml
-- tqdm
-- omegaconf
-- pandas
-- scipy
-- numpy
-- fire
-- jupyterlab
-- scikit-learn
-- wandb
-- pip
+- pytorch=1.7
+- pytorch-lightning=1.1
+- torchvision=0.8
+- albumentations=0.5
+- pillow=8.1 # TODO: test pillow-simd, channel: zegami
+- scikit-image=0.18
+- cython=0.29
+- seaborn=0.11
+- matplotlib=3.3
+- pyyaml=5.4
+- tqdm=4.56
+- pandas=1.2
+- scipy=1.6
+- numpy=1.20
+- fire=0.4
+- jupyterlab=3.0
+- scikit-learn=0.24
+- wandb=0.10
+- pip=21.0
 - pip:
-    - diplib
-    - opencv-python
-    - hydra-core==1.1.0.dev3
+    - diplib==3.*
+    - opencv-python==4.5.*
+    - hydra-core==1.1.0.dev3 # TODO: update to 1.1.* and fix compatibility issues
+    - omegaconf==2.1.0dev19 # TODO: update to 2.1.* and fix compatibility issues
