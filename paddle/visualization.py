@@ -299,7 +299,7 @@ def plot_particle_size_distributions(
 
     plt.xlabel(f"{measurand_name}/{unit}")
 
-    plt.ylabel("Probability Density")
+    plt.ylabel("Probability density")
 
 
 def plot_confusion_matrix(
