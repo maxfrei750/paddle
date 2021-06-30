@@ -1,8 +1,9 @@
 import random
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Literal, Optional
 
 import numpy as np
+import seaborn as sns
 import torch
 from matplotlib import cm
 from matplotlib import pyplot as plt
@@ -254,6 +255,7 @@ def plot_particle_size_distributions(
     labels: Optional[Iterable[str]] = None,
     measurand_name: Optional[str] = "Diameter",
     unit: Optional[str] = "px",
+    kind: Literal["hist", "kde"] = "hist",
 ) -> None:
     """Plot multiple particle size distributions.
 
@@ -262,6 +264,7 @@ def plot_particle_size_distributions(
     :param labels: Labels for the different particle size distributions in the plot.
     :param measurand_name: Name of the measurand (used as x-label).
     :param unit: Unit of the measurement (used in x-label).
+    :param kind: Kind of plot. `hist` for histogram (default) or `kde` for kernel density estimation
     """
     num_particle_size_distributions = len(particle_size_lists)
     colors = get_viridis_colors(num_particle_size_distributions)
@@ -290,9 +293,16 @@ def plot_particle_size_distributions(
             f"  $\sigma_g={geometric_standard_deviation:.2f}$"
         )
 
-        _, bins, _ = plt.hist(
-            particle_sizes, bins=bins, color=color, weights=scores, label=label, **hist_kwargs
-        )
+        if kind == "hist":
+            _, bins, _ = plt.hist(
+                particle_sizes, bins=bins, color=color, weights=scores, label=label, **hist_kwargs
+            )
+        elif kind == "kde":
+            sns.kdeplot(
+                particle_sizes, fill=False, color=color, weights=scores, label=label, markersize=0
+            )
+        else:
+            raise ValueError(f"Unknown value for parameter `kind`: {kind}")
 
     plt.ylabel("")
     plt.legend()
