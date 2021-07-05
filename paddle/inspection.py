@@ -5,7 +5,7 @@ from .custom_types import AnyPath
 from .data import MaskRCNNDataset
 from .deployment import run_model_on_dataset
 from .lightning_modules import LightningMaskRCNN
-from .postprocessing import Postprocessor, SaveVisualization
+from .postprocessing import FilterScore, Postprocessor, SaveVisualization
 from .utilities import get_best_checkpoint_path, get_latest_log_folder_path
 
 
@@ -22,6 +22,7 @@ def inspect_dataset(
     do_display_outlines_only: Optional[bool] = True,
     line_width: Optional[int] = 3,
     font_size: Optional[int] = 16,
+    score_threshold: float = 0,
 ):
     """Visualize a dataset.
 
@@ -39,6 +40,8 @@ def inspect_dataset(
     :param do_display_outlines_only: If true, only the outlines of masks are displayed.
     :param line_width: Line width for bounding boxes and mask outlines.
     :param font_size: Font Size for labels and scores.
+    :param score_threshold: Instances with a score below this threshold are not displayed
+        (default: 0).
     """
 
     if output_root is None:
@@ -51,6 +54,7 @@ def inspect_dataset(
     )
 
     post_processing_steps = [
+        FilterScore(threshold=score_threshold),
         SaveVisualization(
             output_root=output_root,
             file_name_prefix=file_name_prefix,
