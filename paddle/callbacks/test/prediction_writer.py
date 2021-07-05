@@ -72,10 +72,14 @@ class PredictionWriter(callbacks.Callback):
             unique_labels = prediction["labels"].unique()
 
             for label in unique_labels:
+
+                label = int(label)
+
                 # Prepare output folder for current label.
                 label_name = (
-                    self.map_label_to_class_name[int(label)]
+                    self.map_label_to_class_name[label]
                     if self.map_label_to_class_name is not None
+                    and label in self.map_label_to_class_name
                     else str(label)
                 )
 
