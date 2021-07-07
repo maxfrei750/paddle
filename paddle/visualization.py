@@ -299,7 +299,7 @@ def plot_particle_size_distributions(
             f"  $\sigma_g={geometric_standard_deviation:.2f}$"
         )
 
-        line_style = "--" if i == 0 else None
+        line_style = "--" if first_is_reference and i == 0 else None
 
         if kind == "hist":
             _, bins, _ = plt.hist(
