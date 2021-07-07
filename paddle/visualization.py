@@ -256,8 +256,9 @@ def plot_particle_size_distributions(
     measurand_name: Optional[str] = "Diameter",
     unit: Optional[str] = "px",
     kind: Literal["hist", "kde"] = "hist",
+    first_is_reference: bool = False,
 ) -> None:
-    """Plot multiple particle size distributions.
+    """Plot multiple particle size distributions (PSDs).
 
     :param particle_size_lists: List of particle size lists.
     :param score_lists: List of score lists.
@@ -265,22 +266,27 @@ def plot_particle_size_distributions(
     :param measurand_name: Name of the measurand (used as x-label).
     :param unit: Unit of the measurement (used in x-label).
     :param kind: Kind of plot. `hist` for histogram (default) or `kde` for kernel density estimation
+    :param first_is_reference: If true, then the first PSD is plotted in gray with a dashed line
+        style.
     """
     num_particle_size_distributions = len(particle_size_lists)
-    colors = get_viridis_colors(num_particle_size_distributions)
 
-    hist_kwargs = {"density": True, "histtype": "step"}
+    if first_is_reference:
+        colors = ["gray"]
+        colors += get_viridis_colors(num_particle_size_distributions - 1)
+    else:
+        colors = get_viridis_colors(num_particle_size_distributions)
 
     if labels is None:
-        labels = [f"PSD {i}" for i in range(1, num_particle_size_distributions + 1)]
+        labels = [None] * num_particle_size_distributions
 
     if score_lists is None:
         score_lists = [None] * num_particle_size_distributions
 
     bins = None
 
-    for particle_sizes, scores, color, label in zip(
-        particle_size_lists, score_lists, colors, labels
+    for i, (particle_sizes, scores, color, label) in enumerate(
+        zip(particle_size_lists, score_lists, colors, labels)
     ):
         geometric_mean = gmean(particle_sizes, weights=scores)
         geometric_standard_deviation = gstd(particle_sizes, weights=scores)
@@ -293,13 +299,28 @@ def plot_particle_size_distributions(
             f"  $\sigma_g={geometric_standard_deviation:.2f}$"
         )
 
+        line_style = "--" if i == 0 else None
+
         if kind == "hist":
             _, bins, _ = plt.hist(
-                particle_sizes, bins=bins, color=color, weights=scores, label=label, **hist_kwargs
+                particle_sizes,
+                bins=bins,
+                color=color,
+                weights=scores,
+                label=label,
+                density=True,
+                histtype="step",
+                linestyle=line_style,
             )
         elif kind == "kde":
             sns.kdeplot(
-                particle_sizes, fill=False, color=color, weights=scores, label=label, markersize=0
+                particle_sizes,
+                fill=False,
+                color=color,
+                weights=scores,
+                label=label,
+                markersize=0,
+                linestyle=line_style,
             )
         else:
             raise ValueError(f"Unknown value for parameter `kind`: {kind}")
