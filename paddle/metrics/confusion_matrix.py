@@ -146,4 +146,21 @@ class ConfusionMatrix(ConfusionMatrixBase):
         :param class_names: Optional class names to be used as labels.
         :return: figure handle
         """
-        return plot_confusion_matrix(self.compute(), class_names=class_names)
+
+        cm = self.compute()
+        cm = _convert_to_int_if_lossless(cm)
+
+        return plot_confusion_matrix(cm, class_names=class_names)
+
+
+def _convert_to_int_if_lossless(a: torch.Tensor) -> torch.Tensor:
+    """Converts the supplied tensor to int, if the conversion can be done lossless.
+
+    :param a: tensor
+    :return: Input tensor as int, if lossless conversion is possible or as original data type, if
+        not.
+    """
+    if torch.sum(a % 1) == 0:
+        a = a.int()
+
+    return a
