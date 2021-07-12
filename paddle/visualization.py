@@ -358,8 +358,8 @@ def plot_confusion_matrix(
         upper_limit = 1 if confusion_matrix_data.max() <= 1 else None
         im.set_clim(0, upper_limit)
 
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True Label")
+    plt.xlabel("Predicted label")
+    plt.ylabel("True label")
 
     return plt.gcf()
 
