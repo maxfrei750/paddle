@@ -332,6 +332,8 @@ def plot_particle_size_distributions(
 
     plt.ylabel("Probability density")
 
+    plt.xlim(left=0)
+
 
 def plot_confusion_matrix(
     confusion_matrix_data: ArrayLike, class_names: Optional[List[str]] = None
