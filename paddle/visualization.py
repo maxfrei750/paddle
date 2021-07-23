@@ -256,7 +256,10 @@ def plot_particle_size_distributions(
     measurand_name: Optional[str] = "Diameter",
     unit: Optional[str] = "px",
     kind: Literal["hist", "kde"] = "hist",
-    first_is_reference: bool = False,
+    do_display_number: bool = True,
+    do_display_geometric_mean: bool = True,
+    do_display_geometric_standard_deviation: bool = True,
+    **kwargs,
 ) -> None:
     """Plot multiple particle size distributions (PSDs).
 
@@ -266,16 +269,18 @@ def plot_particle_size_distributions(
     :param measurand_name: Name of the measurand (used as x-label).
     :param unit: Unit of the measurement (used in x-label).
     :param kind: Kind of plot. `hist` for histogram (default) or `kde` for kernel density estimation
-    :param first_is_reference: If true, then the first PSD is plotted in gray with a dashed line
-        style.
+    :param do_display_number: If true (default), then the number of particles is displayed in the
+        legend.
+    :param do_display_geometric_mean: If true (default), then the geometric mean of the particle
+        size is displayed in the legend.
+    :param do_display_geometric_standard_deviation: If true (default), then the geometric standard
+        deviation of the particle size of the particles is displayed in the legend.
+    :param kwargs: Optional keyword arguments, that are forwarded to `plt.hist` or `sns.kdeplot`
+        (depending on the value of the `kind` parameter).
     """
     num_particle_size_distributions = len(particle_size_lists)
 
-    if first_is_reference:
-        colors = ["gray"]
-        colors += get_viridis_colors(num_particle_size_distributions - 1)
-    else:
-        colors = get_viridis_colors(num_particle_size_distributions)
+    colors = get_viridis_colors(num_particle_size_distributions)
 
     if labels is None:
         labels = [None] * num_particle_size_distributions
@@ -288,40 +293,46 @@ def plot_particle_size_distributions(
     for i, (particle_sizes, scores, color, label) in enumerate(
         zip(particle_size_lists, score_lists, colors, labels)
     ):
-        geometric_mean = gmean(particle_sizes, weights=scores)
-        geometric_standard_deviation = gstd(particle_sizes, weights=scores)
-        number = len(particle_sizes)
 
-        label = (
-            f"{label}\n"
-            f"  $N={number}$\n"
-            f"  $d_g={geometric_mean:.0f}$ {unit}\n"
-            f"  $\sigma_g={geometric_standard_deviation:.2f}$"
-        )
+        if do_display_number:
+            number = len(particle_sizes)
+            label += f"\n  $N={number}$"
 
-        line_style = "--" if first_is_reference and i == 0 else None
+        if do_display_geometric_mean:
+            geometric_mean = gmean(particle_sizes, weights=scores)
+            label += f"\n  $d_g={geometric_mean:.0f}$ {unit}"
+
+        if do_display_geometric_standard_deviation:
+            geometric_standard_deviation = gstd(particle_sizes, weights=scores)
+            label += f"\n  $\sigma_g={geometric_standard_deviation:.2f}$"
+
+        current_kwargs = kwargs.copy()
+
+        if "color" not in current_kwargs:
+            current_kwargs["color"] = color
 
         if kind == "hist":
+
+            if "histtype" not in current_kwargs:
+                current_kwargs["histtype"] = "step"
+
             _, bins, _ = plt.hist(
                 particle_sizes,
                 bins=bins,
-                color=color,
                 weights=scores,
                 label=label,
                 density=True,
-                histtype="step",
-                linestyle=line_style,
+                **current_kwargs,
             )
         elif kind == "kde":
-            sns.kdeplot(
-                particle_sizes,
-                fill=False,
-                color=color,
-                weights=scores,
-                label=label,
-                markersize=0,
-                linestyle=line_style,
-            )
+
+            if "fill" not in current_kwargs:
+                current_kwargs["fill"] = False
+
+            if "markersize" not in current_kwargs:
+                current_kwargs["markersize"] = 0
+
+            sns.kdeplot(particle_sizes, weights=scores, label=label, **current_kwargs)
         else:
             raise ValueError(f"Unknown value for parameter `kind`: {kind}")
 
