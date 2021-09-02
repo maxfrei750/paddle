@@ -366,7 +366,12 @@ def plot_confusion_matrix(
         confusion_matrix=confusion_matrix_data, display_labels=class_names
     )
 
-    display.plot(cmap="Blues")
+    white = (1.0, 1.0, 1.0)
+    viridis_blue = get_viridis_colors(1)[0]
+    color_list = [white, viridis_blue]
+    colormap = LinearSegmentedColormap.from_list("custom_viridis", color_list)
+
+    display.plot(cmap=colormap)
 
     for im in display.ax_.get_images():
         upper_limit = 1 if confusion_matrix_data.max() <= 1 else None
