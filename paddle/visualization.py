@@ -1,6 +1,6 @@
 import random
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Optional
+from typing import Dict, Iterable, List, Literal, Optional, Union
 
 import numpy as np
 import seaborn as sns
@@ -11,6 +11,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.figure import Figure
 from PIL import Image as PILImage
 from PIL import ImageDraw, ImageFont, ImageOps
+from scipy import stats
 from scipy.ndimage.morphology import binary_erosion
 from skimage import img_as_float, img_as_ubyte
 from sklearn.metrics import ConfusionMatrixDisplay
@@ -325,14 +326,12 @@ def plot_particle_size_distributions(
                 **current_kwargs,
             )
         elif kind == "kde":
-
-            if "fill" not in current_kwargs:
-                current_kwargs["fill"] = False
-
             if "markersize" not in current_kwargs:
                 current_kwargs["markersize"] = 0
 
-            sns.kdeplot(particle_sizes, weights=scores, label=label, **current_kwargs)
+            plot_lognormal_kernel_density_estimate(
+                particle_sizes, weights=scores, label=label, **current_kwargs
+            )
         else:
             raise ValueError(f"Unknown value for parameter `kind`: {kind}")
 
@@ -345,6 +344,23 @@ def plot_particle_size_distributions(
 
     plt.xlim(left=0)
     plt.ylim(bottom=0)
+
+
+def plot_lognormal_kernel_density_estimate(
+    x: Union[ArrayLike, List],
+    weights: Optional[Union[ArrayLike, List]] = None,
+    num_supports: int = 400,
+    **kwargs,
+):
+    support = np.linspace(1, max(x) * 2, num_supports)
+    support_log = np.log(support)
+
+    x_log = np.log(x)
+    probability_densities_transformed = stats.gaussian_kde(x_log, weights=weights)(support_log)
+
+    probability_densities = probability_densities_transformed / support
+
+    plt.plot(support, probability_densities, **kwargs)
 
 
 def plot_confusion_matrix(
