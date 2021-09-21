@@ -133,7 +133,7 @@ class MaskRCNNDataset(torch.utils.data.Dataset):
 
     def _gather_class_names(self) -> None:
         """Gather class names based on class folders in subset folder."""
-        class_names = [f.name for f in self.subset_path.iterdir() if f.is_dir()]
+        class_names = sorted([f.name for f in self.subset_path.iterdir() if f.is_dir()])
 
         if self.class_selector is not None:
             class_names = [
