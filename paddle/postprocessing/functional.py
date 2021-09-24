@@ -114,6 +114,40 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tens
     return annotation
 
 
+def concatenate_annotations(annotations: List[Annotation]) -> Annotation:
+    """Concatenate multiple annotations.
+
+    :param annotations: List of annotations.
+    :return: Concatenated annotations.
+    """
+
+    # TODO: Find a better place for this function.
+
+    if len(annotations) == 1:
+        return annotations[0].copy()
+
+    if not all([annotation.keys() == annotations[0].keys() for annotation in annotations]):
+        raise KeyError("All annotations need to have identical keys.")
+
+    annotation_concatenated = {}
+
+    for key in annotations[0].keys():
+
+        # TODO: Find a more robust/future-proof solution to determine which entries get concatenated.
+        # IDEA: Try to get number of boxes/masks/labels.
+        if key not in ["image_name", "image_id", "slice_index_x", "slice_index_y"]:
+            annotation_concatenated[key] = torch.cat(
+                [annotation[key] for annotation in annotations]
+            )
+        else:
+            if not all([annotation[key] == annotations[0][key] for annotation in annotations]):
+                raise ValueError("Non-concatenatable values must be identical for all annotations.")
+
+            annotation_concatenated[key] = annotations[0][key]
+
+    return annotation_concatenated
+
+
 def calculate_area_equivalent_diameters(masks: ndarray) -> ndarray:
     """Calculate area equivalent diameters for a numpy array containing masks.
 
