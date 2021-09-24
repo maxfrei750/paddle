@@ -4,14 +4,12 @@ import torch
 from torch import Tensor
 from torchvision.ops import box_iou
 
-from ..custom_types import ArrayLike
-
 
 def mask_iou(
-    masks_prediction: ArrayLike,
-    masks_target: ArrayLike,
-    boxes_prediction: ArrayLike,
-    boxes_target: ArrayLike,
+    masks_prediction: Tensor,
+    masks_target: Tensor,
+    boxes_prediction: Tensor,
+    boxes_target: Tensor,
 ) -> Tensor:
     """Calculates IoU matrix, based on instance masks.
 
