@@ -95,6 +95,8 @@ def filter_annotation(annotation: Annotation, do_keep: Union[ndarray, List, Tens
         removed.
     """
 
+    annotation = annotation.copy()
+
     if isinstance(do_keep, Tensor):
         if torch.all(do_keep):
             return annotation
