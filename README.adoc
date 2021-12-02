@@ -4,6 +4,10 @@
 image:https://img.shields.io/badge/DOI-10.1016/j.powtec.2019.10.020-blue.svg[link="https://doi.org/10.1016/j.powtec.2019.10.020"]
 image:https://img.shields.io/badge/arXiv-1907.05112-b31b1b.svg[link="https://arxiv.org/abs/1907.05112"]
 image:https://img.shields.io/github/license/maxfrei750/paddle.svg[link="https://github.com/maxfrei750/paddle/blob/master/LICENSE"]
+image:https://img.shields.io/badge/code%20style-black-000000.svg[link="https://github.com/psf/black"]
+image:https://img.shields.io/lgtm/alerts/g/maxfrei750/paddle.svg?logo=lgtm&logoWidth=18[link="https://lgtm.com/projects/g/maxfrei750/paddle/alerts/"]
+image:https://img.shields.io/lgtm/grade/python/g/facebookresearch/hydra.svg?logo=lgtm&logoWidth=18[link="https://lgtm.com/projects/g/maxfrei750/paddle/context:python"]
+
 
 '''
 [discrete]
