@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from tqdm import tqdm
 
-from ..custom_types import AnyPath
 from ..data import MaskRCNNDataLoader, MaskRCNNDataset
 from .postprocessingsteps import Numpify
 

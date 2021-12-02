@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Literal, Optional, Union
 
 import numpy as np
-import seaborn as sns
 import torch
 from matplotlib import cm
 from matplotlib import pyplot as plt
