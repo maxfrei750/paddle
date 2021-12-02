@@ -9,6 +9,22 @@ from torch import Tensor
 
 from ..custom_types import Annotation, Mask
 
+__all__ = [
+    "filter_annotation",
+    "filter_border_instances",
+    "filter_class_instances",
+    "filter_empty_instances",
+    "filter_low_score_instances",
+    "concatenate_annotations",
+    "calculate_areas",
+    "calculate_maximum_feret_diameter",
+    "calculate_minimum_feret_diameter",
+    "calculate_minimum_and_maximum_feret_diameter",
+    "calculate_area_equivalent_diameters",
+    "calculate_maximum_feret_diameters",
+    "calculate_minimum_feret_diameters",
+]
+
 
 def filter_border_instances(annotation: Annotation, border_width: int = 2) -> Annotation:
     """Remove instances that touch the image border.

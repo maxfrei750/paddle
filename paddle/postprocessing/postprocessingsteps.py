@@ -9,6 +9,16 @@ from ..custom_types import Annotation, AnyPath, Image
 from ..visualization import visualize_annotation
 from .functional import filter_border_instances, filter_class_instances, filter_low_score_instances
 
+__all__ = [
+    "PostProcessingStepBase",
+    "SaveMaskProperties",
+    "SaveVisualization",
+    "FilterScore",
+    "FilterClasses",
+    "FilterBorderInstances",
+    "Numpify",
+]
+
 
 class PostProcessingStepBase:
     """Base class for postprocessing steps."""
