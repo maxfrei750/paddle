@@ -134,9 +134,9 @@ class Sample:
         :param class_name: name of the class
         """
         class_folder_path = self.parent.subset_path / class_name
-        mask_paths_class = list(
+        mask_paths_class = sorted(list(
             class_folder_path.glob(f"{self.parent.mask_prefix}{self.image_name}_*.*")
-        )
+        ))
         return mask_paths_class
 
     def _configure_initial_cropping(self):
