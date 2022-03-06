@@ -6,7 +6,7 @@ from torch import Tensor
 from torch.optim import Optimizer
 
 # General
-AnyPath = Union[str, bytes, PathLike]
+AnyPath = Union[str, PathLike]
 ArrayLike = Union[Tensor, ndarray]
 
 # Data
