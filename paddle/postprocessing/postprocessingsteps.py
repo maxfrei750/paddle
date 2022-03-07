@@ -19,6 +19,7 @@ __all__ = [
     "FilterBorderInstances",
     "Numpify",
     "PickleAnnotation",
+    "MeasureMaskProperties",
 ]
 
 
@@ -298,5 +299,34 @@ class PickleAnnotation(PostProcessingStepBase):
 
         with open(output_file_path, "wb") as output_file:
             pickle.dump(data_to_write, output_file)
+
+        return image, annotation
+
+
+class MeasureMaskProperties(PostProcessingStepBase):
+    """Measure mask properties (using user supplied functions) and add them to the annotation.
+
+    :param measurement_fcns: Dictionary, where keys are measurand names and values are callables,
+        that accept a numpy array containing multiple masks.
+    """
+
+    def __init__(self, measurement_fcns: Dict[str, Callable]) -> None:
+        self._measurement_fcns = measurement_fcns
+        self.measurement_names = list(measurement_fcns.keys())
+
+    def __call__(self, image: Image, annotation: Annotation) -> Tuple[Image, Annotation]:
+        """Measure and store mask properties of a single annotation.
+
+        :param image: input image
+        :param annotation: Dictionary containing annotation of an image (e.g. masks,
+            bounding boxes, etc.)
+        :return: image and annotation, both identical to the inputs
+        """
+        masks = annotation["masks"]
+
+        for measurement_name, measurement_fcn in zip(
+            self.measurement_names, self._measurement_fcns.values()
+        ):
+            annotation[measurement_name] = measurement_fcn(masks)
 
         return image, annotation
