@@ -1,9 +1,12 @@
 from typing import List, Tuple, Union
 
 import numpy as np
+import skimage
 import torch
 from diplib.PyDIP_bin import MeasurementTool as PyDipMeasurementTool
 from numpy import ndarray
+from shapely.geometry import Polygon, box
+from skimage.measure import find_contours
 from skimage.segmentation import clear_border
 from torch import Tensor
 
@@ -23,6 +26,10 @@ __all__ = [
     "calculate_area_equivalent_diameters",
     "calculate_maximum_feret_diameters",
     "calculate_minimum_feret_diameters",
+    "calculate_distances_to_image_border",
+    "calculate_minor_axis_lengths",
+    "calculate_major_axis_lengths",
+    "calculate_perimeters",
 ]
 
 
@@ -234,3 +241,67 @@ def calculate_maximum_feret_diameters(masks: ndarray) -> ndarray:
     :return: Numpy array of maximum Feret diameters of the masks.
     """
     return np.asarray([calculate_maximum_feret_diameter(mask) for mask in masks])
+
+
+def calculate_distances_to_image_border(masks: np.ndarray) -> np.ndarray:
+    """Calculate distances to image border for a numpy array containing masks.
+
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of distances.
+    """
+
+    distances: List[float] = []
+
+    for mask in masks:
+        image_height, image_width = mask.shape
+        image_box = box(0, 0, image_width, image_height).exterior
+
+        mask_outline = Polygon(np.squeeze(find_contours(np.transpose(mask), 0)[0])).exterior
+
+        distance = mask_outline.distance(image_box)
+        distances.append(distance)
+
+    return np.asarray(distances)
+
+
+def calculate_minor_axis_lengths(masks: np.ndarray) -> np.ndarray:
+    """Calculate minor axis lengths for a numpy array containing masks.
+
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of minor axis ratios.
+    """
+
+    minor_axis_lengths: List[float] = []
+
+    for mask in masks:
+        region_properties = skimage.measure.regionprops(mask)
+        minor_axis_lengths.append(region_properties[0].minor_axis_length)
+
+    return np.asarray(minor_axis_lengths)
+
+
+def calculate_major_axis_lengths(masks: np.ndarray) -> np.ndarray:
+    """Calculate major axis lengths for a numpy array containing masks.
+
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of major axis ratios.
+    """
+
+    major_axis_lengths: List[float] = []
+
+    for mask in masks:
+        region_properties = skimage.measure.regionprops(mask)
+        major_axis_lengths.append(region_properties[0].major_axis_length)
+
+    return np.asarray(major_axis_lengths)
+
+
+def calculate_perimeters(masks: np.ndarray) -> np.ndarray:
+    """Calculate perimiters for a numpy array containing masks.
+
+    :param masks: NxHxW numpy array, which stores N instance masks.
+    :return: Numpy array of perimeters.
+    """
+    masks = np.array(masks).astype(bool)
+    perimeters = np.asarray([skimage.measure.perimeter(mask) for mask in masks])
+    return perimeters
