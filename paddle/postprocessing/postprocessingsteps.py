@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path, PosixPath
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -17,6 +18,7 @@ __all__ = [
     "FilterClasses",
     "FilterBorderInstances",
     "Numpify",
+    "PickleAnnotation",
 ]
 
 
@@ -255,5 +257,46 @@ class SaveVisualization(PostProcessingStepBase):
             raise FileExistsError(f"File already exists: {visualization_file_path}")
 
         result.save(visualization_file_path)
+
+        return image, annotation
+
+
+class PickleAnnotation(PostProcessingStepBase):
+    """Extract mask properties (using user supplied functions) and save them into a file, along with
+    the corresponding labels, scores and image names.
+
+    :param output_folder_path: Path of the folder, in which annotation pickle files are saved to.
+    """
+
+    def __init__(
+        self,
+        output_file_path: AnyPath,
+        exclude_keys: Optional[List[str]] = None,
+    ) -> None:
+        self.output_folder_path = Path(output_file_path)
+
+        if exclude_keys is None:
+            exclude_keys = []
+
+        self.exclude_keys = exclude_keys
+
+    def __call__(self, image: Image, annotation: Annotation) -> Tuple[Image, Annotation]:
+        """Store annotations as pickle files.
+
+        :param image: input image
+        :param annotation: Dictionary containing annotation of an image (e.g. masks,
+            bounding boxes, etc.)
+        :return: image and annotation, both identical to the inputs
+        """
+
+        output_file_path = self.output_folder_path / f"{annotation['image_name']}.pkl"
+
+        data_to_write = annotation.copy()
+
+        for key in self.exclude_keys:
+            del data_to_write[key]
+
+        with open(output_file_path, "wb") as output_file:
+            pickle.dump(data_to_write, output_file)
 
         return image, annotation
