@@ -27,6 +27,7 @@ def run_model_on_dataset(
     initial_cropping_rectangle: Optional[CroppingRectangle] = None,
     num_slices_per_axis: Optional[int] = 1,
     class_selector: Optional[List] = None,
+    gpus: Optional[int] = -1,
 ) -> None:
     """Loads a model, runs a dataset through it and stores the results.
 
@@ -40,6 +41,7 @@ def run_model_on_dataset(
         will result in n² pieces. Slicing is performed after the initial cropping and before the
         user transform.
     :param class_selector: Optional list of class names to be included.
+    :param gpus: Specify, which compute device to use (see https://pytorch-lightning.readthedocs.io/en/stable/advanced/multi_gpu.html#select-gpu-devices).
     """
 
     output_root = Path(output_root) / subset
@@ -56,7 +58,7 @@ def run_model_on_dataset(
     trainer = Trainer(
         logger=False,
         checkpoint_callback=False,
-        gpus=-1,
+        gpus=gpus,
         callbacks=[
             PredictionWriter(
                 output_root,
