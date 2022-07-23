@@ -26,6 +26,5 @@ dependencies:
 - pip=21.0
 - pip:
     - diplib==3.*
-    - opencv-python==4.5.*
     - hydra-core==1.1.0.dev3 # TODO: update to 1.1.* and fix compatibility issues
     - omegaconf==2.1.0dev19 # TODO: update to 2.1.* and fix compatibility issues
