@@ -7,7 +7,7 @@ dependencies:
 - cudatoolkit=11.0
 - pytorch=1.7
 - pytorch-lightning=1.1
-- torchvision=0.8
+- torchvision=0.8.1
 - albumentations=0.5
 - pillow=8.1 # TODO: test pillow-simd, channel: zegami
 - scikit-image=0.18

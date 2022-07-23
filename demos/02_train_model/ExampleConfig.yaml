@@ -23,7 +23,8 @@ callbacks:
     line_width: 1
     font_size: 16
 logging:
-  use_wandb: false
+  wandb: 
+    use: false
 trainer:
   fast_dev_run: false
   max_epochs: 3
@@ -36,7 +37,7 @@ lightning_module:
     box_detections_per_img: 200
 data_module:
   data_root: ../data
-  batch_size: 8
+  batch_size: 4
   train_subset: training
   val_subset: validation
   initial_cropping_rectangle: null
