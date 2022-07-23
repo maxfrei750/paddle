@@ -35,6 +35,8 @@ The utilized convolutional neural network is based on the Mask R-CNN architectur
 . Change into the folder of the repository: `cd paddle`
 . Create a new conda environment: `conda env create --file environment.yaml`
 
+TIP: Creating the environment with `conda` can take a while. Using https://github.com/mamba-org/mamba[mamba] can speed up the creation significantly.
+
 == Getting started
 . Open a command line.
 . Activate the conda environment: `activate paddle`
