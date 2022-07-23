@@ -34,6 +34,8 @@ The utilized convolutional neural network is based on the Mask R-CNN architectur
 . Clone this repository: `git clone https://github.com/maxfrei750/paddle.git`
 . Change into the folder of the repository: `cd paddle`
 . Create a new conda environment: `conda env create --file environment.yaml`
+. Activate the conda environment: `activate paddle`
+. Install paddle into the environment: `pip install --editable .`
 
 TIP: Creating the environment with `conda` can take a while. Using https://github.com/mamba-org/mamba[mamba] can speed up the creation significantly.
 
