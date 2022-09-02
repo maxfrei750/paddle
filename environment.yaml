@@ -9,7 +9,7 @@ dependencies:
 - pytorch-lightning=1.1
 - torchvision=0.8.1
 - albumentations=0.5
-- pillow=8.1 # TODO: test pillow-simd, channel: zegami
+- pillow=8.2 # TODO: test pillow-simd, channel: zegami
 - scikit-image=0.18
 - cython=0.29
 - seaborn=0.11
