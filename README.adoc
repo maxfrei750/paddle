@@ -1,6 +1,13 @@
 :toc:
 = paddle (PArticle Detection via Deep LEarning)
 
+---
+
+== ⚠️ DEPRECATED ⚠️
+Unfortunately, I cannot provide support for paddle any longer. Fortunately, there has been a lot of progress in the meantime, with regard to the usability of Mask R-CNN for custom applications, such as image-based particle detection. Therefore, I recommend to use the https://github.com/open-mmlab/mmdetection[mmdetection] framework, which has a large community, a thorough documentation and a huge model zoo. If you plan to train on your own data, https://mmdetection.readthedocs.io/en/latest/user_guides/train.html#train-with-customized-datasets[this] is a good place to get started.
+
+---
+
 image:https://img.shields.io/badge/DOI-10.1016/j.powtec.2019.10.020-blue.svg[link="https://doi.org/10.1016/j.powtec.2019.10.020"]
 image:https://img.shields.io/badge/arXiv-1907.05112-b31b1b.svg[link="https://arxiv.org/abs/1907.05112"]
 image:https://img.shields.io/github/license/maxfrei750/paddle.svg[link="https://github.com/maxfrei750/paddle/blob/master/LICENSE"]
